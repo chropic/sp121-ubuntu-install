@@ -1,13 +1,13 @@
 # Reference material
 
-`original-tested-guide.md` is the verbatim 2026-08-13 machine-tested guide from
-which the public documentation is being derived.
+`original-tested-guide.md` is the verbatim 2026-08-13 machine-tested source from
+which the consolidated public [user guide](../../GUIDE.md) is derived.
 
 It is retained to prevent information loss and to make editorial changes
 auditable. It is not the novice installation entry point, and its commands are
 not automatically safe on a different disk layout or kernel release.
 
-When a section is migrated:
+When material is migrated into the public guide:
 
 1. preserve its factual content;
 2. separate read-only checks from state-changing commands;
