@@ -43,6 +43,8 @@ not an installer prompt to click through.
 
 ## Current limitations
 
+- Canonical's stock ARM64 ISO is the required base, but it cannot be used
+  unchanged because it lacks the machine-tested SP12 device-tree handoff.
 - Secure Boot is disabled in the tested setup.
 - Hibernate is not validated.
 - Camera nodes in a DTB do not prove that camera capture works.

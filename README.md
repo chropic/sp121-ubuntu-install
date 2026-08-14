@@ -4,9 +4,10 @@ Community installation and recovery tooling for the Microsoft Surface Pro
 12-inch, 1st Edition with the Qualcomm Snapdragon X Plus `X1P42100` SoC.
 
 > [!WARNING]
-> This repository is being prepared for its first release. It does **not** yet
-> provide a supported installer image. Do not improvise from unfinished files.
-> Start with [QUICKSTART.md](QUICKSTART.md) and obey every stop condition.
+> This repository does not distribute an installer ISO. Its public path starts
+> with Canonical's stock Ubuntu ARM64 ISO and prepares a local SP12 boot copy.
+> That path is not yet marked **installation-tested** in repository form. Start
+> with [QUICKSTART.md](QUICKSTART.md) and obey every stop condition.
 
 ## Supported device
 
@@ -41,7 +42,7 @@ feature-by-feature runtime validation. Hibernate is not supported.
 
 ## Choose a path
 
-- **Installing for the first time:** [Quick start](QUICKSTART.md)
+- **Building locally from stock Ubuntu:** [Quick start](QUICKSTART.md)
 - **Preparing safely:** [Before you start](docs/00-before-you-start.md)
 - **Understanding the boot design:** [Boot architecture](docs/boot-architecture.md)
 - **Auditing the fallback loader:**
@@ -73,11 +74,11 @@ feature-by-feature runtime validation. Hibernate is not supported.
 
 ## Project status
 
-The repository is in its documentation and reproducibility phase. It includes an
-expert-only local installer builder, but does not publish a supported installer
-image. Planned release artifacts are versioned kernel image/header packages, a
-matching DTB, checksums, and build provenance. Redistributable binary artifacts
-will live in GitHub Releases, not Git history.
+The repository is in its documentation and reproducibility phase. It includes a
+local builder for Canonical's stock Ubuntu ISO and does not publish a modified
+installer image. Planned release artifacts are versioned kernel image/header
+packages, a matching DTB, checksums, and build provenance. Redistributable binary
+artifacts will live in GitHub Releases, not Git history.
 
 The complete 2026-08-13 source guide is preserved verbatim under `docs/reference/`.
 The numbered chapters are the safer public interface; the reference snapshot is
