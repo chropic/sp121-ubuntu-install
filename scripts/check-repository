@@ -20,6 +20,8 @@ docs/development/sensor-stack.md
 docs/reference/original-tested-guide.md
 kernel/patches.yaml
 release/reference/BUILDINFO.json
+release/CANDIDATE.json
+release/LAUNCH-CHECKLIST.md
 firmware/README.md
 firmware/sources.yaml'
 
@@ -78,7 +80,9 @@ printf '%s  %s\n' \
     kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch | sha256sum -c - >/dev/null
 
 if command -v python3 >/dev/null 2>&1; then
-    python3 -m json.tool release/reference/BUILDINFO.json >/dev/null
+    find release -type f -name '*.json' -print | while IFS= read -r json_file; do
+        python3 -m json.tool "$json_file" >/dev/null
+    done
 fi
 
 tests/build-installer

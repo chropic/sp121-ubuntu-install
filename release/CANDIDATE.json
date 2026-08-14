@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "candidate-not-hardware-tested",
+  "distribution": "local-testing-only",
+  "created_utc": "2026-08-14T21:23:18Z",
+  "image": {
+    "filename": "sp12-ubuntu-26.04-arm64-launch-candidate.iso",
+    "size_bytes": 4159942656,
+    "sha256": "5b176c152c320d614e8228f93e132cfb4946e21f25bfdcb0492120b08f12bb8b"
+  },
+  "builder": {
+    "repository_commit": "c62985f67c5a8ed0fcd0600b92366f03d4df8021",
+    "xorriso_version": "1.5.6",
+    "project_archive_sha256": "ce61fde43bb77c9774e99766b90bc0d3a3eb269e39606f2d27bdfdf76a24e40a"
+  },
+  "inputs": {
+    "ubuntu_26_04_desktop_arm64_sha256": "c2afd538d66fdd77377d03f1ed2ac76a34f1c116baecc9a8170d68f833121f57",
+    "installer_dtb_sha256": "d7ed4b073c7344cb0bb2c3f7d00655df60b473588a5c0364af54537dc2c672c7"
+  },
+  "offline_audit": {
+    "sha256_sidecar": "pass",
+    "ubuntu_media_checksums": "pass",
+    "hybrid_gpt": "pass",
+    "arm64_efi_loaders": "pass",
+    "grub_device_tree_configuration": "pass",
+    "embedded_provenance": "pass",
+    "third_party_support_checkout_excluded": "pass"
+  },
+  "remaining_gate": "Physical boot, installation, recovery, and hardware verification on the supported Surface Pro 12",
+  "publication_note": "Do not upload this modified ISO under the current builder-only distribution policy."
+}
