@@ -21,7 +21,7 @@ jobs:
         run: scripts/check-repository
 
       - name: Lint shell scripts
-        run: shellcheck scripts/*
+        run: shellcheck scripts/* tests/*
 
       - name: Reject whitespace errors
         run: >-

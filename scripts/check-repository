@@ -42,7 +42,13 @@ for script in kernel/prepare-tree kernel/build-packages; do
     sh -n "$script"
 done
 
-if find . -path ./.git -prune -o -type f \
+for test_script in tests/*; do
+    [ -f "$test_script" ] || continue
+    sh -n "$test_script"
+done
+
+if find . \( -path ./.git -o -path ./build -o -path ./dist -o -path ./.cache \) \
+    -prune -o -type f \
     \( -name '*.iso' -o -name '*.img' -o -name '*.deb' -o -name '*.dtb' \) \
     -print | grep -q .; then
     printf 'Binary release artifact found in Git history candidate\n' >&2
@@ -74,5 +80,7 @@ printf '%s  %s\n' \
 if command -v python3 >/dev/null 2>&1; then
     python3 -m json.tool release/reference/BUILDINFO.json >/dev/null
 fi
+
+tests/build-installer
 
 printf 'Repository checks passed.\n'

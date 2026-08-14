@@ -50,9 +50,9 @@ original setting before changing it.
 
 ## 4. Stop here for now
 
-The reproducible installer builder and signed release manifest are still being
-prepared. Until the project publishes a release marked **installation-tested**,
-use the detailed source guide only if you are comfortable recovering the ESP by
-hand.
+An expert-only local installer builder now exists, but no signed installer image
+or installation-tested release has been published. Until the project publishes
+a release marked **installation-tested**, use the detailed source guide only if
+you are comfortable recovering the ESP by hand.
 
 Next reading: [Before you start](docs/00-before-you-start.md).

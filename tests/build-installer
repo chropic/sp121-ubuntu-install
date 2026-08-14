@@ -1,0 +1,157 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+test_root=$(mktemp -d "${TMPDIR:-/tmp}/sp12-build-installer-test.XXXXXX")
+trap 'rm -rf "$test_root"' EXIT HUP INT TERM
+
+fake_bin=$test_root/bin
+mkdir -p "$fake_bin"
+
+cat > "$fake_bin/git" <<'EOF'
+#!/bin/sh
+set -eu
+
+case " $* " in
+    *" rev-parse --is-inside-work-tree "*)
+        printf '%s\n' true
+        ;;
+    *" rev-parse --verify HEAD "*)
+        printf '%s\n' ea0f07e66beea95898d96fbeb6daa472f4735af3
+        ;;
+    *" remote get-url origin "*)
+        printf '%s\n' https://github.com/harrisonvanderbyl/surface-pro-12-inch-linux.git
+        ;;
+    *" diff --quiet "*)
+        exit 0
+        ;;
+    *" ls-files --error-unmatch "*)
+        exit 0
+        ;;
+    *" ls-tree "*)
+        printf '%s\n' \
+            lib/firmware/qcom/x1p42100/Microsoft/Surface12/qcadsp8380.mbn \
+            lib/firmware/qcom/x1p42100/Microsoft/Surface12/qccdsp8380.mbn \
+            usr/share/qcom/x1p42100/Surface/surface-pro-12in/dsp/fastrpc_shell_0 \
+            usr/share/qcom/x1p42100/Surface/surface-pro-12in/sensors/config/default_sensors.json
+        ;;
+    *" archive "*)
+        output=
+        for argument do
+            case "$argument" in
+                --output=*) output=${argument#--output=} ;;
+            esac
+        done
+        [ -n "$output" ]
+        printf '%s\n' committed-support-content > "$output"
+        ;;
+    *" status --short "*)
+        ;;
+    *)
+        printf 'Unexpected fake git invocation: %s\n' "$*" >&2
+        exit 1
+        ;;
+esac
+EOF
+
+cat > "$fake_bin/xorriso" <<'EOF'
+#!/bin/sh
+set -eu
+
+if [ "${1:-}" = -version ]; then
+    printf '%s\n' 'xorriso 1.5.6 (test fixture)'
+    exit 0
+fi
+
+case " $* " in
+    *" -report_system_area plain "*)
+        printf '%s\n' 'ISO image size/512 : 8'
+        exit 0
+        ;;
+esac
+
+output=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -extract)
+            [ "$#" -ge 3 ]
+            if [ "$2" = /md5sum.txt ]; then
+                printf '%s\n' \
+                    '00000000000000000000000000000000  ./boot/grub/grub.cfg' \
+                    '11111111111111111111111111111111  ./casper/vmlinuz' > "$3"
+                exit 0
+            fi
+            cat > "$3" <<'CFG'
+menuentry "Try Ubuntu" {
+    linux /casper/vmlinuz quiet splash
+    initrd /casper/initrd
+}
+CFG
+            exit 0
+            ;;
+        -outdev)
+            output=$2
+            : > "$output"
+            shift 2
+            ;;
+        -update)
+            [ -n "$output" ]
+            printf '\n--- %s ---\n' "$3" >> "$output"
+            cat "$2" >> "$output"
+            shift 3
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+EOF
+
+chmod +x "$fake_bin/git" "$fake_bin/xorriso"
+
+base_iso=$test_root/base.iso
+dtb=$test_root/device.dtb
+output=$test_root/sp12-installer.iso
+printf '%s\n' official-iso-fixture > "$base_iso"
+printf '%s\n' dtb-fixture > "$dtb"
+iso_sha256=$(sha256sum "$base_iso" | awk '{print $1}')
+dtb_sha256=$(sha256sum "$dtb" | awk '{print $1}')
+
+PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+    --iso "$base_iso" \
+    --iso-sha256 "$iso_sha256" \
+    --dtb "$dtb" \
+    --dtb-sha256 "$dtb_sha256" \
+    --output "$output" >/dev/null
+
+[ -s "$output" ]
+[ -s "$output.sha256" ]
+[ -s "$output.buildinfo" ]
+grep -q 'stubble.dtb_override=true' "$output"
+grep -q 'devicetree /casper/x1p42100-microsoft-sp12in.dtb' "$output"
+grep -q -- '--- /sp12-buildinfo.txt ---' "$output"
+grep -q -- '--- /md5sum.txt ---' "$output"
+grep -q './boot/grub/grub.cfg' "$output"
+grep -q './casper/x1p42100-microsoft-sp12in.dtb' "$output"
+grep -q './sp12-linux.tar.gz' "$output"
+grep -q './sp12-buildinfo.txt' "$output"
+grep -q "base_iso_sha256=$iso_sha256" "$output.buildinfo"
+grep -q 'builder_revision=ea0f07e66beea95898d96fbeb6daa472f4735af3' "$output.buildinfo"
+grep -q 'project_archive_sha256=' "$output.buildinfo"
+(CDPATH='' cd -- "$test_root" && sha256sum -c sp12-installer.iso.sha256) >/dev/null
+
+bad_output=$test_root/bad.iso
+if PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+    --iso "$base_iso" \
+    --iso-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+    --dtb "$dtb" \
+    --dtb-sha256 "$dtb_sha256" \
+    --output "$bad_output" >"$test_root/bad.log" 2>&1; then
+    printf 'Builder accepted an incorrect base ISO checksum\n' >&2
+    exit 1
+fi
+grep -q 'Base ISO checksum mismatch' "$test_root/bad.log"
+[ ! -e "$bad_output" ]
+
+printf 'Installer builder tests passed.\n'

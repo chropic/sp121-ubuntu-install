@@ -73,9 +73,10 @@ feature-by-feature runtime validation. Hibernate is not supported.
 
 ## Project status
 
-The repository is in its documentation and reproducibility phase. Planned
-release artifacts are versioned kernel image/header packages, a matching DTB,
-checksums, build provenance, and an installer-building tool. Binary artifacts
+The repository is in its documentation and reproducibility phase. It includes an
+expert-only local installer builder, but does not publish a supported installer
+image. Planned release artifacts are versioned kernel image/header packages, a
+matching DTB, checksums, and build provenance. Redistributable binary artifacts
 will live in GitHub Releases, not Git history.
 
 The complete 2026-08-13 source guide is preserved verbatim under `docs/reference/`.

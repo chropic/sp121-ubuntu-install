@@ -4,23 +4,26 @@ set -eu
 
 usage() {
     cat <<'EOF'
-Usage: build-installer --iso FILE --dtb FILE --support-dir DIR --output FILE
+Usage: build-installer --iso FILE --iso-sha256 HASH --dtb FILE \
+  --dtb-sha256 HASH --output FILE
 
 Builds a Surface Pro 12 installer ISO from locally supplied inputs.
-The official base ISO must be checksum-verified before running this tool.
+The output contains this project's tracked files, but no third-party support checkout.
 EOF
 }
 
 base_iso=
+iso_sha256=
 dtb=
-support_dir=
+dtb_sha256=
 output=
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --iso) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; base_iso=$2; shift 2 ;;
+        --iso-sha256) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; iso_sha256=$2; shift 2 ;;
         --dtb) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb=$2; shift 2 ;;
-        --support-dir) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; support_dir=$2; shift 2 ;;
+        --dtb-sha256) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb_sha256=$2; shift 2 ;;
         --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
@@ -28,27 +31,92 @@ while [ "$#" -gt 0 ]; do
 done
 
 [ -n "$base_iso" ] || { printf 'Missing --iso\n' >&2; exit 2; }
+[ -n "$iso_sha256" ] || { printf 'Missing --iso-sha256\n' >&2; exit 2; }
 [ -n "$dtb" ] || { printf 'Missing --dtb\n' >&2; exit 2; }
-[ -n "$support_dir" ] || { printf 'Missing --support-dir\n' >&2; exit 2; }
+[ -n "$dtb_sha256" ] || { printf 'Missing --dtb-sha256\n' >&2; exit 2; }
 [ -n "$output" ] || { printf 'Missing --output\n' >&2; exit 2; }
+
+iso_sha256=$(printf '%s' "$iso_sha256" | tr 'A-F' 'a-f')
+printf '%s\n' "$iso_sha256" | grep -Eq '^[0-9a-f]{64}$' || {
+    printf 'Invalid --iso-sha256: expected 64 hexadecimal characters\n' >&2
+    exit 2
+}
+dtb_sha256=$(printf '%s' "$dtb_sha256" | tr 'A-F' 'a-f')
+printf '%s\n' "$dtb_sha256" | grep -Eq '^[0-9a-f]{64}$' || {
+    printf 'Invalid --dtb-sha256: expected 64 hexadecimal characters\n' >&2
+    exit 2
+}
 
 [ -f "$base_iso" ] || { printf 'Base ISO not found: %s\n' "$base_iso" >&2; exit 1; }
 [ -f "$dtb" ] || { printf 'DTB not found: %s\n' "$dtb" >&2; exit 1; }
-[ -d "$support_dir" ] || { printf 'Support directory not found: %s\n' "$support_dir" >&2; exit 1; }
-[ ! -e "$output" ] || { printf 'Refusing to overwrite: %s\n' "$output" >&2; exit 1; }
+
+checksum_file=$output.sha256
+buildinfo_file=$output.buildinfo
+for candidate in "$output" "$checksum_file" "$buildinfo_file"; do
+    if [ -e "$candidate" ] || [ -L "$candidate" ]; then
+        printf 'Refusing to overwrite: %s\n' "$candidate" >&2
+        exit 1
+    fi
+done
 
 command -v xorriso >/dev/null 2>&1 || { printf 'xorriso is required\n' >&2; exit 1; }
-command -v tar >/dev/null 2>&1 || { printf 'tar is required\n' >&2; exit 1; }
+command -v gzip >/dev/null 2>&1 || { printf 'gzip is required\n' >&2; exit 1; }
+command -v git >/dev/null 2>&1 || { printf 'git is required\n' >&2; exit 1; }
+command -v md5sum >/dev/null 2>&1 || { printf 'md5sum is required\n' >&2; exit 1; }
 command -v sha256sum >/dev/null 2>&1 || { printf 'sha256sum is required\n' >&2; exit 1; }
+command -v truncate >/dev/null 2>&1 || { printf 'truncate is required\n' >&2; exit 1; }
+xorriso_version=$(xorriso -version 2>&1 | sed -n '1p')
+
+actual_iso_sha256=$(sha256sum "$base_iso" | awk '{print $1}')
+[ "$actual_iso_sha256" = "$iso_sha256" ] || {
+    printf 'Base ISO checksum mismatch\n' >&2
+    printf 'Expected: %s\n' "$iso_sha256" >&2
+    printf 'Actual:   %s\n' "$actual_iso_sha256" >&2
+    exit 1
+}
+printf 'PASS: official base ISO checksum matches\n'
+
+actual_dtb_sha256=$(sha256sum "$dtb" | awk '{print $1}')
+[ "$actual_dtb_sha256" = "$dtb_sha256" ] || {
+    printf 'DTB checksum mismatch\n' >&2
+    printf 'Expected: %s\n' "$dtb_sha256" >&2
+    printf 'Actual:   %s\n' "$actual_dtb_sha256" >&2
+    exit 1
+}
+printf 'PASS: DTB checksum matches\n'
+
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+builder_root=$(CDPATH='' cd -- "$script_dir/.." && pwd)
+git -C "$builder_root" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    printf 'Builder must run from a Git checkout\n' >&2
+    exit 1
+}
+if [ -n "$(git -C "$builder_root" status --short --untracked-files=normal)" ]; then
+    printf 'Builder checkout has uncommitted files; commit or remove them before building\n' >&2
+    exit 1
+fi
+builder_revision=$(git -C "$builder_root" rev-parse --verify HEAD)
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/sp12-installer.XXXXXX")
-trap 'rm -rf "$work"' EXIT HUP INT TERM
+completed=0
+cleanup() {
+    rm -rf "$work"
+    if [ "$completed" -ne 1 ]; then
+        rm -f "$output" "$checksum_file" "$buildinfo_file"
+    fi
+}
+trap cleanup EXIT HUP INT TERM
 
 grub_cfg=$work/grub.cfg
-support_archive=$work/surface-pro-12-linux.tar.gz
+md5sums_original=$work/md5sum.txt.original
+md5sums=$work/md5sum.txt
+project_archive=$work/sp12-linux.tar.gz
+project_tar=$work/sp12-linux.tar
+buildinfo=$work/sp12-buildinfo.txt
 
 printf 'Extracting GRUB configuration...\n'
 xorriso -osirrox on -indev "$base_iso" -extract /boot/grub/grub.cfg "$grub_cfg"
+xorriso -osirrox on -indev "$base_iso" -extract /md5sum.txt "$md5sums_original"
 
 cp "$grub_cfg" "$work/grub.cfg.original"
 sed -i '/^[[:space:]]*linux[[:space:]]/ {/stubble\.dtb_override=true/! s/$/ stubble.dtb_override=true/}' "$grub_cfg"
@@ -57,8 +125,37 @@ sed -i '/^[[:space:]]*initrd[[:space:]]/a\    devicetree /casper/x1p42100-micros
 grep -q 'stubble.dtb_override=true' "$grub_cfg" || { printf 'Failed to add kernel argument\n' >&2; exit 1; }
 grep -q 'devicetree /casper/x1p42100-microsoft-sp12in.dtb' "$grub_cfg" || { printf 'Failed to add DTB directive\n' >&2; exit 1; }
 
-printf 'Archiving support files...\n'
-tar -C "$support_dir" -czf "$support_archive" .
+printf 'Archiving tracked project files...\n'
+git -C "$builder_root" archive --format=tar --output="$project_tar" \
+    "$builder_revision"
+gzip -n -c "$project_tar" > "$project_archive"
+
+project_sha256=$(sha256sum "$project_archive" | awk '{print $1}')
+
+{
+    printf 'schema=1\n'
+    printf 'created_utc=%s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    printf 'builder_revision=%s\n' "$builder_revision"
+    printf 'xorriso_version=%s\n' "$xorriso_version"
+    printf 'base_iso_name=%s\n' "$(basename -- "$base_iso")"
+    printf 'base_iso_sha256=%s\n' "$actual_iso_sha256"
+    printf 'dtb_name=%s\n' "$(basename -- "$dtb")"
+    printf 'dtb_sha256=%s\n' "$actual_dtb_sha256"
+    printf 'project_archive_sha256=%s\n' "$project_sha256"
+} > "$buildinfo"
+
+awk '$2 != "./boot/grub/grub.cfg" &&
+     $2 != "./casper/x1p42100-microsoft-sp12in.dtb" &&
+     $2 != "./sp12-linux.tar.gz" &&
+     $2 != "./sp12-buildinfo.txt" { print }' \
+    "$md5sums_original" > "$md5sums"
+append_md5() {
+    printf '%s  %s\n' "$(md5sum "$1" | awk '{print $1}')" "$2" >> "$md5sums"
+}
+append_md5 "$grub_cfg" ./boot/grub/grub.cfg
+append_md5 "$dtb" ./casper/x1p42100-microsoft-sp12in.dtb
+append_md5 "$project_archive" ./sp12-linux.tar.gz
+append_md5 "$buildinfo" ./sp12-buildinfo.txt
 
 printf 'Building customized ISO...\n'
 xorriso -indev "$base_iso" \
@@ -66,11 +163,29 @@ xorriso -indev "$base_iso" \
     -boot_image any replay \
     -update "$grub_cfg" /boot/grub/grub.cfg \
     -update "$dtb" /casper/x1p42100-microsoft-sp12in.dtb \
-    -update "$support_archive" /surface-pro-12-linux.tar.gz \
+    -update "$project_archive" /sp12-linux.tar.gz \
+    -update "$buildinfo" /sp12-buildinfo.txt \
+    -update "$md5sums" /md5sum.txt \
+    -padding 0 \
     -commit
 
 [ -s "$output" ] || { printf 'Output ISO was not created\n' >&2; exit 1; }
 
+image_sectors=$(xorriso -indev "$output" -report_system_area plain 2>/dev/null | \
+    awk '$1 == "ISO" && $2 == "image" && $3 == "size/512" { print $5 }')
+printf '%s\n' "$image_sectors" | grep -Eq '^[1-9][0-9]*$' || {
+    printf 'Could not determine the hybrid image sector count\n' >&2
+    exit 1
+}
+truncate -s "$((image_sectors * 512))" "$output"
+
+output_sha256=$(sha256sum "$output" | awk '{print $1}')
+printf '%s  %s\n' "$output_sha256" "$(basename -- "$output")" > "$checksum_file"
+cp "$buildinfo" "$buildinfo_file"
+completed=1
+
 printf '\nBuilt: %s\n' "$output"
-sha256sum "$output"
-printf 'Record this checksum before writing installation media.\n'
+printf 'SHA-256: %s\n' "$output_sha256"
+printf 'Checksum: %s\n' "$checksum_file"
+printf 'Build information: %s\n' "$buildinfo_file"
+printf 'The ISO does not contain the separately supplied third-party support checkout.\n'
