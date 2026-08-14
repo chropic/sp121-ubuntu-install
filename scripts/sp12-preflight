@@ -1,0 +1,81 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+failures=0
+
+pass() { printf 'PASS: %s\n' "$*"; }
+fail() { printf 'FAIL: %s\n' "$*" >&2; failures=$((failures + 1)); }
+note() { printf 'INFO: %s\n' "$*"; }
+
+if [ "$(uname -m)" = "aarch64" ]; then
+    pass "ARM64 architecture detected"
+else
+    fail "expected aarch64, found $(uname -m)"
+fi
+
+model_path=/proc/device-tree/model
+compatible_path=/proc/device-tree/compatible
+
+if [ -r "$model_path" ]; then
+    model=$(tr -d '\000' < "$model_path")
+    case "$model" in
+        *"Surface Pro 12in 1st Edition"*) pass "supported model: $model" ;;
+        *) fail "unsupported device-tree model: $model" ;;
+    esac
+else
+    fail "cannot read $model_path; are you booted on the tablet?"
+fi
+
+if [ -r "$compatible_path" ]; then
+    compatibles=$(tr '\000' '\n' < "$compatible_path")
+    if printf '%s\n' "$compatibles" | grep -qx 'microsoft,surface-pro-12in'; then
+        pass "Microsoft SP12 compatible detected"
+    else
+        fail "missing microsoft,surface-pro-12in compatible"
+    fi
+    if printf '%s\n' "$compatibles" | grep -qx 'qcom,x1p42100'; then
+        pass "Qualcomm X1P42100 compatible detected"
+    else
+        fail "missing qcom,x1p42100 compatible"
+    fi
+else
+    fail "cannot read $compatible_path"
+fi
+
+ufs_found=0
+for proc_name in /sys/class/scsi_host/host*/proc_name; do
+    [ -r "$proc_name" ] || continue
+    if grep -qi 'ufs' "$proc_name"; then
+        ufs_found=1
+        break
+    fi
+done
+
+if [ "$ufs_found" -eq 1 ]; then
+    pass "a UFS storage controller is present"
+else
+    fail "no UFS storage controller detected; do not install"
+fi
+
+if command -v lsblk >/dev/null 2>&1; then
+    note "visible disks (this script does not choose one):"
+    lsblk -e 7 -o NAME,SIZE,TYPE,FSTYPE,LABEL,MOUNTPOINTS,MODEL
+else
+    fail "lsblk is unavailable"
+fi
+
+if command -v mokutil >/dev/null 2>&1; then
+    note "Secure Boot state:"
+    mokutil --sb-state 2>/dev/null || note "mokutil could not read Secure Boot state"
+else
+    note "mokutil is unavailable; verify Secure Boot manually in Surface UEFI"
+fi
+
+if [ "$failures" -ne 0 ]; then
+    printf 'RESULT: FAIL -- %s safety check(s) failed; stop here\n' "$failures" >&2
+    exit 1
+fi
+
+printf 'RESULT: PASS -- supported Surface Pro 12 hardware detected\n'
+printf 'NEXT: manually confirm which listed disk is the internal installation target\n'

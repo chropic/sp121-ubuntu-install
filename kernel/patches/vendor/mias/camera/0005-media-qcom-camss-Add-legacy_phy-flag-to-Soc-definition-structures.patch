@@ -1,0 +1,162 @@
+Flag which SoCs have legacy - builtin PHY code. This will be useful in
+subsequent patches to inform PHY bringup logic if legacy bindings are
+available.
+
+Signed-off-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
+---
+ drivers/media/platform/qcom/camss/camss.c | 17 +++++++++++++++++
+ drivers/media/platform/qcom/camss/camss.h |  1 +
+ 2 files changed, 18 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index c90f7579018a30..d7961045f5d0e4 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -5265,6 +5265,7 @@ static void camss_remove(struct platform_device *pdev)
+ 
+ static const struct camss_resources msm8916_resources = {
+ 	.version = CAMSS_8x16,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x16,
+ 	.csid_res = csid_res_8x16,
+ 	.ispif_res = &ispif_res_8x16,
+@@ -5276,6 +5277,7 @@ static const struct camss_resources msm8916_resources = {
+ 
+ static const struct camss_resources msm8939_resources = {
+ 	.version = CAMSS_8x39,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x39,
+ 	.csid_res = csid_res_8x39,
+ 	.ispif_res = &ispif_res_8x39,
+@@ -5287,6 +5289,7 @@ static const struct camss_resources msm8939_resources = {
+ 
+ static const struct camss_resources msm8953_resources = {
+ 	.version = CAMSS_8x53,
++	.legacy_phy = true,
+ 	.icc_res = icc_res_8x53,
+ 	.icc_path_num = ARRAY_SIZE(icc_res_8x53),
+ 	.csiphy_res = csiphy_res_8x96,
+@@ -5300,6 +5303,7 @@ static const struct camss_resources msm8953_resources = {
+ 
+ static const struct camss_resources msm8996_resources = {
+ 	.version = CAMSS_8x96,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x96,
+ 	.csid_res = csid_res_8x96,
+ 	.ispif_res = &ispif_res_8x96,
+@@ -5311,6 +5315,7 @@ static const struct camss_resources msm8996_resources = {
+ 
+ static const struct camss_resources qcm2290_resources = {
+ 	.version = CAMSS_2290,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_2290,
+ 	.csid_res = csid_res_2290,
+ 	.vfe_res = vfe_res_2290,
+@@ -5324,6 +5329,7 @@ static const struct camss_resources qcm2290_resources = {
+ static const struct camss_resources qcs8300_resources = {
+ 	.version = CAMSS_8300,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8300,
+ 	.csid_res = csid_res_8775p,
+ 	.csid_wrapper_res = &csid_wrapper_res_sm8550,
+@@ -5340,6 +5346,7 @@ static const struct camss_resources qcs8300_resources = {
+ static const struct camss_resources sa8775p_resources = {
+ 	.version = CAMSS_8775P,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8775p,
+ 	.csid_res = csid_res_8775p,
+ 	.csid_wrapper_res = &csid_wrapper_res_sm8550,
+@@ -5355,6 +5362,7 @@ static const struct camss_resources sa8775p_resources = {
+ 
+ static const struct camss_resources sdm660_resources = {
+ 	.version = CAMSS_660,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_660,
+ 	.csid_res = csid_res_660,
+ 	.ispif_res = &ispif_res_660,
+@@ -5366,6 +5374,7 @@ static const struct camss_resources sdm660_resources = {
+ 
+ static const struct camss_resources sdm670_resources = {
+ 	.version = CAMSS_845,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_670,
+ 	.csid_res = csid_res_670,
+ 	.vfe_res = vfe_res_670,
+@@ -5377,6 +5386,7 @@ static const struct camss_resources sdm670_resources = {
+ static const struct camss_resources sdm845_resources = {
+ 	.version = CAMSS_845,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_845,
+ 	.csid_res = csid_res_845,
+ 	.vfe_res = vfe_res_845,
+@@ -5388,6 +5398,7 @@ static const struct camss_resources sdm845_resources = {
+ static const struct camss_resources sm6150_resources = {
+ 	.version = CAMSS_6150,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sm6150,
+ 	.csid_res = csid_res_sm6150,
+ 	.vfe_res = vfe_res_sm6150,
+@@ -5401,6 +5412,7 @@ static const struct camss_resources sm6150_resources = {
+ static const struct camss_resources sm8250_resources = {
+ 	.version = CAMSS_8250,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8250,
+ 	.csid_res = csid_res_8250,
+ 	.vfe_res = vfe_res_8250,
+@@ -5414,6 +5426,7 @@ static const struct camss_resources sm8250_resources = {
+ static const struct camss_resources sc8280xp_resources = {
+ 	.version = CAMSS_8280XP,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sc8280xp,
+ 	.csid_res = csid_res_sc8280xp,
+ 	.ispif_res = NULL,
+@@ -5428,6 +5441,7 @@ static const struct camss_resources sc8280xp_resources = {
+ static const struct camss_resources sc7280_resources = {
+ 	.version = CAMSS_7280,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_7280,
+ 	.csid_res = csid_res_7280,
+ 	.vfe_res = vfe_res_7280,
+@@ -5441,6 +5455,7 @@ static const struct camss_resources sc7280_resources = {
+ static const struct camss_resources sm8550_resources = {
+ 	.version = CAMSS_8550,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8550,
+ 	.csid_res = csid_res_8550,
+ 	.vfe_res = vfe_res_8550,
+@@ -5455,6 +5470,7 @@ static const struct camss_resources sm8550_resources = {
+ static const struct camss_resources sm8650_resources = {
+ 	.version = CAMSS_8650,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sm8650,
+ 	.csid_res = csid_res_sm8650,
+ 	.csid_wrapper_res = &csid_wrapper_res_sm8550,
+@@ -5469,6 +5485,7 @@ static const struct camss_resources sm8650_resources = {
+ static const struct camss_resources x1e80100_resources = {
+ 	.version = CAMSS_X1E80100,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_x1e80100,
+ 	.csid_res = csid_res_x1e80100,
+ 	.vfe_res = vfe_res_x1e80100,
+diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
+index 9ffc777d4bd722..315d4ee87bf226 100644
+--- a/drivers/media/platform/qcom/camss/camss.h
++++ b/drivers/media/platform/qcom/camss/camss.h
+@@ -106,6 +106,7 @@ enum icc_count {
+ struct camss_resources {
+ 	enum camss_version version;
+ 	const char *pd_name;
++	const bool legacy_phy;
+ 	const struct camss_subdev_resources *csiphy_res;
+ 	const struct camss_subdev_resources *csid_res;
+ 	const struct camss_subdev_resources *ispif_res;

@@ -1,0 +1,11 @@
+--- a/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 11:24:40.739199095 +0200
++++ b/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 11:28:09.256099996 +0200
+@@ -1189,6 +1189,8 @@
+ 		vddrfa1p8-supply = <&vreg_pmu_rfa_1p8>;
+ 		vddpcie0p9-supply = <&vreg_pmu_pcie_0p9>;
+ 		vddpcie1p8-supply = <&vreg_pmu_pcie_1p8>;
++
++		disable-rfkill;
+ 	};
+ };
+ 

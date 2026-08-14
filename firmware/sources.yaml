@@ -1,0 +1,96 @@
+schema: 1
+device:
+  model: "Surface Pro 12in 1st Edition"
+  compatible: "microsoft,surface-pro-12in"
+  soc_compatible: "qcom,x1p42100"
+
+sources:
+  - id: harrison-surface-pro-12
+    url: "https://github.com/harrisonvanderbyl/surface-pro-12-inch-linux.git"
+    commit: "ea0f07e66beea95898d96fbeb6daa472f4735af3"
+    tested_commit_date: "2026-08-04T12:35:12+10:00"
+    purpose: "Device firmware layout, DSP/sensor files, and platform research"
+    redistribute_from_this_project: false
+    install_allowlist:
+      - "lib/firmware/qcom"
+      - "usr/share/qcom"
+
+  - id: audioreach-topology
+    url: "https://github.com/linux-msm/audioreach-topology.git"
+    commit: "d7a5e9d80ad18a7a6844eeb32cacbdeea0e7e677"
+    tag: "v1.0.4"
+    tested_commit_date: "2026-06-15T13:27:44Z"
+    purpose: "Build the X1P42100 Surface audio topology"
+    redistribute_from_this_project: false
+    tested_output:
+      path: "/lib/firmware/qcom/x1e80100/X1P42100-Microsoft-Surface-Pro-12in-tplg.bin"
+      sha256: "89b731f3f98fc2b84699bca39a56e390925a44a26d5aea80382cf617e00c08d8"
+
+  - id: qca-ath12k-bdencoder
+    url: "https://github.com/qca/qca-swiss-army-knife.git"
+    commit: "6df4dae3e2f5e4c2903f3cafd40996fc1b3639ce"
+    path: "tools/scripts/ath12k/ath12k-bdencoder"
+    sha256: "fdcc8dc9628d67e500d496a1de22e82e136ddeaec32669ea1b3add93f2980652"
+    licence: "ISC-style; copyright and permission notice retained upstream"
+    purpose: "Extract one tested compatible WCN7850 board entry"
+    redistribute_from_this_project: false
+
+  - id: alsa-ucm-conf
+    url: "https://github.com/alsa-project/alsa-ucm-conf.git"
+    commit: "c68dcb174f432234dd224a3dc5270fa1f4856afd"
+    tag: "v1.2.16.1"
+    path: "ucm2/Qualcomm/x1e80100/Surface12in-HiFi.conf"
+    sha256: "76eec2a1f34b9bea9c36c76a75de24c83d8840f73c57dadf1ed397bb5063edaa"
+    purpose: "Correct Surface playback and capture PCM/device routing"
+    redistribute_from_this_project: false
+
+  - id: libssc
+    url: "https://codeberg.org/DylanVanAssche/libssc.git"
+    commit: "f6dfbfa5f34ef22f3d47ef346c22834e79c60df1"
+    version: "0.4.4"
+    licence: "GPL-3.0-or-later"
+    purpose: "Userspace Qualcomm Sensor Core library"
+    redistribute_from_this_project: true
+
+  - id: harrison-hexagonrpc
+    url: "https://github.com/harrisonvanderbyl/hexagonrpc.git"
+    commit: "78b67e2f00df0455f0c0282183b1b1b8b219447d"
+    version: "0.4.0"
+    licence: "GPL-3.0"
+    purpose: "FastRPC daemon used to reach the sensor DSP"
+    redistribute_from_this_project: true
+
+  - id: harrison-iio-sensor-proxy
+    url: "https://github.com/harrisonvanderbyl/iio-sensor-proxy.git"
+    commit: "fcd5b5cf431bc053375350c57064b8b13dd961b4"
+    version: "3.9"
+    licence: "GPL-3.0-or-later"
+    build_option: "-Dssc-support=enabled"
+    purpose: "Desktop accelerometer, light, and compass integration"
+    redistribute_from_this_project: true
+
+tested_live_files:
+  - path: "/lib/firmware/ath12k/WCN7850/hw2.0/board.bin"
+    sha256: "0ef5f6f3cb124f33c6de52371819ccd7c13763ceb86d476a178fd56e4cdc26a3"
+    note: "Machine-specific extraction result; not distributed here"
+  - path: "/usr/share/alsa/ucm2/Qualcomm/x1e80100/MICROSOFT-Surface-Pro-12in.conf"
+    sha256: "171acda75bba76cc47bd258de7cfabe9474382c76e994e8c8164496b00bb50d1"
+    mode: "0644"
+  - path: "/usr/share/alsa/ucm2/Qualcomm/x1e80100/Surface12in-HiFi.conf"
+    sha256: "76eec2a1f34b9bea9c36c76a75de24c83d8840f73c57dadf1ed397bb5063edaa"
+    mode: "0644"
+  - path: "/usr/local/lib/aarch64-linux-gnu/libssc.so.2"
+    sha256: "89c4e3dbbd4b7e26c76828b16bbdadae047e7746262a22023ac793481f60abb2"
+    version: "0.4.4"
+  - path: "/usr/local/bin/hexagonrpcd"
+    sha256: "115df0ce13784df4d99d9333a3f16cad5dc06449146523a518af654e4995a36f"
+    version: "0.4.0"
+  - path: "/usr/local/libexec/iio-sensor-proxy"
+    sha256: "3fb0fb0f10d62604d310fd6e5bdc6766cfcb42c025f95005bf2e7b20e3a406fd"
+    version: "3.9"
+
+policy:
+  repository_contains_third_party_firmware: false
+  release_contains_third_party_firmware: false
+  custom_iso_contains_third_party_firmware: false
+  user_must_supply_source_checkout: true

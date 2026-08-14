@@ -1,0 +1,65 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: build-fallback-loader --root-uuid UUID --output FILE [--modules-dir DIR]'
+}
+
+root_uuid=
+output=
+modules_dir=/usr/lib/grub/arm64-efi
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --root-uuid) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; root_uuid=$2; shift 2 ;;
+        --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
+        --modules-dir) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; modules_dir=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+printf '%s\n' "$root_uuid" | grep -Eq '^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$' || {
+    printf 'Invalid root UUID: %s\n' "$root_uuid" >&2
+    exit 2
+}
+[ -n "$output" ] || { printf 'Missing --output\n' >&2; exit 2; }
+[ ! -e "$output" ] || { printf 'Refusing to overwrite: %s\n' "$output" >&2; exit 1; }
+[ -d "$modules_dir" ] || { printf 'GRUB modules directory not found: %s\n' "$modules_dir" >&2; exit 1; }
+
+for module in part_gpt fat search search_fs_file linux; do
+    [ -f "$modules_dir/$module.mod" ] || { printf 'Missing GRUB module: %s.mod\n' "$module" >&2; exit 1; }
+done
+command -v grub-mkstandalone >/dev/null 2>&1 || { printf 'grub-mkstandalone is required\n' >&2; exit 1; }
+command -v grub-file >/dev/null 2>&1 || { printf 'grub-file is required\n' >&2; exit 1; }
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/sp12-loader.XXXXXX")
+trap 'rm -rf "$work"' EXIT HUP INT TERM
+config=$work/grub.cfg
+
+{
+    printf '%s\n' 'insmod part_gpt'
+    printf '%s\n' 'insmod fat'
+    printf '%s\n' 'insmod search_fs_file'
+    printf '%s\n' 'search --no-floppy --file --set=root /sp12/SP12BOOT'
+    printf 'linux /sp12/vmlinuz root=UUID=%s ro clk_ignore_unused pd_ignore_unused cma=128M efi=noruntime quiet splash console=tty0 stubble.dtb_override=true\n' "$root_uuid"
+    printf '%s\n' 'initrd /sp12/initrd.img'
+    printf '%s\n' 'devicetree /sp12/dtb'
+    printf '%s\n' 'boot'
+} > "$config"
+
+grub-mkstandalone --format=arm64-efi \
+    --directory="$modules_dir" \
+    --modules='part_gpt fat search search_fs_file linux' \
+    --output="$output" \
+    "boot/grub/grub.cfg=$config"
+
+if ! grub-file --is-arm64-efi "$output"; then
+    rm -f "$output"
+    printf 'Generated file is not a valid ARM64 EFI program\n' >&2
+    exit 1
+fi
+
+printf 'Built ARM64 fallback loader: %s\n' "$output"
+sha256sum "$output"

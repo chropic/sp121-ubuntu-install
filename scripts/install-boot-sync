@@ -1,0 +1,81 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: install-boot-sync --kernel-release RELEASE --dtb /boot/FILE [--apply]'
+}
+
+kver=
+dtb=
+apply=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --kernel-release) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kver=$2; shift 2 ;;
+        --dtb) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb=$2; shift 2 ;;
+        --apply) apply=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ -n "$kver" ] || { printf 'Missing --kernel-release\n' >&2; exit 2; }
+case "$kver" in
+    *[!A-Za-z0-9._+~-]*) printf 'Invalid kernel release: %s\n' "$kver" >&2; exit 2 ;;
+esac
+case "$dtb" in
+    /boot/*) ;;
+    *) printf -- '--dtb must name an existing absolute path below /boot\n' >&2; exit 2 ;;
+esac
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+kernel=/boot/vmlinuz-$kver
+initrd=/boot/initrd.img-$kver
+
+"$repo_root/scripts/sp12-preflight"
+for source in "$kernel" "$initrd" "$dtb"; do
+    [ -f "$source" ] || { printf 'Missing source: %s\n' "$source" >&2; exit 1; }
+done
+
+printf '\nRequested boot selection\n'
+printf '  kernel release: %s\n' "$kver"
+printf '  kernel:        %s\n' "$kernel"
+printf '  initramfs:     %s\n' "$initrd"
+printf '  DTB:           %s\n' "$dtb"
+for source in "$kernel" "$initrd" "$dtb"; do
+    if [ -r "$source" ]; then
+        sha256sum "$source"
+    else
+        printf '  checksum unavailable without root: %s\n' "$source"
+    fi
+done
+
+if [ "$apply" -ne 1 ]; then
+    printf '\nDRY RUN: no files changed. Re-run as root with --apply after reviewing the paths.\n'
+    exit 0
+fi
+
+[ "$(id -u)" -eq 0 ] || { printf -- '--apply requires root\n' >&2; exit 1; }
+
+install -d -m 0755 /etc/sp12-linux /usr/local/sbin \
+    /etc/kernel/postinst.d /etc/initramfs/post-update.d
+install -m 0755 "$repo_root/system/usr-local-sbin/sp12-sync-boot" \
+    /usr/local/sbin/sp12-sync-boot
+install -m 0755 "$repo_root/system/etc/kernel/postinst.d/zzzz-sp12-sync" \
+    /etc/kernel/postinst.d/zzzz-sp12-sync
+install -m 0755 "$repo_root/system/etc/initramfs/post-update.d/zzzz-sp12-sync" \
+    /etc/initramfs/post-update.d/zzzz-sp12-sync
+
+config_tmp=$(mktemp /etc/sp12-linux/boot.conf.XXXXXX)
+trap 'rm -f "$config_tmp"' EXIT HUP INT TERM
+{
+    printf 'KVER=%s\n' "$kver"
+    printf 'DTB=%s\n' "$dtb"
+} > "$config_tmp"
+chmod 0644 "$config_tmp"
+mv -f "$config_tmp" /etc/sp12-linux/boot.conf
+trap - EXIT HUP INT TERM
+
+/usr/local/sbin/sp12-sync-boot
+printf 'Installed boot synchronization helper and hooks.\n'

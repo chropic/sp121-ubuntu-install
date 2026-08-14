@@ -1,0 +1,52 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+config=/etc/sp12-linux/boot.conf
+esp=/boot/efi
+dest=$esp/sp12
+
+[ "$(id -u)" -eq 0 ] || { printf 'sp12-sync-boot: must run as root\n' >&2; exit 1; }
+[ -f "$config" ] || { printf 'sp12-sync-boot: missing %s\n' "$config" >&2; exit 1; }
+
+kver=$(sed -n 's/^KVER=//p' "$config" | tail -n 1)
+dtb=$(sed -n 's/^DTB=//p' "$config" | tail -n 1)
+
+case "$kver" in
+    ''|*[!A-Za-z0-9._+~-]*)
+        printf 'sp12-sync-boot: invalid KVER in %s\n' "$config" >&2
+        exit 1
+        ;;
+esac
+case "$dtb" in
+    /boot/*) ;;
+    *) printf 'sp12-sync-boot: DTB must be an absolute path below /boot\n' >&2; exit 1 ;;
+esac
+
+kernel=/boot/vmlinuz-$kver
+initrd=/boot/initrd.img-$kver
+
+for source in "$kernel" "$initrd" "$dtb"; do
+    [ -f "$source" ] || { printf 'sp12-sync-boot: missing required source: %s\n' "$source" >&2; exit 1; }
+done
+
+mountpoint -q "$esp" || mount "$esp"
+mount -o remount,rw "$esp"
+trap 'sync; mount -o remount,ro "$esp" || true' EXIT HUP INT TERM
+
+mkdir -p "$dest"
+cp -f "$kernel" "$dest/vmlinuz.new"
+cp -f "$initrd" "$dest/initrd.img.new"
+cp -f "$dtb" "$dest/dtb.new"
+
+cmp -s "$kernel" "$dest/vmlinuz.new"
+cmp -s "$initrd" "$dest/initrd.img.new"
+cmp -s "$dtb" "$dest/dtb.new"
+
+mv -f "$dest/vmlinuz.new" "$dest/vmlinuz"
+mv -f "$dest/initrd.img.new" "$dest/initrd.img"
+mv -f "$dest/dtb.new" "$dest/dtb"
+touch "$dest/SP12BOOT"
+sync
+
+printf 'sp12-sync-boot: installed %s with %s\n' "$kver" "$dtb"

@@ -1,0 +1,196 @@
+The Purwa camera subsystem is a cut-down variant of the Hamoa CAMSS.
+Compared to Hamoa, Purwa provides only two CSIPHY instances and does
+not include the VFE1.
+
+Signed-off-by: Wenmeng Liu <wenmeng.liu@oss.qualcomm.com>
+---
+ .../qcom/camss/camss-csiphy-3ph-1-0.c         |   2 +
+ drivers/media/platform/qcom/camss/camss-vfe.c |   2 +
+ drivers/media/platform/qcom/camss/camss.c     | 109 ++++++++++++++++++
+ drivers/media/platform/qcom/camss/camss.h     |   1 +
+ 4 files changed, 114 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+index 41548327455259..d37f71de0f42c3 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+@@ -1020,6 +1020,7 @@ static bool csiphy_is_gen2(u32 version)
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		ret = true;
+ 		break;
+ 	}
+@@ -1115,6 +1116,7 @@ static int csiphy_init(struct csiphy_device *csiphy)
+ 		regs->lane_array_size = ARRAY_SIZE(lane_regs_sc8280xp);
+ 		break;
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		regs->lane_regs = &lane_regs_x1e80100[0];
+ 		regs->lane_array_size = ARRAY_SIZE(lane_regs_x1e80100);
+ 		regs->offset = 0x1000;
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
+index 5baf0e3d4bc461..b48dfad5a8a73f 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.c
++++ b/drivers/media/platform/qcom/camss/camss-vfe.c
+@@ -353,6 +353,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		switch (sink_code) {
+ 		case MEDIA_BUS_FMT_YUYV8_1X16:
+ 		{
+@@ -2012,6 +2013,7 @@ static int vfe_bpl_align(struct vfe_device *vfe)
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		ret = 16;
+ 		break;
+ 	default:
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index c84ace01116999..2dfa2786d717f9 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -4254,6 +4254,98 @@ static const struct resources_wrapper csid_wrapper_res_x1e80100 = {
+ 	.reg = "csid_wrapper",
+ };
+ 
++static const struct camss_subdev_resources csiphy_res_x1p42100[] = {
++	/* CSIPHY0 */
++	{
++		.csiphy = {
++			.id = 0,
++			.hw_ops = &csiphy_ops_3ph_1_0,
++			.formats = &csiphy_formats_sdm845
++		},
++	},
++	/* CSIPHY4 */
++	{
++		.csiphy = {
++			.id = 4,
++			.hw_ops = &csiphy_ops_3ph_1_0,
++			.formats = &csiphy_formats_sdm845
++		},
++	},
++};
++
++static const struct camss_subdev_resources vfe_res_x1p42100[] = {
++	/* IFE0 */
++	{
++		.regulators = {},
++		.clock = {"camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			  "cpas_fast_ahb", "cpas_vfe0", "vfe0_fast_ahb",
++			  "vfe0" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 345600000, 432000000, 594000000, 675000000,
++				  727000000 }, },
++		.reg = { "vfe0" },
++		.interrupt = { "vfe0" },
++		.vfe = {
++			.line_num = 4,
++			.pd_name = "ife0",
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++	/* IFE_LITE_0 */
++	{
++		.regulators = {},
++		.clock = { "camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			   "vfe_lite_ahb", "cpas_vfe_lite", "vfe_lite",
++			   "vfe_lite_csid" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 266666667, 400000000, 480000000 },
++				{ 266666667, 400000000, 480000000 }, },
++		.reg = { "vfe_lite0" },
++		.interrupt = { "vfe_lite0" },
++		.vfe = {
++			.is_lite = true,
++			.line_num = 4,
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++	/* IFE_LITE_1 */
++	{
++		.regulators = {},
++		.clock = { "camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			   "vfe_lite_ahb", "cpas_vfe_lite", "vfe_lite",
++			   "vfe_lite_csid" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 266666667, 400000000, 480000000 },
++				{ 266666667, 400000000, 480000000 }, },
++		.reg = { "vfe_lite1" },
++		.interrupt = { "vfe_lite1" },
++		.vfe = {
++			.is_lite = true,
++			.line_num = 4,
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++};
++
+ /*
+  * camss_add_clock_margin - Add margin to clock frequency rate
+  * @rate: Clock frequency rate
+@@ -5504,6 +5596,20 @@ static const struct camss_resources x1e80100_resources = {
+ 	.vfe_num = ARRAY_SIZE(vfe_res_x1e80100),
+ };
+ 
++static const struct camss_resources x1p42100_resources = {
++	.version = CAMSS_X1P42100,
++	.pd_name = "top",
++	.csiphy_res = csiphy_res_x1p42100,
++	.csid_res = csid_res_x1e80100,
++	.vfe_res = vfe_res_x1p42100,
++	.csid_wrapper_res = &csid_wrapper_res_x1e80100,
++	.icc_res = icc_res_x1e80100,
++	.icc_path_num = ARRAY_SIZE(icc_res_x1e80100),
++	.csiphy_num = ARRAY_SIZE(csiphy_res_x1p42100),
++	.csid_num = ARRAY_SIZE(csid_res_x1e80100),
++	.vfe_num = ARRAY_SIZE(vfe_res_x1p42100),
++};
++
+ static const struct of_device_id camss_dt_match[] = {
+ 	{ .compatible = "qcom,msm8916-camss", .data = &msm8916_resources },
+ 	{ .compatible = "qcom,msm8939-camss", .data = &msm8939_resources },
+@@ -5522,6 +5630,7 @@ static const struct of_device_id camss_dt_match[] = {
+ 	{ .compatible = "qcom,sm8550-camss", .data = &sm8550_resources },
+ 	{ .compatible = "qcom,sm8650-camss", .data = &sm8650_resources },
+ 	{ .compatible = "qcom,x1e80100-camss", .data = &x1e80100_resources },
++	{ .compatible = "qcom,x1p42100-camss", .data = &x1p42100_resources },
+ 	{ }
+ };
+ 
+diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
+index 315d4ee87bf226..541b5c8bf19263 100644
+--- a/drivers/media/platform/qcom/camss/camss.h
++++ b/drivers/media/platform/qcom/camss/camss.h
+@@ -96,6 +96,7 @@ enum camss_version {
+ 	CAMSS_8650,
+ 	CAMSS_8775P,
+ 	CAMSS_X1E80100,
++	CAMSS_X1P42100,
+ };
+ 
+ enum icc_count {

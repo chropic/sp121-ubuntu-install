@@ -1,0 +1,102 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+expected_commit=ea0f07e66beea95898d96fbeb6daa472f4735af3
+source_dir=
+target_root=/
+apply=0
+acknowledged=0
+
+usage() {
+    printf 'Usage: %s --source DIR [--target-root DIR] [--apply --acknowledge-third-party-files]\n' "$0"
+    printf 'Default mode is read-only. Only two committed Qualcomm subtrees are allowed.\n'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            source_dir=$2
+            shift 2
+            ;;
+        --target-root)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            target_root=$2
+            shift 2
+            ;;
+        --apply)
+            apply=1
+            shift
+            ;;
+        --acknowledge-third-party-files)
+            acknowledged=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -n "$source_dir" ] || { usage >&2; exit 2; }
+[ -d "$target_root" ] || {
+    printf 'FAIL: target root is not a directory: %s\n' "$target_root" >&2
+    exit 1
+}
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+"$script_dir/inspect-support-source" --source "$source_dir"
+
+git_safe="safe.directory=$source_dir"
+file_count=$(git -c "$git_safe" -C "$source_dir" ls-tree -r --name-only \
+    "$expected_commit" -- lib/firmware/qcom usr/share/qcom | wc -l | tr -d ' ')
+
+printf 'PLAN: install %s files from pinned commit %s\n' "$file_count" "$expected_commit"
+printf 'PLAN: %s/lib/firmware/qcom\n' "${target_root%/}"
+printf 'PLAN: %s/usr/share/qcom\n' "${target_root%/}"
+printf 'PLAN: no Wi-Fi board.bin, audio topology, UCM, service, or executable is installed\n'
+
+if [ "$apply" -eq 0 ]; then
+    printf 'RESULT: DRY RUN -- no files changed\n'
+    printf 'NEXT: review firmware/README.md and applicable third-party terms\n'
+    exit 0
+fi
+
+[ "$acknowledged" -eq 1 ] || {
+    printf 'FAIL: --apply also requires --acknowledge-third-party-files\n' >&2
+    exit 1
+}
+[ "$(id -u)" -eq 0 ] || {
+    printf 'FAIL: --apply must run as root\n' >&2
+    exit 1
+}
+
+if [ "$target_root" = / ]; then
+    "$script_dir/sp12-preflight"
+fi
+
+stage_dir=$(mktemp -d /tmp/sp12-platform-files.XXXXXX)
+trap 'rm -rf "$stage_dir"' EXIT HUP INT TERM
+archive=$stage_dir/platform-files.tar
+git -c "$git_safe" -C "$source_dir" archive --format=tar --output="$archive" \
+    "$expected_commit" -- lib/firmware/qcom usr/share/qcom
+mkdir -p "$stage_dir/root"
+tar -xf "$archive" -C "$stage_dir/root"
+
+find "$stage_dir/root" -type f | while IFS= read -r file; do
+    relative=${file#"$stage_dir/root/"}
+    destination=${target_root%/}/$relative
+    mode=0644
+    [ -x "$file" ] && mode=0755
+    install -D -o root -g root -m "$mode" "$file" "$destination"
+done
+
+printf 'RESULT: installed %s pinned platform files\n' "$file_count"
+printf 'NEXT: install Wi-Fi, audio, and sensor components separately; then rebuild the exact initramfs\n'

@@ -1,0 +1,44 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: build-packages --source DIR [--jobs NUMBER]'
+}
+
+source_dir=
+jobs=$(nproc)
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; source_dir=$2; shift 2 ;;
+        --jobs) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; jobs=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ -n "$source_dir" ] || { printf 'Missing --source\n' >&2; exit 2; }
+source_dir=$(readlink -f "$source_dir")
+case "$jobs" in
+    ''|*[!0-9]*) printf 'Invalid job count: %s\n' "$jobs" >&2; exit 2 ;;
+esac
+[ "$jobs" -gt 0 ] || { printf 'Job count must be positive\n' >&2; exit 2; }
+[ -f "$source_dir/.config" ] || { printf 'Missing prepared .config; run kernel/prepare-tree first\n' >&2; exit 1; }
+[ -f "$source_dir/drivers/rtc/rtc-surface.c" ] || { printf 'Release snapshot is not applied\n' >&2; exit 1; }
+[ -f "$source_dir/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts" ] || {
+    printf 'SP12 DTS is missing\n' >&2
+    exit 1
+}
+
+for command in make dpkg-buildpackage pahole; do
+    command -v "$command" >/dev/null 2>&1 || { printf 'Missing build command: %s\n' "$command" >&2; exit 1; }
+done
+
+printf 'Building kernel with %s parallel jobs...\n' "$jobs"
+make -C "$source_dir" -j"$jobs" LOCALVERSION=-sp12-extra-camera
+
+printf 'Packaging serially to avoid the observed DTB installation race...\n'
+make -C "$source_dir" -j1 bindeb-pkg LOCALVERSION=-sp12-extra-camera
+
+printf 'Build complete. Packages were created beside the kernel source directory.\n'
+printf 'Do not install by wildcard; inspect exact package versions and contents first.\n'

@@ -1,0 +1,10 @@
+[Unit]
+Description=Surface Pro 12 measured power tuning
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/sp12-power-tune
+
+[Install]
+WantedBy=multi-user.target

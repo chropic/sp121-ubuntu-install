@@ -1,0 +1,76 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    cat <<'EOF'
+Usage: build-installer --iso FILE --dtb FILE --support-dir DIR --output FILE
+
+Builds a Surface Pro 12 installer ISO from locally supplied inputs.
+The official base ISO must be checksum-verified before running this tool.
+EOF
+}
+
+base_iso=
+dtb=
+support_dir=
+output=
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --iso) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; base_iso=$2; shift 2 ;;
+        --dtb) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb=$2; shift 2 ;;
+        --support-dir) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; support_dir=$2; shift 2 ;;
+        --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ -n "$base_iso" ] || { printf 'Missing --iso\n' >&2; exit 2; }
+[ -n "$dtb" ] || { printf 'Missing --dtb\n' >&2; exit 2; }
+[ -n "$support_dir" ] || { printf 'Missing --support-dir\n' >&2; exit 2; }
+[ -n "$output" ] || { printf 'Missing --output\n' >&2; exit 2; }
+
+[ -f "$base_iso" ] || { printf 'Base ISO not found: %s\n' "$base_iso" >&2; exit 1; }
+[ -f "$dtb" ] || { printf 'DTB not found: %s\n' "$dtb" >&2; exit 1; }
+[ -d "$support_dir" ] || { printf 'Support directory not found: %s\n' "$support_dir" >&2; exit 1; }
+[ ! -e "$output" ] || { printf 'Refusing to overwrite: %s\n' "$output" >&2; exit 1; }
+
+command -v xorriso >/dev/null 2>&1 || { printf 'xorriso is required\n' >&2; exit 1; }
+command -v tar >/dev/null 2>&1 || { printf 'tar is required\n' >&2; exit 1; }
+command -v sha256sum >/dev/null 2>&1 || { printf 'sha256sum is required\n' >&2; exit 1; }
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/sp12-installer.XXXXXX")
+trap 'rm -rf "$work"' EXIT HUP INT TERM
+
+grub_cfg=$work/grub.cfg
+support_archive=$work/surface-pro-12-linux.tar.gz
+
+printf 'Extracting GRUB configuration...\n'
+xorriso -osirrox on -indev "$base_iso" -extract /boot/grub/grub.cfg "$grub_cfg"
+
+cp "$grub_cfg" "$work/grub.cfg.original"
+sed -i '/^[[:space:]]*linux[[:space:]]/ {/stubble\.dtb_override=true/! s/$/ stubble.dtb_override=true/}' "$grub_cfg"
+sed -i '/^[[:space:]]*initrd[[:space:]]/a\    devicetree /casper/x1p42100-microsoft-sp12in.dtb' "$grub_cfg"
+
+grep -q 'stubble.dtb_override=true' "$grub_cfg" || { printf 'Failed to add kernel argument\n' >&2; exit 1; }
+grep -q 'devicetree /casper/x1p42100-microsoft-sp12in.dtb' "$grub_cfg" || { printf 'Failed to add DTB directive\n' >&2; exit 1; }
+
+printf 'Archiving support files...\n'
+tar -C "$support_dir" -czf "$support_archive" .
+
+printf 'Building customized ISO...\n'
+xorriso -indev "$base_iso" \
+    -outdev "$output" \
+    -boot_image any replay \
+    -update "$grub_cfg" /boot/grub/grub.cfg \
+    -update "$dtb" /casper/x1p42100-microsoft-sp12in.dtb \
+    -update "$support_archive" /surface-pro-12-linux.tar.gz \
+    -commit
+
+[ -s "$output" ] || { printf 'Output ISO was not created\n' >&2; exit 1; }
+
+printf '\nBuilt: %s\n' "$output"
+sha256sum "$output"
+printf 'Record this checksum before writing installation media.\n'

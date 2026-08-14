@@ -1,0 +1,78 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+required_files='README.md
+QUICKSTART.md
+CREDITS.md
+SOURCES.md
+SUPPORT.md
+SECURITY.md
+LICENSE.md
+docs/00-before-you-start.md
+docs/04-hardware-verification.md
+docs/05-power-and-battery.md
+docs/07-recovery.md
+docs/troubleshooting/README.md
+docs/development/fallback-loader.md
+docs/development/target-fallback-install.md
+docs/development/sensor-stack.md
+docs/reference/original-tested-guide.md
+kernel/patches.yaml
+release/reference/BUILDINFO.json
+firmware/README.md
+firmware/sources.yaml'
+
+printf '%s\n' "$required_files" | while IFS= read -r path; do
+    [ -f "$path" ] || { printf 'Missing required file: %s\n' "$path" >&2; exit 1; }
+done
+
+for script in scripts/*; do
+    [ -f "$script" ] || continue
+    sh -n "$script"
+done
+
+for script in system/usr-local-sbin/* system/etc/kernel/postinst.d/* \
+    system/etc/initramfs/post-update.d/*; do
+    [ -f "$script" ] || continue
+    sh -n "$script"
+done
+
+for script in kernel/prepare-tree kernel/build-packages; do
+    sh -n "$script"
+done
+
+if find . -path ./.git -prune -o -type f \
+    \( -name '*.iso' -o -name '*.img' -o -name '*.deb' -o -name '*.dtb' \) \
+    -print | grep -q .; then
+    printf 'Binary release artifact found in Git history candidate\n' >&2
+    exit 1
+fi
+
+grep -q 'active: false' kernel/patches.yaml
+grep -q 'touchscreen GPIOs 51/52' SOURCES.md
+grep -q 'known incorrect' SOURCES.md
+grep -q 'ea0f07e66beea95898d96fbeb6daa472f4735af3' firmware/sources.yaml
+grep -q 'repository_contains_third_party_firmware: false' firmware/sources.yaml
+grep -q '6df4dae3e2f5e4c2903f3cafd40996fc1b3639ce' firmware/sources.yaml
+grep -q 'd7a5e9d80ad18a7a6844eeb32cacbdeea0e7e677' firmware/sources.yaml
+grep -q 'c68dcb174f432234dd224a3dc5270fa1f4856afd' firmware/sources.yaml
+grep -q 'f6dfbfa5f34ef22f3d47ef346c22834e79c60df1' firmware/sources.yaml
+grep -q '78b67e2f00df0455f0c0282183b1b1b8b219447d' firmware/sources.yaml
+grep -q 'fcd5b5cf431bc053375350c57064b8b13dd961b4' firmware/sources.yaml
+[ "$(find kernel/patches/vendor/mias -type f -name '*.patch' | wc -l)" -eq 37 ] || {
+    printf 'Expected 37 original Mias patch files\n' >&2
+    exit 1
+}
+printf '%s  %s\n' \
+    f1cf894800c08e5d7c920c6a125f7296304bc7ef71858ccc94b0326ee2f0b87a \
+    kernel/config/config-7.2.0-rc7-sp12-extra-camera | sha256sum -c - >/dev/null
+printf '%s  %s\n' \
+    02450df6b1996572e1d76571b10cb279d4f8b7b2a0c5d777a6243623ecc3744d \
+    kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch | sha256sum -c - >/dev/null
+
+if command -v python3 >/dev/null 2>&1; then
+    python3 -m json.tool release/reference/BUILDINFO.json >/dev/null
+fi
+
+printf 'Repository checks passed.\n'

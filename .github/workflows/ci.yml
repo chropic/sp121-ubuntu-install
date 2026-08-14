@@ -1,0 +1,29 @@
+name: repository checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install shell linter
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+
+      - name: Validate repository
+        run: scripts/check-repository
+
+      - name: Lint shell scripts
+        run: shellcheck scripts/*
+
+      - name: Reject whitespace errors
+        run: >-
+          git show --check --format= --
+          . ':(exclude)kernel/patches/**'

@@ -1,0 +1,29 @@
+Use devm_of_platform_populate() to populate subs in the tree.
+
+Signed-off-by: Bryan O'Donoghue <bryan.odonoghue@linaro.org>
+Reviewed-by: Loic Poulain <loic.poulain@oss.qualcomm.com>
+---
+ drivers/media/platform/qcom/camss/camss.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index ceee37f0c910fe..c90f7579018a30 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -16,6 +16,7 @@
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+ #include <linux/of_graph.h>
++#include <linux/of_platform.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/pm_domain.h>
+ #include <linux/slab.h>
+@@ -5115,6 +5116,8 @@ static int camss_probe(struct platform_device *pdev)
+ 	if (!camss)
+ 		return -ENOMEM;
+ 
++	devm_of_platform_populate(dev);
++
+ 	camss->res = of_device_get_match_data(dev);
+ 
+ 	atomic_set(&camss->ref_count, 0);

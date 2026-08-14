@@ -1,0 +1,53 @@
+Add a SAM client device node group and registry entry for the
+Microsoft Surface Pro, 12-inch with Snapdragon.
+
+This set enables the use of the following devices.
+1: cover keyboard
+2: cover touchpad
+3: pen stash events.
+
+The battery info and charger info devices have been
+purposefully omitted as they are also reported by
+other drivers and cause conflicts.
+
+Signed-off-by: Harrison Vanderbyl <harrison.vanderbyl@gmail.com>
+Link: https://patch.msgid.link/ab458aadea651396d9ea7629419a32dc7510c593.1778822464.git.harrison.vanderbyl@gmail.com
+Reviewed-by: Ilpo Järvinen <ilpo.jarvinen@linux.intel.com>
+Signed-off-by: Ilpo Järvinen <ilpo.jarvinen@linux.intel.com>
+---
+ drivers/platform/surface/surface_aggregator_registry.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/platform/surface/surface_aggregator_registry.c b/drivers/platform/surface/surface_aggregator_registry.c
+index f0881edfb6161..d37a7e4c6b02a 100644
+--- a/drivers/platform/surface/surface_aggregator_registry.c
++++ b/drivers/platform/surface/surface_aggregator_registry.c
+@@ -420,6 +420,19 @@ static const struct software_node *ssam_node_group_sp11[] = {
+ 	NULL,
+ };
+ 
++/* Devices for Surface Pro 12" first edition (ARM/QCOM) */
++static const struct software_node *ssam_node_group_sp12in[] = {
++	&ssam_node_root,
++	&ssam_node_hub_kip,
++	&ssam_node_tmp_sensors,
++	&ssam_node_hid_kip_keyboard,
++	&ssam_node_hid_sam_penstash,
++	&ssam_node_hid_kip_touchpad,
++	&ssam_node_hid_kip_fwupd,
++	&ssam_node_pos_tablet_switch,
++	NULL,
++};
++
+ /* -- SSAM platform/meta-hub driver. ---------------------------------------- */
+ 
+ static const struct acpi_device_id ssam_platform_hub_acpi_match[] = {
+@@ -498,6 +511,8 @@ static const struct of_device_id ssam_platform_hub_of_match[] __maybe_unused = {
+ 	{ .compatible = "microsoft,arcata", (void *)ssam_node_group_sp9_5g },
+ 	/* Surface Pro 11 (ARM/QCOM) */
+ 	{ .compatible = "microsoft,denali", (void *)ssam_node_group_sp11 },
++	/* Surface Pro 12in First Edition (ARM/QCOM) */
++	{ .compatible = "microsoft,surface-pro-12in", (void *)ssam_node_group_sp12in },
+ 	/* Surface Laptop 7 */
+ 	{ .compatible = "microsoft,romulus13", (void *)ssam_node_group_sl7 },
+ 	{ .compatible = "microsoft,romulus15", (void *)ssam_node_group_sl7 },

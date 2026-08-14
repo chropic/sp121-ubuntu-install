@@ -1,0 +1,11 @@
+*.deb
+*.iso
+*.img
+*.log
+*.dtb
+*.cpio*
+*.tar.*
+SHA256SUMS
+build/
+dist/
+.cache/

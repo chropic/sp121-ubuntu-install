@@ -1,0 +1,5951 @@
+# Working-tree snapshot for the tested 7.2.0-rc7-sp12-extra-camera build.
+# Base: Linux v7.2-rc7, commit db2ddb87143519e20a95aa36c60b36107b736a58
+# Generated from the preserved tested worktree on 2026-08-14.
+# Original authorship/provenance is retained in ../vendor/mias/.
+# Generated artifacts (*.orig and err) are intentionally excluded.
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 8014b9f8253edf15231df215d1b14063a54a55ec..8ba4aa9ea7b346c492646ab915860c78430e6d47 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -22298,6 +22298,16 @@ S:	Maintained
+ F:	Documentation/devicetree/bindings/media/qcom,*-iris.yaml
+ F:	drivers/media/platform/qcom/iris/
+ 
++QUALCOMM MIPI CSI2 PHY DRIVER
++M:	Bryan O'Donoghue <bod@kernel.org>
++L:	linux-phy@lists.infradead.org
++L:	linux-media@vger.kernel.org
++L:	linux-arm-msm@vger.kernel.org
++S:	Maintained
++F:	Documentation/devicetree/bindings/phy/qcom,*-csi2-phy.yaml
++F:	drivers/phy/qualcomm/phy-qcom-mipi-csi2*.c
++F:	drivers/phy/qualcomm/phy-qcom-mipi-csi2*.h
++
+ QUALCOMM NAND CONTROLLER DRIVER
+ M:	Manivannan Sadhasivam <mani@kernel.org>
+ L:	linux-mtd@lists.infradead.org
+diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
+index 6f33c4e2f09c3990e90e1b25a6f7d618891948c5..ada494ecbc641328cb4a2f8ca3c8250c9827078b 100644
+--- a/arch/arm64/boot/dts/qcom/Makefile
++++ b/arch/arm64/boot/dts/qcom/Makefile
+@@ -457,3 +457,5 @@ x1p42100-lenovo-thinkbook-16-el2-dtbs	:= x1p42100-lenovo-thinkbook-16.dtb x1-el2
+ dtb-$(CONFIG_ARCH_QCOM)	+= x1p42100-lenovo-thinkbook-16.dtb x1p42100-lenovo-thinkbook-16-el2.dtb
+ x1p64100-microsoft-denali-el2-dtbs	:= x1p64100-microsoft-denali.dtb x1-el2.dtbo
+ dtb-$(CONFIG_ARCH_QCOM)	+= x1p64100-microsoft-denali.dtb x1p64100-microsoft-denali-el2.dtb
++x1p42100-microsoft-sp12in-el2-dtbs	:= x1p42100-microsoft-sp12in.dtb x1-el2.dtbo
++dtb-$(CONFIG_ARCH_QCOM)	+= x1p42100-microsoft-sp12in.dtb x1p42100-microsoft-sp12in-el2.dtb
+diff --git a/arch/arm64/boot/dts/qcom/hamoa.dtsi b/arch/arm64/boot/dts/qcom/hamoa.dtsi
+index 4ba751a65142baefc6f034d0a7337791ed4d5998..19990964c0c4603c041757111893f05821339059 100644
+--- a/arch/arm64/boot/dts/qcom/hamoa.dtsi
++++ b/arch/arm64/boot/dts/qcom/hamoa.dtsi
+@@ -6,6 +6,7 @@
+ #include <dt-bindings/clock/qcom,rpmh.h>
+ #include <dt-bindings/clock/qcom,sc8280xp-lpasscc.h>
+ #include <dt-bindings/clock/qcom,sm8450-videocc.h>
++#include <dt-bindings/clock/qcom,x1e80100-camcc.h>
+ #include <dt-bindings/clock/qcom,x1e80100-dispcc.h>
+ #include <dt-bindings/clock/qcom,x1e80100-gcc.h>
+ #include <dt-bindings/clock/qcom,x1e80100-gpucc.h>
+@@ -15,6 +16,7 @@
+ #include <dt-bindings/interconnect/qcom,x1e80100-rpmh.h>
+ #include <dt-bindings/interrupt-controller/arm-gic.h>
+ #include <dt-bindings/mailbox/qcom-ipcc.h>
++#include <dt-bindings/phy/phy.h>
+ #include <dt-bindings/phy/phy-qcom-qmp.h>
+ #include <dt-bindings/power/qcom,rpmhpd.h>
+ #include <dt-bindings/power/qcom-rpmpd.h>
+@@ -5550,6 +5552,462 @@ videocc: clock-controller@aaf0000 {
+ 			#power-domain-cells = <1>;
+ 		};
+ 
++		cci0: cci@ac15000 {
++			compatible = "qcom,x1e80100-cci", "qcom,msm8996-cci";
++			reg = <0 0x0ac15000 0 0x1000>;
++
++			interrupts = <GIC_SPI 460 IRQ_TYPE_EDGE_RISING>;
++
++			clocks = <&camcc CAM_CC_CAMNOC_AXI_RT_CLK>,
++				 <&camcc CAM_CC_CPAS_AHB_CLK>,
++				 <&camcc CAM_CC_CCI_0_CLK>;
++			clock-names = "camnoc_axi",
++				      "cpas_ahb",
++				      "cci";
++
++			power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
++
++			pinctrl-0 = <&cci0_default>;
++			pinctrl-1 = <&cci0_sleep>;
++			pinctrl-names = "default", "sleep";
++
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			status = "disabled";
++
++			cci0_i2c0: i2c-bus@0 {
++				reg = <0>;
++				clock-frequency = <1000000>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++			};
++
++			cci0_i2c1: i2c-bus@1 {
++				reg = <1>;
++				clock-frequency = <1000000>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++			};
++		};
++
++		cci1: cci@ac16000 {
++			compatible = "qcom,x1e80100-cci", "qcom,msm8996-cci";
++			reg = <0 0x0ac16000 0 0x1000>;
++
++			interrupts = <GIC_SPI 271 IRQ_TYPE_EDGE_RISING>;
++
++			clocks = <&camcc CAM_CC_CAMNOC_AXI_RT_CLK>,
++				 <&camcc CAM_CC_CPAS_AHB_CLK>,
++				 <&camcc CAM_CC_CCI_1_CLK>;
++			clock-names = "camnoc_axi",
++				      "cpas_ahb",
++				      "cci";
++
++			power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
++
++			pinctrl-0 = <&cci1_default>;
++			pinctrl-1 = <&cci1_sleep>;
++			pinctrl-names = "default", "sleep";
++
++			#address-cells = <1>;
++			#size-cells = <0>;
++
++			status = "disabled";
++
++			cci1_i2c0: i2c-bus@0 {
++				reg = <0>;
++				clock-frequency = <1000000>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++			};
++
++			cci1_i2c1: i2c-bus@1 {
++				reg = <1>;
++				clock-frequency = <1000000>;
++				#address-cells = <1>;
++				#size-cells = <0>;
++			};
++		};
++
++		camss: isp@acb7000 {
++			compatible = "qcom,x1e80100-camss";
++
++			reg = <0 0x0acb7000 0 0x2000>,
++			      <0 0x0acb9000 0 0x2000>,
++			      <0 0x0acbb000 0 0x2000>,
++			      <0 0x0acc6000 0 0x1000>,
++			      <0 0x0acca000 0 0x1000>,
++			      <0 0x0acb6000 0 0x1000>,
++			      <0 0x0ace4000 0 0x1000>,
++			      <0 0x0ace6000 0 0x1000>,
++			      <0 0x0ace8000 0 0x1000>,
++			      <0 0x0acec000 0 0x4000>,
++			      <0 0x0acf6000 0 0x1000>,
++			      <0 0x0acf7000 0 0x1000>,
++			      <0 0x0acf8000 0 0x1000>,
++			      <0 0x0ac62000 0 0xf000>,
++			      <0 0x0ac71000 0 0xf000>,
++			      <0 0x0acc7000 0 0x2000>,
++			      <0 0x0accb000 0 0x2000>;
++
++			reg-names = "csid0",
++				    "csid1",
++				    "csid2",
++				    "csid_lite0",
++				    "csid_lite1",
++				    "csid_wrapper",
++				    "csiphy0",
++				    "csiphy1",
++				    "csiphy2",
++				    "csiphy4",
++				    "csitpg0",
++				    "csitpg1",
++				    "csitpg2",
++				    "vfe0",
++				    "vfe1",
++				    "vfe_lite0",
++				    "vfe_lite1";
++
++			clocks = <&camcc CAM_CC_CAMNOC_AXI_NRT_CLK>,
++				 <&camcc CAM_CC_CAMNOC_AXI_RT_CLK>,
++				 <&camcc CAM_CC_CORE_AHB_CLK>,
++				 <&camcc CAM_CC_CPAS_AHB_CLK>,
++				 <&camcc CAM_CC_CPAS_FAST_AHB_CLK>,
++				 <&camcc CAM_CC_CPAS_IFE_0_CLK>,
++				 <&camcc CAM_CC_CPAS_IFE_1_CLK>,
++				 <&camcc CAM_CC_CPAS_IFE_LITE_CLK>,
++				 <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
++				 <&camcc CAM_CC_CSID_CLK>,
++				 <&camcc CAM_CC_CSID_CSIPHY_RX_CLK>,
++				 <&camcc CAM_CC_CSIPHY0_CLK>,
++				 <&camcc CAM_CC_CSI0PHYTIMER_CLK>,
++				 <&camcc CAM_CC_CSIPHY1_CLK>,
++				 <&camcc CAM_CC_CSI1PHYTIMER_CLK>,
++				 <&camcc CAM_CC_CSIPHY2_CLK>,
++				 <&camcc CAM_CC_CSI2PHYTIMER_CLK>,
++				 <&camcc CAM_CC_CSIPHY4_CLK>,
++				 <&camcc CAM_CC_CSI4PHYTIMER_CLK>,
++				 <&gcc GCC_CAMERA_HF_AXI_CLK>,
++				 <&gcc GCC_CAMERA_SF_AXI_CLK>,
++				 <&camcc CAM_CC_IFE_0_CLK>,
++				 <&camcc CAM_CC_IFE_0_FAST_AHB_CLK>,
++				 <&camcc CAM_CC_IFE_1_CLK>,
++				 <&camcc CAM_CC_IFE_1_FAST_AHB_CLK>,
++				 <&camcc CAM_CC_IFE_LITE_CLK>,
++				 <&camcc CAM_CC_IFE_LITE_AHB_CLK>,
++				 <&camcc CAM_CC_IFE_LITE_CPHY_RX_CLK>,
++				 <&camcc CAM_CC_IFE_LITE_CSID_CLK>;
++
++			clock-names = "camnoc_nrt_axi",
++				      "camnoc_rt_axi",
++				      "core_ahb",
++				      "cpas_ahb",
++				      "cpas_fast_ahb",
++				      "cpas_vfe0",
++				      "cpas_vfe1",
++				      "cpas_vfe_lite",
++				      "cphy_rx_clk_src",
++				      "csid",
++				      "csid_csiphy_rx",
++				      "csiphy0",
++				      "csiphy0_timer",
++				      "csiphy1",
++				      "csiphy1_timer",
++				      "csiphy2",
++				      "csiphy2_timer",
++				      "csiphy4",
++				      "csiphy4_timer",
++				      "gcc_axi_hf",
++				      "gcc_axi_sf",
++				      "vfe0",
++				      "vfe0_fast_ahb",
++				      "vfe1",
++				      "vfe1_fast_ahb",
++				      "vfe_lite",
++				      "vfe_lite_ahb",
++				      "vfe_lite_cphy_rx",
++				      "vfe_lite_csid";
++
++			interrupts = <GIC_SPI 464 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 466 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 431 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 468 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 359 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 477 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 478 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 479 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 122 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 465 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 467 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 469 IRQ_TYPE_EDGE_RISING>,
++				     <GIC_SPI 360 IRQ_TYPE_EDGE_RISING>;
++
++			interrupt-names = "csid0",
++					  "csid1",
++					  "csid2",
++					  "csid_lite0",
++					  "csid_lite1",
++					  "csiphy0",
++					  "csiphy1",
++					  "csiphy2",
++					  "csiphy4",
++					  "vfe0",
++					  "vfe1",
++					  "vfe_lite0",
++					  "vfe_lite1";
++
++			interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
++					 &config_noc SLAVE_CAMERA_CFG QCOM_ICC_TAG_ACTIVE_ONLY>,
++					<&mmss_noc MASTER_CAMNOC_HF QCOM_ICC_TAG_ALWAYS
++					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
++					<&mmss_noc MASTER_CAMNOC_SF QCOM_ICC_TAG_ALWAYS
++					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
++					<&mmss_noc MASTER_CAMNOC_ICP QCOM_ICC_TAG_ALWAYS
++					 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
++			interconnect-names = "ahb",
++					     "hf_mnoc",
++					     "sf_mnoc",
++					     "sf_icp_mnoc";
++
++			iommus = <&apps_smmu 0x800 0x60>,
++				 <&apps_smmu 0x820 0x60>,
++				 <&apps_smmu 0x840 0x60>,
++				 <&apps_smmu 0x860 0x60>,
++				 <&apps_smmu 0x18a0 0x0>;
++
++			#address-cells = <2>;
++			#size-cells = <2>;
++			ranges;
++
++			phys = <&csiphy0 PHY_TYPE_DPHY>,
++			       <&csiphy1 PHY_TYPE_DPHY>,
++			       <&csiphy2 PHY_TYPE_DPHY>,
++			       <&csiphy4 PHY_TYPE_DPHY>;
++			phy-names = "csiphy0",
++				    "csiphy1",
++				    "csiphy2",
++				    "csiphy4";
++
++			power-domains = <&camcc CAM_CC_IFE_0_GDSC>,
++					<&camcc CAM_CC_IFE_1_GDSC>,
++					<&camcc CAM_CC_TITAN_TOP_GDSC>;
++			power-domain-names = "ife0",
++					     "ife1",
++					     "top";
++
++			status = "disabled";
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++					#address-cells = <1>;
++					#size-cells = <0>;
++					camss_csiphy0_inep0: endpoint@0 {
++						reg = <0>;
++					};
++				};
++
++				port@1 {
++					reg = <1>;
++					#address-cells = <1>;
++					#size-cells = <0>;
++					camss_csiphy1_inep0: endpoint@0 {
++						reg = <0>;
++					};
++				};
++
++				port@2 {
++					reg = <2>;
++					#address-cells = <1>;
++					#size-cells = <0>;
++					camss_csiphy2_inep0: endpoint@0 {
++						reg = <0>;
++					};
++				};
++
++				port@3 {
++					reg = <3>;
++					#address-cells = <1>;
++					#size-cells = <0>;
++					camss_csiphy4_inep0: endpoint@0 {
++						reg = <0>;
++					};
++				};
++			};
++
++			csiphy0: phy@ace4000 {
++				compatible = "qcom,x1e80100-csi2-phy";
++				reg = <0 0x0ace4000 0 0x2000>;
++
++				clocks = <&camcc CAM_CC_CSIPHY0_CLK>,
++					 <&camcc CAM_CC_CSI0PHYTIMER_CLK>,
++					 <&camcc CAM_CC_CORE_AHB_CLK>;
++				clock-names = "core",
++					      "timer",
++					      "ahb";
++
++				operating-points-v2 = <&csiphy_mxc_opp_table>;
++
++				interrupts = <GIC_SPI 477 IRQ_TYPE_EDGE_RISING>;
++
++				power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>,
++						<&rpmhpd RPMHPD_MMCX>,
++						<&rpmhpd RPMHPD_MXC>;
++				power-domain-names = "top",
++						     "mmcx",
++						     "mx";
++
++				#phy-cells = <1>;
++
++				status = "disabled";
++			};
++
++			csiphy1: phy@ace6000 {
++				compatible = "qcom,x1e80100-csi2-phy";
++				reg = <0 0x0ace6000 0 0x2000>;
++
++				clocks = <&camcc CAM_CC_CSIPHY1_CLK>,
++					 <&camcc CAM_CC_CSI1PHYTIMER_CLK>,
++					 <&camcc CAM_CC_CORE_AHB_CLK>;
++				clock-names = "core",
++					      "timer",
++					      "ahb";
++
++				operating-points-v2 = <&csiphy_mxc_opp_table>;
++
++				interrupts = <GIC_SPI 478 IRQ_TYPE_EDGE_RISING>;
++
++				power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>,
++						<&rpmhpd RPMHPD_MMCX>,
++						<&rpmhpd RPMHPD_MXC>;
++				power-domain-names = "top",
++						     "mmcx",
++						     "mx";
++
++				#phy-cells = <1>;
++
++				status = "disabled";
++			};
++
++			csiphy2: phy@ace8000 {
++				compatible = "qcom,x1e80100-csi2-phy";
++				reg = <0 0x0ace8000 0 0x2000>;
++
++				clocks = <&camcc CAM_CC_CSIPHY2_CLK>,
++					 <&camcc CAM_CC_CSI2PHYTIMER_CLK>,
++					 <&camcc CAM_CC_CORE_AHB_CLK>;
++				clock-names = "core",
++					      "timer",
++					      "ahb";
++
++				operating-points-v2 = <&csiphy_mxc_opp_table>;
++
++				interrupts = <GIC_SPI 479 IRQ_TYPE_EDGE_RISING>;
++
++				power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>,
++						<&rpmhpd RPMHPD_MMCX>,
++						<&rpmhpd RPMHPD_MXC>;
++				power-domain-names = "top",
++						     "mmcx",
++						     "mx";
++
++				#phy-cells = <1>;
++
++				status = "disabled";
++			};
++
++			csiphy4: phy@acec000 {
++				compatible = "qcom,x1e80100-csi2-phy";
++				reg = <0 0x0acec000 0 0x2000>;
++
++				clocks = <&camcc CAM_CC_CSIPHY4_CLK>,
++					 <&camcc CAM_CC_CSI4PHYTIMER_CLK>,
++					 <&camcc CAM_CC_CORE_AHB_CLK>;
++				clock-names = "core",
++					      "timer",
++					      "ahb";
++
++				operating-points-v2 = <&csiphy_mxa_opp_table>;
++
++				interrupts = <GIC_SPI 122 IRQ_TYPE_EDGE_RISING>;
++
++				power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>,
++						<&rpmhpd RPMHPD_MMCX>,
++						<&rpmhpd RPMHPD_MXC>;
++				power-domain-names = "top",
++						     "mmcx",
++						     "mx";
++
++				#phy-cells = <1>;
++
++				status = "disabled";
++			};
++
++			csiphy_mxc_opp_table: opp-table-mxc {
++				compatible = "operating-points-v2";
++
++				opp-300000000 {
++					opp-hz = /bits/ 64 <300000000>;
++					required-opps = <&rpmhpd_opp_low_svs_d1>,
++							<&rpmhpd_opp_low_svs_d1>;
++				};
++
++				opp-400000000 {
++					opp-hz = /bits/ 64 <400000000>;
++					required-opps = <&rpmhpd_opp_low_svs>,
++							<&rpmhpd_opp_low_svs>;
++				};
++
++				opp-480000000 {
++					opp-hz = /bits/ 64 <480000000>;
++					required-opps = <&rpmhpd_opp_low_svs>,
++							<&rpmhpd_opp_low_svs>;
++				};
++			};
++
++			csiphy_mxa_opp_table: opp-table-mxa {
++				compatible = "operating-points-v2";
++
++				opp-300000000 {
++					opp-hz = /bits/ 64 <300000000>;
++					required-opps = <&rpmhpd_opp_low_svs_d1>,
++							<&rpmhpd_opp_low_svs_d1>;
++				};
++
++				opp-400000000 {
++					opp-hz = /bits/ 64 <400000000>;
++					required-opps = <&rpmhpd_opp_low_svs>,
++							<&rpmhpd_opp_low_svs_d1>;
++				};
++
++				opp-480000000 {
++					opp-hz = /bits/ 64 <480000000>;
++					required-opps = <&rpmhpd_opp_low_svs>,
++							<&rpmhpd_opp_low_svs_d1>;
++				};
++			};
++		};
++
++		camcc: clock-controller@ade0000 {
++			compatible = "qcom,x1e80100-camcc";
++			reg = <0 0x0ade0000 0 0x20000>;
++			clocks = <&gcc GCC_CAMERA_AHB_CLK>,
++				 <&bi_tcxo_div2>,
++				 <&bi_tcxo_ao_div2>,
++				 <&sleep_clk>;
++			power-domains = <&rpmhpd RPMHPD_MXC>,
++					<&rpmhpd RPMHPD_MMCX>;
++			required-opps = <&rpmhpd_opp_low_svs>,
++					<&rpmhpd_opp_low_svs>;
++			#clock-cells = <1>;
++			#reset-cells = <1>;
++			#power-domain-cells = <1>;
++		};
++
+ 		mdss: display-subsystem@ae00000 {
+ 			compatible = "qcom,x1e80100-mdss";
+ 			reg = <0 0x0ae00000 0 0x1000>;
+@@ -6131,6 +6589,78 @@ tlmm: pinctrl@f100000 {
+ 			gpio-ranges = <&tlmm 0 0 239>;
+ 			wakeup-parent = <&pdc>;
+ 
++			cci0_default: cci0-default-state {
++				cci0_i2c0_default: cci0-i2c0-default-pins {
++					/* cci_i2c_sda0, cci_i2c_scl0 */
++					pins = "gpio101", "gpio102";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-up;
++				};
++
++				cci0_i2c1_default: cci0-i2c1-default-pins {
++					/* cci_i2c_sda1, cci_i2c_scl1 */
++					pins = "gpio103", "gpio104";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-up;
++				};
++			};
++
++			cci0_sleep: cci0-sleep-state {
++				cci0_i2c0_sleep: cci0-i2c0-sleep-pins {
++					/* cci_i2c_sda0, cci_i2c_scl0 */
++					pins = "gpio101", "gpio102";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-down;
++				};
++
++				cci0_i2c1_sleep: cci0-i2c1-sleep-pins {
++					/* cci_i2c_sda1, cci_i2c_scl1 */
++					pins = "gpio103", "gpio104";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-down;
++				};
++			};
++
++			cci1_default: cci1-default-state {
++				cci1_i2c0_default: cci1-i2c0-default-pins {
++					/* cci_i2c_sda2, cci_i2c_scl2 */
++					pins = "gpio105", "gpio106";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-up;
++				};
++
++				cci1_i2c1_default: cci1-i2c1-default-pins {
++					/* aon_cci_i2c_sda3, aon_cci_i2c_scl3 */
++					pins = "gpio235", "gpio236";
++					function = "aon_cci";
++					drive-strength = <2>;
++					bias-pull-up;
++				};
++			};
++
++			cci1_sleep: cci1-sleep-state {
++				cci1_i2c0_sleep: cci1-i2c0-sleep-pins {
++					/* cci_i2c_sda2, cci_i2c_scl2 */
++					pins = "gpio105", "gpio106";
++					function = "cci_i2c";
++					drive-strength = <2>;
++					bias-pull-down;
++				};
++
++				cci1_i2c1_sleep: cci1-i2c1-sleep-pins {
++					/* aon_cci_i2c_sda3, aon_cci_i2c_scl3 */
++					pins = "gpio235", "gpio236";
++					function = "aon_cci";
++					drive-strength = <2>;
++					bias-pull-down;
++				};
++			};
++
+ 			edp0_hpd_default: edp0-hpd-default-state {
+ 				pins = "gpio119";
+ 				function = "edp0_hot";
+diff --git a/arch/arm64/boot/dts/qcom/purwa.dtsi b/arch/arm64/boot/dts/qcom/purwa.dtsi
+index 5b17840fb62fb2e664837b125d0ed5cf8b272326..aee7d697b021c09c6ce1fdf49046873a1ffb6fda 100644
+--- a/arch/arm64/boot/dts/qcom/purwa.dtsi
++++ b/arch/arm64/boot/dts/qcom/purwa.dtsi
+@@ -5,6 +5,7 @@
+ 
+ /* X1P42100 is heavily based on hamoa, with some meaningful differences */
+ #include "hamoa.dtsi"
++#include <dt-bindings/clock/qcom,x1p42100-videocc.h>
+ 
+ /delete-node/ &bwmon_cluster0;
+ /delete-node/ &cluster_pd2;
+@@ -17,8 +18,11 @@
+ /delete-node/ &cpu_pd9;
+ /delete-node/ &cpu_pd10;
+ /delete-node/ &cpu_pd11;
++/delete-node/ &csiphy1;
++/delete-node/ &csiphy2;
+ /delete-node/ &gpu_opp_table;
+ /delete-node/ &gpu_speed_bin;
++/delete-node/ &iris_opp_table;
+ /delete-node/ &pcie3_phy;
+ /delete-node/ &thermal_aoss3;
+ /delete-node/ &thermal_cpu2_0_btm;
+@@ -36,10 +40,174 @@
+ /delete-node/ &thermal_gpuss_6;
+ /delete-node/ &thermal_gpuss_7;
+ 
++&camss {
++	compatible = "qcom,x1p42100-camss";
++
++	reg = <0 0x0acb7000 0 0x2000>,
++	      <0 0x0acb9000 0 0x2000>,
++	      <0 0x0acbb000 0 0x2000>,
++	      <0 0x0acc6000 0 0x1000>,
++	      <0 0x0acca000 0 0x1000>,
++	      <0 0x0acb6000 0 0x1000>,
++	      <0 0x0ace4000 0 0x1000>,
++	      <0 0x0acec000 0 0x4000>,
++	      <0 0x0acf6000 0 0x1000>,
++	      <0 0x0acf7000 0 0x1000>,
++	      <0 0x0acf8000 0 0x1000>,
++	      <0 0x0ac62000 0 0x4000>,
++	      <0 0x0acc7000 0 0x2000>,
++	      <0 0x0accb000 0 0x2000>;
++
++	reg-names = "csid0",
++		    "csid1",
++		    "csid2",
++		    "csid_lite0",
++		    "csid_lite1",
++		    "csid_wrapper",
++		    "csiphy0",
++		    "csiphy4",
++		    "csitpg0",
++		    "csitpg1",
++		    "csitpg2",
++		    "vfe0",
++		    "vfe_lite0",
++		    "vfe_lite1";
++
++	interrupts = <GIC_SPI 464 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 466 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 431 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 468 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 359 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 477 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 122 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 465 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 469 IRQ_TYPE_EDGE_RISING>,
++		     <GIC_SPI 360 IRQ_TYPE_EDGE_RISING>;
++
++	interrupt-names = "csid0",
++			  "csid1",
++			  "csid2",
++			  "csid_lite0",
++			  "csid_lite1",
++			  "csiphy0",
++			  "csiphy4",
++			  "vfe0",
++			  "vfe_lite0",
++			  "vfe_lite1";
++
++	clocks = <&camcc CAM_CC_CAMNOC_AXI_NRT_CLK>,
++		 <&camcc CAM_CC_CAMNOC_AXI_RT_CLK>,
++		 <&camcc CAM_CC_CORE_AHB_CLK>,
++		 <&camcc CAM_CC_CPAS_AHB_CLK>,
++		 <&camcc CAM_CC_CPAS_FAST_AHB_CLK>,
++		 <&camcc CAM_CC_CPAS_IFE_0_CLK>,
++		 <&camcc CAM_CC_CPAS_IFE_LITE_CLK>,
++		 <&camcc CAM_CC_CPHY_RX_CLK_SRC>,
++		 <&camcc CAM_CC_CSID_CLK>,
++		 <&camcc CAM_CC_CSID_CSIPHY_RX_CLK>,
++		 <&camcc CAM_CC_CSIPHY0_CLK>,
++		 <&camcc CAM_CC_CSI0PHYTIMER_CLK>,
++		 <&camcc CAM_CC_CSIPHY4_CLK>,
++		 <&camcc CAM_CC_CSI4PHYTIMER_CLK>,
++		 <&gcc GCC_CAMERA_HF_AXI_CLK>,
++		 <&gcc GCC_CAMERA_SF_AXI_CLK>,
++		 <&camcc CAM_CC_IFE_0_CLK>,
++		 <&camcc CAM_CC_IFE_0_FAST_AHB_CLK>,
++		 <&camcc CAM_CC_IFE_LITE_CLK>,
++		 <&camcc CAM_CC_IFE_LITE_AHB_CLK>,
++		 <&camcc CAM_CC_IFE_LITE_CPHY_RX_CLK>,
++		 <&camcc CAM_CC_IFE_LITE_CSID_CLK>;
++
++	clock-names = "camnoc_nrt_axi",
++		      "camnoc_rt_axi",
++		      "core_ahb",
++		      "cpas_ahb",
++		      "cpas_fast_ahb",
++		      "cpas_vfe0",
++		      "cpas_vfe_lite",
++		      "cphy_rx_clk_src",
++		      "csid",
++		      "csid_csiphy_rx",
++		      "csiphy0",
++		      "csiphy0_timer",
++		      "csiphy4",
++		      "csiphy4_timer",
++		      "gcc_axi_hf",
++		      "gcc_axi_sf",
++		      "vfe0",
++		      "vfe0_fast_ahb",
++		      "vfe_lite",
++		      "vfe_lite_ahb",
++		      "vfe_lite_cphy_rx",
++		      "vfe_lite_csid";
++
++	interconnects = <&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
++			 &config_noc SLAVE_CAMERA_CFG QCOM_ICC_TAG_ACTIVE_ONLY>,
++			<&mmss_noc MASTER_CAMNOC_HF QCOM_ICC_TAG_ALWAYS
++			 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
++			<&mmss_noc MASTER_CAMNOC_SF QCOM_ICC_TAG_ALWAYS
++			 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
++			<&mmss_noc MASTER_CAMNOC_ICP QCOM_ICC_TAG_ALWAYS
++			 &mc_virt SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
++	interconnect-names = "ahb",
++			     "hf_mnoc",
++			     "sf_mnoc",
++			     "sf_icp_mnoc";
++
++	iommus = <&apps_smmu 0x800 0x60>,
++		 <&apps_smmu 0x860 0x60>,
++		 <&apps_smmu 0x1860 0x60>,
++		 <&apps_smmu 0x18e0 0x00>,
++		 <&apps_smmu 0x19a0 0x20>;
++
++	power-domains = <&camcc CAM_CC_IFE_0_GDSC>,
++			<&camcc CAM_CC_TITAN_TOP_GDSC>;
++	power-domain-names = "ife0",
++			     "top";
++
++	phys = <&csiphy0 PHY_TYPE_DPHY>,
++	       <&csiphy4 PHY_TYPE_DPHY>;
++	phy-names = "csiphy0",
++		    "csiphy4";
++
++	status = "disabled";
++
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@0 {
++			reg = <0>;
++			#address-cells = <1>;
++			#size-cells = <0>;
++			camss_in0_ep: endpoint@0 {
++				reg = <0>;
++			};
++		};
++
++		port@1 {
++			reg = <1>;
++			#address-cells = <1>;
++			#size-cells = <0>;
++			camss_in1_ep: endpoint@0 {
++				reg = <0>;
++			};
++		};
++	};
++};
++
++&camcc {
++	compatible = "qcom,x1p42100-camcc";
++};
++
+ &gcc {
+ 	compatible = "qcom,x1p42100-gcc", "qcom,x1e80100-gcc";
+ };
+ 
++&videocc {
++	compatible = "qcom,x1p42100-videocc";
++};
++
+ &gmu {
+ 	compatible = "qcom,adreno-gmu-x145.0", "qcom,adreno-gmu";
+ };
+@@ -159,6 +327,55 @@ &gpucc {
+ 	compatible = "qcom,x1p42100-gpucc";
+ };
+ 
++&iris {
++	compatible = "qcom,x1p42100-iris";
++
++	clocks = <&gcc GCC_VIDEO_AXI0_CLK>,
++		 <&videocc VIDEO_CC_MVS0C_CLK>,
++		 <&videocc VIDEO_CC_MVS0_CLK>,
++		 <&videocc VIDEO_CC_MVS0_BSE_CLK>;
++	clock-names = "iface",
++		      "core",
++		      "vcodec0_core",
++		      "vcodec0_bse";
++
++	operating-points-v2 = <&iris_opp_table_x1p42100>;
++
++	iris_opp_table_x1p42100: opp-table {
++		compatible = "operating-points-v2";
++
++		opp-210000000 {
++			opp-hz = /bits/ 64 <210000000 105000000>;
++			required-opps = <&rpmhpd_opp_low_svs_d1>,
++					<&rpmhpd_opp_low_svs>;
++		};
++
++		opp-300000000 {
++			opp-hz = /bits/ 64 <300000000 150000000>;
++			required-opps = <&rpmhpd_opp_low_svs_d1>,
++					<&rpmhpd_opp_svs>;
++		};
++
++		opp-335000000 {
++			opp-hz = /bits/ 64 <335000000 167500000>;
++			required-opps = <&rpmhpd_opp_svs>,
++					<&rpmhpd_opp_svs_l1>;
++		};
++
++		opp-424000000 {
++			opp-hz = /bits/ 64 <424000000 212000000>;
++			required-opps = <&rpmhpd_opp_svs>,
++					<&rpmhpd_opp_nom>;
++		};
++
++		opp-500000000 {
++			opp-hz = /bits/ 64 <500000000 250000000>;
++			required-opps = <&rpmhpd_opp_svs>,
++					<&rpmhpd_opp_turbo>;
++		};
++	};
++};
++
+ /* PCIe3 has half the lanes compared to X1E80100 */
+ &pcie3 {
+ 	num-lanes = <4>;
+diff --git a/drivers/gpu/drm/panel/panel-edp.c b/drivers/gpu/drm/panel/panel-edp.c
+index aa27d6cd932e825d08682fe3921f399c273a5768..75ffbbedbef9b6074847791616786c02410e4557 100644
+--- a/drivers/gpu/drm/panel/panel-edp.c
++++ b/drivers/gpu/drm/panel/panel-edp.c
+@@ -2144,6 +2144,7 @@ static const struct edp_panel_entry edp_panels[] = {
+ 	EDP_PANEL_ENTRY('S', 'H', 'P', 0x154c, &delay_200_500_p2e100, "LQ116M1JW10"),
+ 	EDP_PANEL_ENTRY('S', 'H', 'P', 0x158f, &delay_200_500_p2e100, "LQ134Z1"),
+ 	EDP_PANEL_ENTRY('S', 'H', 'P', 0x1593, &delay_200_500_p2e100, "LQ134N1"),
++	EDP_PANEL_ENTRY('S', 'H', 'P', 0x15a7, &delay_200_500_p2e100, "LQ120P1JX51"),
+ 
+ 	EDP_PANEL_ENTRY('S', 'T', 'A', 0x0004, &delay_200_500_e200, "116KHD024006"),
+ 	EDP_PANEL_ENTRY('S', 'T', 'A', 0x0009, &delay_200_500_e250, "116QHD024002"),
+diff --git a/drivers/media/i2c/ov02c10.c b/drivers/media/i2c/ov02c10.c
+index cf93d36032e14712209d50f4a8e223541c666e79..ef3aac8498554756c732abb13160d81438bef37f 100644
+--- a/drivers/media/i2c/ov02c10.c
++++ b/drivers/media/i2c/ov02c10.c
+@@ -34,6 +34,7 @@
+ #define OV02C10_EXPOSURE_MIN		4
+ #define OV02C10_EXPOSURE_MAX_MARGIN	8
+ #define OV02C10_EXPOSURE_STEP		1
++#define OV02C10_EXPOSURE_DEFAULT	0x046c
+ 
+ /* Analog gain controls from sensor */
+ #define OV02C10_REG_ANALOG_GAIN		CCI_REG16(0x3508)
+@@ -545,7 +546,8 @@ static int ov02c10_init_controls(struct ov02c10 *ov02c10)
+ 					      OV02C10_EXPOSURE_MIN,
+ 					      exposure_max,
+ 					      OV02C10_EXPOSURE_STEP,
+-					      exposure_max);
++					      min_t(s64, exposure_max,
++						    OV02C10_EXPOSURE_DEFAULT));
+ 
+ 	v4l2_ctrl_new_std(ctrl_hdlr, &ov02c10_ctrl_ops, V4L2_CID_HFLIP,
+ 			  0, 1, 1, 0);
+@@ -755,6 +757,39 @@ static int ov02c10_enum_frame_size(struct v4l2_subdev *sd,
+ 	return 0;
+ }
+ 
++static int ov02c10_get_selection(struct v4l2_subdev *sd,
++				 struct v4l2_subdev_state *sd_state,
++				 struct v4l2_subdev_selection *sel)
++{
++	struct v4l2_rect bounds = {
++		.left = 0,
++		.top = 0,
++		.width = supported_modes[0].width,
++		.height = supported_modes[0].height,
++	};
++	struct v4l2_rect crop = {
++		.left = 0,
++		.top = 0,
++		.width = supported_modes[0].width,
++		.height = supported_modes[0].height,
++	};
++
++	if (sel->pad != 0)
++		return -EINVAL;
++
++	switch (sel->target) {
++	case V4L2_SEL_TGT_CROP:
++	case V4L2_SEL_TGT_CROP_DEFAULT:
++		sel->r = crop;
++		return 0;
++	case V4L2_SEL_TGT_CROP_BOUNDS:
++		sel->r = bounds;
++		return 0;
++	default:
++		return -EINVAL;
++	}
++}
++
+ static int ov02c10_init_state(struct v4l2_subdev *sd,
+ 			      struct v4l2_subdev_state *sd_state)
+ {
+@@ -773,6 +808,7 @@ static const struct v4l2_subdev_pad_ops ov02c10_pad_ops = {
+ 	.get_fmt = v4l2_subdev_get_fmt,
+ 	.enum_mbus_code = ov02c10_enum_mbus_code,
+ 	.enum_frame_size = ov02c10_enum_frame_size,
++	.get_selection = ov02c10_get_selection,
+ 	.enable_streams = ov02c10_enable_streams,
+ 	.disable_streams = ov02c10_disable_streams,
+ };
+diff --git a/drivers/media/i2c/ov13858.c b/drivers/media/i2c/ov13858.c
+index 09d58e8b1c7fbdbe41aba9a97ee8054a89830fd1..4707899c7bee512f1b62df379c9b534c2cca9b7a 100644
+--- a/drivers/media/i2c/ov13858.c
++++ b/drivers/media/i2c/ov13858.c
+@@ -3,23 +3,28 @@
+ 
+ #include <linux/acpi.h>
+ #include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
+ #include <linux/i2c.h>
+ #include <linux/module.h>
++#include <linux/of.h>
+ #include <linux/pm_runtime.h>
++#include <linux/regmap.h>
++#include <media/v4l2-cci.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-event.h>
+ #include <media/v4l2-fwnode.h>
+ 
+-#define OV13858_REG_VALUE_08BIT		1
+-#define OV13858_REG_VALUE_16BIT		2
+-#define OV13858_REG_VALUE_24BIT		3
++#define OV13858_MCLK			19200000
++#define OV13858_MIPI_LANES		4
++#define OV13858_RGB_DEPTH		10
+ 
+-#define OV13858_REG_MODE_SELECT		0x0100
++#define OV13858_REG_MODE_SELECT		CCI_REG8(0x0100)
+ #define OV13858_MODE_STANDBY		0x00
+ #define OV13858_MODE_STREAMING		0x01
+ 
+-#define OV13858_REG_SOFTWARE_RST	0x0103
++#define OV13858_REG_SOFTWARE_RST	CCI_REG8(0x0103)
+ #define OV13858_SOFTWARE_RST		0x01
+ 
+ /* PLL1 generates PCLK and MIPI_PHY_CLK */
+@@ -41,11 +46,11 @@
+ #define OV13858_REG_MIPI_SC_CTRL1	0x3022
+ 
+ /* Chip ID */
+-#define OV13858_REG_CHIP_ID		0x300a
++#define OV13858_REG_CHIP_ID		CCI_REG24(0x300a)
+ #define OV13858_CHIP_ID			0x00d855
+ 
+ /* V_TIMING internal */
+-#define OV13858_REG_VTS			0x380e
++#define OV13858_REG_VTS			CCI_REG16(0x380e)
+ #define OV13858_VTS_30FPS		0x0c8e /* 30 fps */
+ #define OV13858_VTS_60FPS		0x0648 /* 60 fps */
+ #define OV13858_VTS_MAX			0x7fff
+@@ -55,51 +60,47 @@
+ #define OV13858_PPL_540MHZ		4488
+ 
+ /* Exposure control */
+-#define OV13858_REG_EXPOSURE		0x3500
++#define OV13858_REG_EXPOSURE		CCI_REG24(0x3500)
+ #define OV13858_EXPOSURE_MIN		4
+ #define OV13858_EXPOSURE_STEP		1
+ #define OV13858_EXPOSURE_DEFAULT	0x640
+ 
+ /* Analog gain control */
+-#define OV13858_REG_ANALOG_GAIN		0x3508
++#define OV13858_REG_ANALOG_GAIN		CCI_REG16(0x3508)
+ #define OV13858_ANA_GAIN_MIN		0
+ #define OV13858_ANA_GAIN_MAX		0x1fff
+ #define OV13858_ANA_GAIN_STEP		1
+ #define OV13858_ANA_GAIN_DEFAULT	0x80
+ 
++/* Rotate */
++#define OV13858_ROTATE_CONTROL		CCI_REG8(0x3820)
++#define OV13858_ISP_X_WIN_CONTROL	CCI_REG16(0x3810)
++#define OV13858_ISP_Y_WIN_CONTROL	CCI_REG16(0x3812)
++
+ /* Digital gain control */
+-#define OV13858_REG_B_MWB_GAIN		0x5100
+-#define OV13858_REG_G_MWB_GAIN		0x5102
+-#define OV13858_REG_R_MWB_GAIN		0x5104
++#define OV13858_REG_B_MWB_GAIN		CCI_REG16(0x5100)
++#define OV13858_REG_G_MWB_GAIN		CCI_REG16(0x5102)
++#define OV13858_REG_R_MWB_GAIN		CCI_REG16(0x5104)
+ #define OV13858_DGTL_GAIN_MIN		0
+ #define OV13858_DGTL_GAIN_MAX		16384	/* Max = 16 X */
+ #define OV13858_DGTL_GAIN_DEFAULT	1024	/* Default gain = 1 X */
+ #define OV13858_DGTL_GAIN_STEP		1	/* Each step = 1/1024 */
+ 
+ /* Test Pattern Control */
+-#define OV13858_REG_TEST_PATTERN	0x4503
++#define OV13858_REG_TEST_PATTERN	CCI_REG8(0x4503)
+ #define OV13858_TEST_PATTERN_ENABLE	BIT(7)
+ #define OV13858_TEST_PATTERN_MASK	0xfc
+ 
+ /* Number of frames to skip */
+ #define OV13858_NUM_OF_SKIP_FRAMES	2
+ 
+-struct ov13858_reg {
+-	u16 address;
+-	u8 val;
+-};
+-
+-struct ov13858_reg_list {
+-	u32 num_of_regs;
+-	const struct ov13858_reg *regs;
+-};
+-
+ /* Link frequency config */
+ struct ov13858_link_freq_config {
+ 	u32 pixels_per_line;
+ 
+ 	/* PLL registers for this link frequency */
+-	struct ov13858_reg_list reg_list;
++	const struct reg_sequence *reg_sequence;
++	const int sequence_length;
+ };
+ 
+ /* Mode : resolution and related config&values */
+@@ -116,11 +117,12 @@ struct ov13858_mode {
+ 	/* Index of Link frequency config to be used */
+ 	u32 link_freq_index;
+ 	/* Default register values */
+-	struct ov13858_reg_list reg_list;
++	const struct reg_sequence *reg_sequence;
++	const int sequence_length;
+ };
+ 
+ /* 4224x3136 needs 1080Mbps/lane, 4 lanes */
+-static const struct ov13858_reg mipi_data_rate_1080mbps[] = {
++static const struct reg_sequence mipi_data_rate_1080mbps[] = {
+ 	/* PLL1 registers */
+ 	{OV13858_REG_PLL1_CTRL_0, 0x07},
+ 	{OV13858_REG_PLL1_CTRL_1, 0x01},
+@@ -144,7 +146,7 @@ static const struct ov13858_reg mipi_data_rate_1080mbps[] = {
+  * 2112x1568, 2112x1188, 1056x784 need 540Mbps/lane,
+  * 4 lanes
+  */
+-static const struct ov13858_reg mipi_data_rate_540mbps[] = {
++static const struct reg_sequence mipi_data_rate_540mbps[] = {
+ 	/* PLL1 registers */
+ 	{OV13858_REG_PLL1_CTRL_0, 0x07},
+ 	{OV13858_REG_PLL1_CTRL_1, 0x01},
+@@ -164,7 +166,7 @@ static const struct ov13858_reg mipi_data_rate_540mbps[] = {
+ 	{OV13858_REG_MIPI_SC_CTRL1, 0x01},
+ };
+ 
+-static const struct ov13858_reg mode_4224x3136_regs[] = {
++static const struct reg_sequence mode_4224x3136_regs[] = {
+ 	{0x3013, 0x32},
+ 	{0x301b, 0xf0},
+ 	{0x301f, 0xd0},
+@@ -243,8 +245,6 @@ static const struct ov13858_reg mode_4224x3136_regs[] = {
+ 	{0x380d, 0x62},
+ 	{0x380e, 0x0c},
+ 	{0x380f, 0x8e},
+-	{0x3811, 0x04},
+-	{0x3813, 0x05},
+ 	{0x3814, 0x01},
+ 	{0x3815, 0x01},
+ 	{0x3816, 0x01},
+@@ -355,7 +355,7 @@ static const struct ov13858_reg mode_4224x3136_regs[] = {
+ 	{0x5408, 0x4a},
+ };
+ 
+-static const struct ov13858_reg mode_2112x1568_regs[] = {
++static const struct reg_sequence mode_2112x1568_regs[] = {
+ 	{0x3013, 0x32},
+ 	{0x301b, 0xf0},
+ 	{0x301f, 0xd0},
+@@ -434,8 +434,6 @@ static const struct ov13858_reg mode_2112x1568_regs[] = {
+ 	{0x380d, 0x62},
+ 	{0x380e, 0x0c},
+ 	{0x380f, 0x8e},
+-	{0x3811, 0x04},
+-	{0x3813, 0x05},
+ 	{0x3814, 0x03},
+ 	{0x3815, 0x01},
+ 	{0x3816, 0x03},
+@@ -546,7 +544,7 @@ static const struct ov13858_reg mode_2112x1568_regs[] = {
+ 	{0x5408, 0x4a},
+ };
+ 
+-static const struct ov13858_reg mode_2112x1188_regs[] = {
++static const struct reg_sequence mode_2112x1188_regs[] = {
+ 	{0x3013, 0x32},
+ 	{0x301b, 0xf0},
+ 	{0x301f, 0xd0},
+@@ -625,8 +623,6 @@ static const struct ov13858_reg mode_2112x1188_regs[] = {
+ 	{0x380d, 0x62},
+ 	{0x380e, 0x0c},
+ 	{0x380f, 0x8e},
+-	{0x3811, 0x08},
+-	{0x3813, 0x03},
+ 	{0x3814, 0x03},
+ 	{0x3815, 0x01},
+ 	{0x3816, 0x03},
+@@ -737,7 +733,7 @@ static const struct ov13858_reg mode_2112x1188_regs[] = {
+ 	{0x5408, 0x4a},
+ };
+ 
+-static const struct ov13858_reg mode_1056x784_regs[] = {
++static const struct reg_sequence mode_1056x784_regs[] = {
+ 	{0x3013, 0x32},
+ 	{0x301b, 0xf0},
+ 	{0x301f, 0xd0},
+@@ -816,8 +812,6 @@ static const struct ov13858_reg mode_1056x784_regs[] = {
+ 	{0x380d, 0x62},
+ 	{0x380e, 0x0c},
+ 	{0x380f, 0x8e},
+-	{0x3811, 0x04},
+-	{0x3813, 0x05},
+ 	{0x3814, 0x07},
+ 	{0x3815, 0x01},
+ 	{0x3816, 0x07},
+@@ -966,17 +960,13 @@ static const struct ov13858_link_freq_config
+ 			link_freq_configs[OV13858_NUM_OF_LINK_FREQS] = {
+ 	{
+ 		.pixels_per_line = OV13858_PPL_540MHZ,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mipi_data_rate_1080mbps),
+-			.regs = mipi_data_rate_1080mbps,
+-		}
++		.reg_sequence = mipi_data_rate_1080mbps,
++		.sequence_length = ARRAY_SIZE(mipi_data_rate_1080mbps),
+ 	},
+ 	{
+ 		.pixels_per_line = OV13858_PPL_270MHZ,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mipi_data_rate_540mbps),
+-			.regs = mipi_data_rate_540mbps,
+-		}
++		.reg_sequence = mipi_data_rate_540mbps,
++		.sequence_length = ARRAY_SIZE(mipi_data_rate_540mbps),
+ 	}
+ };
+ 
+@@ -987,10 +977,8 @@ static const struct ov13858_mode supported_modes[] = {
+ 		.height = 3136,
+ 		.vts_def = OV13858_VTS_30FPS,
+ 		.vts_min = OV13858_VTS_30FPS,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_4224x3136_regs),
+-			.regs = mode_4224x3136_regs,
+-		},
++		.reg_sequence = mode_4224x3136_regs,
++		.sequence_length = ARRAY_SIZE(mode_4224x3136_regs),
+ 		.link_freq_index = OV13858_LINK_FREQ_INDEX_0,
+ 	},
+ 	{
+@@ -998,10 +986,8 @@ static const struct ov13858_mode supported_modes[] = {
+ 		.height = 1568,
+ 		.vts_def = OV13858_VTS_30FPS,
+ 		.vts_min = 1608,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_2112x1568_regs),
+-			.regs = mode_2112x1568_regs,
+-		},
++		.reg_sequence = mode_2112x1568_regs,
++		.sequence_length = ARRAY_SIZE(mode_2112x1568_regs),
+ 		.link_freq_index = OV13858_LINK_FREQ_INDEX_1,
+ 	},
+ 	{
+@@ -1009,10 +995,8 @@ static const struct ov13858_mode supported_modes[] = {
+ 		.height = 1188,
+ 		.vts_def = OV13858_VTS_30FPS,
+ 		.vts_min = 1608,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_2112x1188_regs),
+-			.regs = mode_2112x1188_regs,
+-		},
++		.reg_sequence = mode_2112x1188_regs,
++		.sequence_length = ARRAY_SIZE(mode_2112x1188_regs),
+ 		.link_freq_index = OV13858_LINK_FREQ_INDEX_1,
+ 	},
+ 	{
+@@ -1020,22 +1004,28 @@ static const struct ov13858_mode supported_modes[] = {
+ 		.height = 784,
+ 		.vts_def = OV13858_VTS_30FPS,
+ 		.vts_min = 804,
+-		.reg_list = {
+-			.num_of_regs = ARRAY_SIZE(mode_1056x784_regs),
+-			.regs = mode_1056x784_regs,
+-		},
++		.reg_sequence = mode_1056x784_regs,
++		.sequence_length = ARRAY_SIZE(mode_1056x784_regs),
+ 		.link_freq_index = OV13858_LINK_FREQ_INDEX_1,
+ 	}
+ };
+ 
++static const char * const ov13858_supply_names[] = {
++	"afvdd",        /* Autofocus power */
++	"dovdd",        /* Digital I/O power */
++	"avdd",         /* Analog power */
++	"dvdd",         /* Digital core power */
++};
++
+ struct ov13858 {
+ 	struct device *dev;
+-	struct clk *clk;
+ 
+ 	struct v4l2_subdev sd;
+ 	struct media_pad pad;
+ 
+ 	struct v4l2_ctrl_handler ctrl_handler;
++	struct regmap *regmap;
++
+ 	/* V4L2 Controls */
+ 	struct v4l2_ctrl *link_freq;
+ 	struct v4l2_ctrl *pixel_rate;
+@@ -1043,146 +1033,29 @@ struct ov13858 {
+ 	struct v4l2_ctrl *hblank;
+ 	struct v4l2_ctrl *exposure;
+ 
++	struct clk *img_clk;
++	struct gpio_desc *reset_gpio;
++	struct regulator_bulk_data supplies[ARRAY_SIZE(ov13858_supply_names)];
++
+ 	/* Current mode */
+ 	const struct ov13858_mode *cur_mode;
+-
+-	/* Mutex for serialized access */
+-	struct mutex mutex;
+ };
+ 
+ #define to_ov13858(_sd)	container_of(_sd, struct ov13858, sd)
+ 
+-/* Read registers up to 4 at a time */
+-static int ov13858_read_reg(struct ov13858 *ov13858, u16 reg, u32 len,
+-			    u32 *val)
+-{
+-	struct i2c_client *client = v4l2_get_subdevdata(&ov13858->sd);
+-	struct i2c_msg msgs[2];
+-	u8 *data_be_p;
+-	int ret;
+-	__be32 data_be = 0;
+-	__be16 reg_addr_be = cpu_to_be16(reg);
+-
+-	if (len > 4)
+-		return -EINVAL;
+-
+-	data_be_p = (u8 *)&data_be;
+-	/* Write register address */
+-	msgs[0].addr = client->addr;
+-	msgs[0].flags = 0;
+-	msgs[0].len = 2;
+-	msgs[0].buf = (u8 *)&reg_addr_be;
+-
+-	/* Read data from register */
+-	msgs[1].addr = client->addr;
+-	msgs[1].flags = I2C_M_RD;
+-	msgs[1].len = len;
+-	msgs[1].buf = &data_be_p[4 - len];
+-
+-	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
+-	if (ret != ARRAY_SIZE(msgs))
+-		return -EIO;
+-
+-	*val = be32_to_cpu(data_be);
+-
+-	return 0;
+-}
+-
+-/* Write registers up to 4 at a time */
+-static int ov13858_write_reg(struct ov13858 *ov13858, u16 reg, u32 len,
+-			     u32 __val)
+-{
+-	struct i2c_client *client = v4l2_get_subdevdata(&ov13858->sd);
+-	int buf_i, val_i;
+-	u8 buf[6], *val_p;
+-	__be32 val;
+-
+-	if (len > 4)
+-		return -EINVAL;
+-
+-	buf[0] = reg >> 8;
+-	buf[1] = reg & 0xff;
+-
+-	val = cpu_to_be32(__val);
+-	val_p = (u8 *)&val;
+-	buf_i = 2;
+-	val_i = 4 - len;
+-
+-	while (val_i < 4)
+-		buf[buf_i++] = val_p[val_i++];
+-
+-	if (i2c_master_send(client, buf, len + 2) != len + 2)
+-		return -EIO;
+-
+-	return 0;
+-}
+-
+-/* Write a list of registers */
+-static int ov13858_write_regs(struct ov13858 *ov13858,
+-			      const struct ov13858_reg *regs, u32 len)
+-{
+-	int ret;
+-	u32 i;
+-
+-	for (i = 0; i < len; i++) {
+-		ret = ov13858_write_reg(ov13858, regs[i].address, 1,
+-					regs[i].val);
+-		if (ret) {
+-			dev_err_ratelimited(
+-				ov13858->dev,
+-				"Failed to write reg 0x%4.4x. error = %d\n",
+-				regs[i].address, ret);
+-
+-			return ret;
+-		}
+-	}
+-
+-	return 0;
+-}
+-
+-static int ov13858_write_reg_list(struct ov13858 *ov13858,
+-				  const struct ov13858_reg_list *r_list)
+-{
+-	return ov13858_write_regs(ov13858, r_list->regs, r_list->num_of_regs);
+-}
+-
+-/* Open sub-device */
+-static int ov13858_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
+-{
+-	struct ov13858 *ov13858 = to_ov13858(sd);
+-	struct v4l2_mbus_framefmt *try_fmt = v4l2_subdev_state_get_format(fh->state,
+-									  0);
+-
+-	mutex_lock(&ov13858->mutex);
+-
+-	/* Initialize try_fmt */
+-	try_fmt->width = ov13858->cur_mode->width;
+-	try_fmt->height = ov13858->cur_mode->height;
+-	try_fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
+-	try_fmt->field = V4L2_FIELD_NONE;
+-
+-	/* No crop or compose */
+-	mutex_unlock(&ov13858->mutex);
+-
+-	return 0;
+-}
+-
+ static int ov13858_update_digital_gain(struct ov13858 *ov13858, u32 d_gain)
+ {
+ 	int ret;
+ 
+-	ret = ov13858_write_reg(ov13858, OV13858_REG_B_MWB_GAIN,
+-				OV13858_REG_VALUE_16BIT, d_gain);
++	ret = cci_write(ov13858->regmap, OV13858_REG_B_MWB_GAIN, d_gain, NULL);
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = ov13858_write_reg(ov13858, OV13858_REG_G_MWB_GAIN,
+-				OV13858_REG_VALUE_16BIT, d_gain);
++	ret = cci_write(ov13858->regmap, OV13858_REG_G_MWB_GAIN, d_gain, NULL);
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = ov13858_write_reg(ov13858, OV13858_REG_R_MWB_GAIN,
+-				OV13858_REG_VALUE_16BIT, d_gain);
++	ret = cci_write(ov13858->regmap, OV13858_REG_R_MWB_GAIN, d_gain, NULL);
+ 
+ 	return ret;
+ }
+@@ -1190,10 +1063,9 @@ static int ov13858_update_digital_gain(struct ov13858 *ov13858, u32 d_gain)
+ static int ov13858_enable_test_pattern(struct ov13858 *ov13858, u32 pattern)
+ {
+ 	int ret;
+-	u32 val;
++	u64 val;
+ 
+-	ret = ov13858_read_reg(ov13858, OV13858_REG_TEST_PATTERN,
+-			       OV13858_REG_VALUE_08BIT, &val);
++	ret = cci_read(ov13858->regmap, OV13858_REG_TEST_PATTERN, &val, NULL);
+ 	if (ret)
+ 		return ret;
+ 
+@@ -1204,8 +1076,7 @@ static int ov13858_enable_test_pattern(struct ov13858 *ov13858, u32 pattern)
+ 		val &= ~OV13858_TEST_PATTERN_ENABLE;
+ 	}
+ 
+-	return ov13858_write_reg(ov13858, OV13858_REG_TEST_PATTERN,
+-				 OV13858_REG_VALUE_08BIT, val);
++	return cci_write(ov13858->regmap, OV13858_REG_TEST_PATTERN, val, NULL);
+ }
+ 
+ static int ov13858_set_ctrl(struct v4l2_ctrl *ctrl)
+@@ -1213,7 +1084,7 @@ static int ov13858_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	struct ov13858 *ov13858 = container_of(ctrl->handler,
+ 					       struct ov13858, ctrl_handler);
+ 	s64 max;
+-	int ret;
++	int ret = 0;
+ 
+ 	/* Propagate change of current control to all related controls */
+ 	switch (ctrl->id) {
+@@ -1233,30 +1104,40 @@ static int ov13858_set_ctrl(struct v4l2_ctrl *ctrl)
+ 	if (!pm_runtime_get_if_in_use(ov13858->dev))
+ 		return 0;
+ 
+-	ret = 0;
+ 	switch (ctrl->id) {
+ 	case V4L2_CID_ANALOGUE_GAIN:
+-		ret = ov13858_write_reg(ov13858, OV13858_REG_ANALOG_GAIN,
+-					OV13858_REG_VALUE_16BIT, ctrl->val);
++		cci_write(ov13858->regmap, OV13858_REG_ANALOG_GAIN,
++			  ctrl->val, &ret);
+ 		break;
+ 	case V4L2_CID_DIGITAL_GAIN:
+ 		ret = ov13858_update_digital_gain(ov13858, ctrl->val);
+ 		break;
+ 	case V4L2_CID_EXPOSURE:
+-		ret = ov13858_write_reg(ov13858, OV13858_REG_EXPOSURE,
+-					OV13858_REG_VALUE_24BIT,
+-					ctrl->val << 4);
++		cci_write(ov13858->regmap, OV13858_REG_EXPOSURE,
++			  ctrl->val << 4, &ret);
+ 		break;
+ 	case V4L2_CID_VBLANK:
+ 		/* Update VTS that meets expected vertical blanking */
+-		ret = ov13858_write_reg(ov13858, OV13858_REG_VTS,
+-					OV13858_REG_VALUE_16BIT,
+-					ov13858->cur_mode->height
+-					  + ctrl->val);
++		cci_write(ov13858->regmap, OV13858_REG_VTS,
++			  ov13858->cur_mode->height
++			  + ctrl->val, &ret);
+ 		break;
+ 	case V4L2_CID_TEST_PATTERN:
+ 		ret = ov13858_enable_test_pattern(ov13858, ctrl->val);
+ 		break;
++	case V4L2_CID_HFLIP:
++		cci_write(ov13858->regmap, OV13858_ISP_X_WIN_CONTROL,
++			  ctrl->val ? 2 : 1, &ret);
++		cci_update_bits(ov13858->regmap, OV13858_ROTATE_CONTROL,
++				BIT(3), ctrl->val ? 0 : BIT(3), &ret);
++		break;
++
++	case V4L2_CID_VFLIP:
++		cci_write(ov13858->regmap, OV13858_ISP_Y_WIN_CONTROL,
++			  ctrl->val ? 2 : 1, &ret);
++		cci_update_bits(ov13858->regmap, OV13858_ROTATE_CONTROL,
++				BIT(4), ctrl->val << 4, &ret);
++		break;
+ 	default:
+ 		dev_info(ov13858->dev,
+ 			 "ctrl(id:0x%x,val:0x%x) is not handled\n",
+@@ -1273,78 +1154,254 @@ static const struct v4l2_ctrl_ops ov13858_ctrl_ops = {
+ 	.s_ctrl = ov13858_set_ctrl,
+ };
+ 
+-static int ov13858_enum_mbus_code(struct v4l2_subdev *sd,
+-				  struct v4l2_subdev_state *sd_state,
+-				  struct v4l2_subdev_mbus_code_enum *code)
++/* Initialize control handlers */
++static int ov13858_init_controls(struct ov13858 *ov13858)
+ {
+-	/* Only one bayer order(GRBG) is supported */
+-	if (code->index > 0)
+-		return -EINVAL;
++	struct v4l2_fwnode_device_properties props;
++	struct v4l2_ctrl_handler *ctrl_hdlr;
++	s64 exposure_max;
++	s64 vblank_def;
++	s64 vblank_min;
++	s64 hblank;
++	s64 pixel_rate_min;
++	s64 pixel_rate_max;
++	const struct ov13858_mode *mode;
++	int ret;
+ 
+-	code->code = MEDIA_BUS_FMT_SGRBG10_1X10;
++	ctrl_hdlr = &ov13858->ctrl_handler;
++	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 12);
++	if (ret)
++		return ret;
++
++	ov13858->link_freq = v4l2_ctrl_new_int_menu(ctrl_hdlr,
++				&ov13858_ctrl_ops,
++				V4L2_CID_LINK_FREQ,
++				OV13858_NUM_OF_LINK_FREQS - 1,
++				0,
++				link_freq_menu_items);
++	if (ov13858->link_freq)
++		ov13858->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
++
++	pixel_rate_max = link_freq_to_pixel_rate(link_freq_menu_items[0]);
++	pixel_rate_min = link_freq_to_pixel_rate(link_freq_menu_items[1]);
++	/* By default, PIXEL_RATE is read only */
++	ov13858->pixel_rate = v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops,
++						V4L2_CID_PIXEL_RATE,
++						pixel_rate_min, pixel_rate_max,
++						1, pixel_rate_max);
++
++	mode = ov13858->cur_mode;
++	vblank_def = mode->vts_def - mode->height;
++	vblank_min = mode->vts_min - mode->height;
++	ov13858->vblank = v4l2_ctrl_new_std(
++				ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_VBLANK,
++				vblank_min, OV13858_VTS_MAX - mode->height, 1,
++				vblank_def);
++
++	hblank = link_freq_configs[mode->link_freq_index].pixels_per_line -
++		 mode->width;
++	ov13858->hblank = v4l2_ctrl_new_std(
++				ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_HBLANK,
++				hblank, hblank, 1, hblank);
++	if (ov13858->hblank)
++		ov13858->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
++
++	exposure_max = mode->vts_def - 8;
++	ov13858->exposure = v4l2_ctrl_new_std(
++				ctrl_hdlr, &ov13858_ctrl_ops,
++				V4L2_CID_EXPOSURE, OV13858_EXPOSURE_MIN,
++				exposure_max, OV13858_EXPOSURE_STEP,
++				OV13858_EXPOSURE_DEFAULT);
++
++	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
++			  OV13858_ANA_GAIN_MIN, OV13858_ANA_GAIN_MAX,
++			  OV13858_ANA_GAIN_STEP, OV13858_ANA_GAIN_DEFAULT);
++
++	/* Digital gain */
++	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_DIGITAL_GAIN,
++			  OV13858_DGTL_GAIN_MIN, OV13858_DGTL_GAIN_MAX,
++			  OV13858_DGTL_GAIN_STEP, OV13858_DGTL_GAIN_DEFAULT);
++
++	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_HFLIP,
++			  0, 1, 1, 0);
++
++	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_VFLIP,
++			  0, 1, 1, 0);
++
++	v4l2_ctrl_new_std_menu_items(ctrl_hdlr, &ov13858_ctrl_ops,
++				     V4L2_CID_TEST_PATTERN,
++				     ARRAY_SIZE(ov13858_test_pattern_menu) - 1,
++				     0, 0, ov13858_test_pattern_menu);
++	if (ctrl_hdlr->error) {
++		ret = ctrl_hdlr->error;
++		dev_err(ov13858->dev, "%s control init failed (%d)\n",
++			__func__, ret);
++		goto error;
++	}
++
++	ret = v4l2_fwnode_device_parse(ov13858->dev, &props);
++	if (ret)
++		goto error;
++
++	ret = v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &ov13858_ctrl_ops,
++					      &props);
++	if (ret)
++		goto error;
++
++	ov13858->sd.ctrl_handler = ctrl_hdlr;
+ 
+ 	return 0;
++
++error:
++	v4l2_ctrl_handler_free(ctrl_hdlr);
++
++	return ret;
+ }
+ 
+-static int ov13858_enum_frame_size(struct v4l2_subdev *sd,
+-				   struct v4l2_subdev_state *sd_state,
+-				   struct v4l2_subdev_frame_size_enum *fse)
++static void ov13858_update_pad_format(const struct ov13858_mode *mode,
++				      struct v4l2_mbus_framefmt *fmt)
+ {
+-	if (fse->index >= ARRAY_SIZE(supported_modes))
+-		return -EINVAL;
++	fmt->width = mode->width;
++	fmt->height = mode->height;
++	fmt->code = MEDIA_BUS_FMT_SGRBG10_1X10;
++	fmt->field = V4L2_FIELD_NONE;
++}
+ 
+-	if (fse->code != MEDIA_BUS_FMT_SGRBG10_1X10)
+-		return -EINVAL;
++/* Start streaming */
++static int ov13858_enable_streams(struct v4l2_subdev *sd,
++				  struct v4l2_subdev_state *state,
++				  u32 pad, u64 streams_mask)
++{
++	struct ov13858 *ov13858 = to_ov13858(sd);
++	const struct reg_sequence *reg_sequence;
++	int sequence_length;
++	int ret, link_freq_index;
+ 
+-	fse->min_width = supported_modes[fse->index].width;
+-	fse->max_width = fse->min_width;
+-	fse->min_height = supported_modes[fse->index].height;
+-	fse->max_height = fse->min_height;
++	ret = pm_runtime_resume_and_get(ov13858->dev);
++	if (ret)
++		return ret;
++
++	/* Get out of from software reset */
++	ret = cci_write(ov13858->regmap, OV13858_REG_SOFTWARE_RST,
++			OV13858_SOFTWARE_RST, NULL);
++	if (ret) {
++		dev_err(ov13858->dev, "%s failed to set powerup registers\n",
++			__func__);
++		goto out;
++	}
++
++	/* Setup PLL */
++	link_freq_index = ov13858->cur_mode->link_freq_index;
++	reg_sequence = link_freq_configs[link_freq_index].reg_sequence;
++	sequence_length = link_freq_configs[link_freq_index].sequence_length;
++	ret = regmap_multi_reg_write(ov13858->regmap, reg_sequence,
++				     sequence_length);
++	if (ret) {
++		dev_err(ov13858->dev, "%s failed to set plls\n", __func__);
++		goto out;
++	}
++
++	/* Apply default values of current mode */
++	reg_sequence = ov13858->cur_mode->reg_sequence;
++	sequence_length = ov13858->cur_mode->sequence_length;
++	ret = regmap_multi_reg_write(ov13858->regmap, reg_sequence,
++				     sequence_length);
++	if (ret) {
++		dev_err(ov13858->dev, "%s failed to set mode\n", __func__);
++		goto out;
++	}
++
++	/* Apply customized values from user */
++	ret =  __v4l2_ctrl_handler_setup(ov13858->sd.ctrl_handler);
++	if (ret)
++		goto out;
++
++	ret = cci_write(ov13858->regmap, OV13858_REG_MODE_SELECT,
++			OV13858_MODE_STREAMING, NULL);
++out:
++	if (ret)
++		pm_runtime_put(ov13858->dev);
++
++	return ret;
++}
++
++/* Stop streaming */
++static int ov13858_disable_streams(struct v4l2_subdev *sd,
++				   struct v4l2_subdev_state *state,
++				   u32 pad, u64 streams_mask)
++{
++	struct ov13858 *ov13858 = to_ov13858(sd);
++
++	cci_write(ov13858->regmap, OV13858_REG_MODE_SELECT,
++		  OV13858_MODE_STANDBY, NULL);
++	pm_runtime_put(ov13858->dev);
+ 
+ 	return 0;
+ }
+ 
+-static void ov13858_update_pad_format(const struct ov13858_mode *mode,
+-				      struct v4l2_subdev_format *fmt)
++static int ov13858_get_pm_resources(struct device *dev)
+ {
+-	fmt->format.width = mode->width;
+-	fmt->format.height = mode->height;
+-	fmt->format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+-	fmt->format.field = V4L2_FIELD_NONE;
++	struct v4l2_subdev *sd = dev_get_drvdata(dev);
++	struct ov13858 *ov13858 = to_ov13858(sd);
++	int i;
++
++	ov13858->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
++	if (IS_ERR(ov13858->reset_gpio))
++		return dev_err_probe(dev, PTR_ERR(ov13858->reset_gpio),
++				     "failed to get reset gpio\n");
++
++	for (i = 0; i < ARRAY_SIZE(ov13858_supply_names); i++)
++		ov13858->supplies[i].supply = ov13858_supply_names[i];
++
++	return devm_regulator_bulk_get(dev, ARRAY_SIZE(ov13858_supply_names),
++				       ov13858->supplies);
+ }
+ 
+-static int ov13858_do_get_pad_format(struct ov13858 *ov13858,
+-				     struct v4l2_subdev_state *sd_state,
+-				     struct v4l2_subdev_format *fmt)
++static int ov13858_power_off(struct device *dev)
+ {
+-	struct v4l2_mbus_framefmt *framefmt;
++	struct v4l2_subdev *sd = dev_get_drvdata(dev);
++	struct ov13858 *ov13858 = to_ov13858(sd);
+ 
+-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+-		framefmt = v4l2_subdev_state_get_format(sd_state, fmt->pad);
+-		fmt->format = *framefmt;
+-	} else {
+-		ov13858_update_pad_format(ov13858->cur_mode, fmt);
+-	}
++	gpiod_set_value_cansleep(ov13858->reset_gpio, 1);
++	regulator_bulk_disable(ARRAY_SIZE(ov13858_supply_names),
++			       ov13858->supplies);
++	clk_disable_unprepare(ov13858->img_clk);
+ 
+ 	return 0;
+ }
+ 
+-static int ov13858_get_pad_format(struct v4l2_subdev *sd,
+-				  struct v4l2_subdev_state *sd_state,
+-				  struct v4l2_subdev_format *fmt)
++static int ov13858_power_on(struct device *dev)
+ {
++	struct v4l2_subdev *sd = dev_get_drvdata(dev);
+ 	struct ov13858 *ov13858 = to_ov13858(sd);
+ 	int ret;
+ 
+-	mutex_lock(&ov13858->mutex);
+-	ret = ov13858_do_get_pad_format(ov13858, sd_state, fmt);
+-	mutex_unlock(&ov13858->mutex);
++	ret = clk_prepare_enable(ov13858->img_clk);
++	if (ret < 0) {
++		dev_err(dev, "failed to enable clock: %d\n", ret);
++		return ret;
++	}
+ 
+-	return ret;
++	ret = regulator_bulk_enable(ARRAY_SIZE(ov13858_supply_names),
++				    ov13858->supplies);
++	if (ret < 0) {
++		dev_err(dev, "failed to enable regulators: %d\n", ret);
++		clk_disable_unprepare(ov13858->img_clk);
++		return ret;
++	}
++
++	usleep_range(1000, 1500);
++
++	if (ov13858->reset_gpio) {
++		gpiod_set_value_cansleep(ov13858->reset_gpio, 0);
++		usleep_range(10000, 11000);
++	}
++
++	return 0;
+ }
+ 
+ static int
+-ov13858_set_pad_format(struct v4l2_subdev *sd,
++ov13858_set_format(struct v4l2_subdev *sd,
+ 		       struct v4l2_subdev_state *sd_state,
+ 		       struct v4l2_subdev_format *fmt)
+ {
+@@ -1357,8 +1414,6 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,
+ 	s64 pixel_rate;
+ 	s64 link_freq;
+ 
+-	mutex_lock(&ov13858->mutex);
+-
+ 	/* Only one raw bayer(GRBG) order is supported */
+ 	if (fmt->format.code != MEDIA_BUS_FMT_SGRBG10_1X10)
+ 		fmt->format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+@@ -1367,7 +1422,7 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,
+ 				      ARRAY_SIZE(supported_modes),
+ 				      width, height,
+ 				      fmt->format.width, fmt->format.height);
+-	ov13858_update_pad_format(mode, fmt);
++	ov13858_update_pad_format(mode, &fmt->format);
+ 	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
+ 		framefmt = v4l2_subdev_state_get_format(sd_state, fmt->pad);
+ 		*framefmt = fmt->format;
+@@ -1395,119 +1450,89 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,
+ 					 h_blank, 1, h_blank);
+ 	}
+ 
+-	mutex_unlock(&ov13858->mutex);
+-
+ 	return 0;
+ }
+ 
+-static int ov13858_get_skip_frames(struct v4l2_subdev *sd, u32 *frames)
++static int ov13858_enum_mbus_code(struct v4l2_subdev *sd,
++				  struct v4l2_subdev_state *sd_state,
++				  struct v4l2_subdev_mbus_code_enum *code)
+ {
+-	*frames = OV13858_NUM_OF_SKIP_FRAMES;
++	/* Only one bayer order(GRBG) is supported */
++	if (code->index > 0)
++		return -EINVAL;
++
++	code->code = MEDIA_BUS_FMT_SGRBG10_1X10;
+ 
+ 	return 0;
+ }
+ 
+-/* Start streaming */
+-static int ov13858_start_streaming(struct ov13858 *ov13858)
++static int ov13858_enum_frame_size(struct v4l2_subdev *sd,
++				   struct v4l2_subdev_state *sd_state,
++				   struct v4l2_subdev_frame_size_enum *fse)
+ {
+-	const struct ov13858_reg_list *reg_list;
+-	int ret, link_freq_index;
+-
+-	/* Get out of from software reset */
+-	ret = ov13858_write_reg(ov13858, OV13858_REG_SOFTWARE_RST,
+-				OV13858_REG_VALUE_08BIT, OV13858_SOFTWARE_RST);
+-	if (ret) {
+-		dev_err(ov13858->dev, "%s failed to set powerup registers\n",
+-			__func__);
+-		return ret;
+-	}
+-
+-	/* Setup PLL */
+-	link_freq_index = ov13858->cur_mode->link_freq_index;
+-	reg_list = &link_freq_configs[link_freq_index].reg_list;
+-	ret = ov13858_write_reg_list(ov13858, reg_list);
+-	if (ret) {
+-		dev_err(ov13858->dev, "%s failed to set plls\n", __func__);
+-		return ret;
+-	}
+-
+-	/* Apply default values of current mode */
+-	reg_list = &ov13858->cur_mode->reg_list;
+-	ret = ov13858_write_reg_list(ov13858, reg_list);
+-	if (ret) {
+-		dev_err(ov13858->dev, "%s failed to set mode\n", __func__);
+-		return ret;
+-	}
++	if (fse->index >= ARRAY_SIZE(supported_modes))
++		return -EINVAL;
+ 
+-	/* Apply customized values from user */
+-	ret =  __v4l2_ctrl_handler_setup(ov13858->sd.ctrl_handler);
+-	if (ret)
+-		return ret;
++	if (fse->code != MEDIA_BUS_FMT_SGRBG10_1X10)
++		return -EINVAL;
+ 
+-	return ov13858_write_reg(ov13858, OV13858_REG_MODE_SELECT,
+-				 OV13858_REG_VALUE_08BIT,
+-				 OV13858_MODE_STREAMING);
+-}
++	fse->min_width = supported_modes[fse->index].width;
++	fse->max_width = fse->min_width;
++	fse->min_height = supported_modes[fse->index].height;
++	fse->max_height = fse->min_height;
+ 
+-/* Stop streaming */
+-static int ov13858_stop_streaming(struct ov13858 *ov13858)
+-{
+-	return ov13858_write_reg(ov13858, OV13858_REG_MODE_SELECT,
+-				 OV13858_REG_VALUE_08BIT, OV13858_MODE_STANDBY);
++	return 0;
+ }
+ 
+-static int ov13858_set_stream(struct v4l2_subdev *sd, int enable)
++static int ov13858_get_selection(struct v4l2_subdev *sd,
++				 struct v4l2_subdev_state *sd_state,
++				 struct v4l2_subdev_selection *sel)
+ {
+ 	struct ov13858 *ov13858 = to_ov13858(sd);
+-	int ret = 0;
+ 
+-	mutex_lock(&ov13858->mutex);
+-
+-	if (enable) {
+-		ret = pm_runtime_resume_and_get(ov13858->dev);
+-		if (ret < 0)
+-			goto err_unlock;
++	struct v4l2_rect bounds = {
++		.left = 0,
++		.top = 0,
++		.width = ov13858->cur_mode->width,
++		.height = ov13858->cur_mode->height,
++	};
++	struct v4l2_rect crop = {
++		.left = 0,
++		.top = 0,
++		.width = ov13858->cur_mode->width,
++		.height = ov13858->cur_mode->height,
++	};
++
++	if (sel->pad != 0)
++		return -EINVAL;
+ 
+-		/*
+-		 * Apply default & customized values
+-		 * and then start streaming.
+-		 */
+-		ret = ov13858_start_streaming(ov13858);
+-		if (ret)
+-			goto err_rpm_put;
+-	} else {
+-		ov13858_stop_streaming(ov13858);
+-		pm_runtime_put(ov13858->dev);
++	switch (sel->target) {
++	case V4L2_SEL_TGT_CROP:
++	case V4L2_SEL_TGT_CROP_DEFAULT:
++		sel->r = crop;
++		return 0;
++	case V4L2_SEL_TGT_CROP_BOUNDS:
++		sel->r = bounds;
++		return 0;
++	default:
++		return -EINVAL;
+ 	}
++}
+ 
+-	mutex_unlock(&ov13858->mutex);
+-
+-	return ret;
++static int ov13858_init_state(struct v4l2_subdev *sd,
++			      struct v4l2_subdev_state *sd_state)
++{
++	struct ov13858 *ov13858 = to_ov13858(sd);
+ 
+-err_rpm_put:
+-	pm_runtime_put(ov13858->dev);
+-err_unlock:
+-	mutex_unlock(&ov13858->mutex);
++	ov13858_update_pad_format(ov13858->cur_mode,
++				  v4l2_subdev_state_get_format(sd_state, 0));
+ 
+-	return ret;
++	return 0;
+ }
+ 
+-/* Verify chip ID */
+-static int ov13858_identify_module(struct ov13858 *ov13858)
++static int ov13858_get_skip_frames(struct v4l2_subdev *sd, u32 *frames)
+ {
+-	int ret;
+-	u32 val;
+-
+-	ret = ov13858_read_reg(ov13858, OV13858_REG_CHIP_ID,
+-			       OV13858_REG_VALUE_24BIT, &val);
+-	if (ret)
+-		return ret;
+-
+-	if (val != OV13858_CHIP_ID) {
+-		dev_err(ov13858->dev, "chip id mismatch: %x!=%x\n",
+-			OV13858_CHIP_ID, val);
+-		return -EIO;
+-	}
++	*frames = OV13858_NUM_OF_SKIP_FRAMES;
+ 
+ 	return 0;
+ }
+@@ -1519,14 +1544,17 @@ static const struct v4l2_subdev_core_ops ov13858_core_ops = {
+ };
+ 
+ static const struct v4l2_subdev_video_ops ov13858_video_ops = {
+-	.s_stream = ov13858_set_stream,
++	.s_stream = v4l2_subdev_s_stream_helper,
+ };
+ 
+ static const struct v4l2_subdev_pad_ops ov13858_pad_ops = {
+ 	.enum_mbus_code = ov13858_enum_mbus_code,
+-	.get_fmt = ov13858_get_pad_format,
+-	.set_fmt = ov13858_set_pad_format,
++	.get_fmt = v4l2_subdev_get_fmt,
++	.set_fmt = ov13858_set_format,
+ 	.enum_frame_size = ov13858_enum_frame_size,
++	.get_selection = ov13858_get_selection,
++	.enable_streams = ov13858_enable_streams,
++	.disable_streams = ov13858_disable_streams,
+ };
+ 
+ static const struct v4l2_subdev_sensor_ops ov13858_sensor_ops = {
+@@ -1545,121 +1573,94 @@ static const struct media_entity_operations ov13858_subdev_entity_ops = {
+ };
+ 
+ static const struct v4l2_subdev_internal_ops ov13858_internal_ops = {
+-	.open = ov13858_open,
++	.init_state = ov13858_init_state,
+ };
+ 
+-/* Initialize control handlers */
+-static int ov13858_init_controls(struct ov13858 *ov13858)
++/* Verify chip ID */
++static int ov13858_identify_module(struct ov13858 *ov13858)
+ {
+-	struct v4l2_fwnode_device_properties props;
+-	struct v4l2_ctrl_handler *ctrl_hdlr;
+-	s64 exposure_max;
+-	s64 vblank_def;
+-	s64 vblank_min;
+-	s64 hblank;
+-	s64 pixel_rate_min;
+-	s64 pixel_rate_max;
+-	const struct ov13858_mode *mode;
+ 	int ret;
++	u64 chip_id;
+ 
+-	ctrl_hdlr = &ov13858->ctrl_handler;
+-	ret = v4l2_ctrl_handler_init(ctrl_hdlr, 10);
++	ret = cci_read(ov13858->regmap, OV13858_REG_CHIP_ID, &chip_id, NULL);
+ 	if (ret)
+ 		return ret;
+ 
+-	mutex_init(&ov13858->mutex);
+-	ctrl_hdlr->lock = &ov13858->mutex;
+-	ov13858->link_freq = v4l2_ctrl_new_int_menu(ctrl_hdlr,
+-				&ov13858_ctrl_ops,
+-				V4L2_CID_LINK_FREQ,
+-				OV13858_NUM_OF_LINK_FREQS - 1,
+-				0,
+-				link_freq_menu_items);
+-	if (ov13858->link_freq)
+-		ov13858->link_freq->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+-
+-	pixel_rate_max = link_freq_to_pixel_rate(link_freq_menu_items[0]);
+-	pixel_rate_min = link_freq_to_pixel_rate(link_freq_menu_items[1]);
+-	/* By default, PIXEL_RATE is read only */
+-	ov13858->pixel_rate = v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops,
+-						V4L2_CID_PIXEL_RATE,
+-						pixel_rate_min, pixel_rate_max,
+-						1, pixel_rate_max);
+-
+-	mode = ov13858->cur_mode;
+-	vblank_def = mode->vts_def - mode->height;
+-	vblank_min = mode->vts_min - mode->height;
+-	ov13858->vblank = v4l2_ctrl_new_std(
+-				ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_VBLANK,
+-				vblank_min, OV13858_VTS_MAX - mode->height, 1,
+-				vblank_def);
+-
+-	hblank = link_freq_configs[mode->link_freq_index].pixels_per_line -
+-		 mode->width;
+-	ov13858->hblank = v4l2_ctrl_new_std(
+-				ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_HBLANK,
+-				hblank, hblank, 1, hblank);
+-	if (ov13858->hblank)
+-		ov13858->hblank->flags |= V4L2_CTRL_FLAG_READ_ONLY;
+-
+-	exposure_max = mode->vts_def - 8;
+-	ov13858->exposure = v4l2_ctrl_new_std(
+-				ctrl_hdlr, &ov13858_ctrl_ops,
+-				V4L2_CID_EXPOSURE, OV13858_EXPOSURE_MIN,
+-				exposure_max, OV13858_EXPOSURE_STEP,
+-				OV13858_EXPOSURE_DEFAULT);
++	if (chip_id != OV13858_CHIP_ID) {
++		dev_err(ov13858->dev, "chip id mismatch: %x!=%llx\n",
++			OV13858_CHIP_ID, chip_id);
++		return -EIO;
++	}
+ 
+-	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_ANALOGUE_GAIN,
+-			  OV13858_ANA_GAIN_MIN, OV13858_ANA_GAIN_MAX,
+-			  OV13858_ANA_GAIN_STEP, OV13858_ANA_GAIN_DEFAULT);
++	return 0;
++}
+ 
+-	/* Digital gain */
+-	v4l2_ctrl_new_std(ctrl_hdlr, &ov13858_ctrl_ops, V4L2_CID_DIGITAL_GAIN,
+-			  OV13858_DGTL_GAIN_MIN, OV13858_DGTL_GAIN_MAX,
+-			  OV13858_DGTL_GAIN_STEP, OV13858_DGTL_GAIN_DEFAULT);
++static int ov13858_check_hwcfg(struct ov13858 *ov13858)
++{
++	struct v4l2_fwnode_endpoint bus_cfg = {
++		.bus_type = V4L2_MBUS_CSI2_DPHY,
++	};
++	struct fwnode_handle *fwnode = dev_fwnode(ov13858->dev);
++	struct fwnode_handle *ep;
++	unsigned long link_freq_bitmap;
++	int ret;
+ 
+-	v4l2_ctrl_new_std_menu_items(ctrl_hdlr, &ov13858_ctrl_ops,
+-				     V4L2_CID_TEST_PATTERN,
+-				     ARRAY_SIZE(ov13858_test_pattern_menu) - 1,
+-				     0, 0, ov13858_test_pattern_menu);
+-	if (ctrl_hdlr->error) {
+-		ret = ctrl_hdlr->error;
+-		dev_err(ov13858->dev, "%s control init failed (%d)\n",
+-			__func__, ret);
+-		goto error;
+-	}
++	if (!fwnode)
++		return -ENXIO;
+ 
+-	ret = v4l2_fwnode_device_parse(ov13858->dev, &props);
+-	if (ret)
+-		goto error;
++	ep = fwnode_graph_get_endpoint_by_id(fwnode, 0, 0, 0);
++	if (!ep)
++		return dev_err_probe(ov13858->dev, -EPROBE_DEFER,
++				     "waiting for fwnode graph endpoint\n");
+ 
+-	ret = v4l2_ctrl_new_fwnode_properties(ctrl_hdlr, &ov13858_ctrl_ops,
+-					      &props);
++	ret = v4l2_fwnode_endpoint_alloc_parse(ep, &bus_cfg);
++	fwnode_handle_put(ep);
+ 	if (ret)
+-		goto error;
+-
+-	ov13858->sd.ctrl_handler = ctrl_hdlr;
++		return dev_err_probe(ov13858->dev, ret,
++				     "parsing endpoint failed\n");
++
++	if (bus_cfg.bus.mipi_csi2.num_data_lanes != OV13858_MIPI_LANES) {
++		ret = dev_err_probe(ov13858->dev, -EINVAL,
++				    "only 4 data lanes are supported, got %u\n",
++				    bus_cfg.bus.mipi_csi2.num_data_lanes);
++		goto out;
++	}
+ 
+-	return 0;
+-
+-error:
+-	v4l2_ctrl_handler_free(ctrl_hdlr);
+-	mutex_destroy(&ov13858->mutex);
++	ret = v4l2_link_freq_to_bitmap(ov13858->dev,
++				       bus_cfg.link_frequencies,
++				       bus_cfg.nr_of_link_frequencies,
++				       link_freq_menu_items,
++				       ARRAY_SIZE(link_freq_menu_items),
++				       &link_freq_bitmap);
+ 
++out:
++	v4l2_fwnode_endpoint_free(&bus_cfg);
+ 	return ret;
+ }
+ 
+-static void ov13858_free_controls(struct ov13858 *ov13858)
++static void ov13858_remove(struct i2c_client *client)
+ {
+-	v4l2_ctrl_handler_free(ov13858->sd.ctrl_handler);
+-	mutex_destroy(&ov13858->mutex);
++	struct v4l2_subdev *sd = i2c_get_clientdata(client);
++	struct ov13858 *ov13858 = to_ov13858(sd);
++
++	v4l2_async_unregister_subdev(sd);
++	v4l2_subdev_cleanup(sd);
++	media_entity_cleanup(&sd->entity);
++	v4l2_ctrl_handler_free(sd->ctrl_handler);
++
++	pm_runtime_disable(ov13858->dev);
++
++	if (!pm_runtime_status_suspended(ov13858->dev)) {
++		ov13858_power_off(ov13858->dev);
++		pm_runtime_set_suspended(ov13858->dev);
++	}
+ }
+ 
+ static int ov13858_probe(struct i2c_client *client)
+ {
+ 	struct ov13858 *ov13858;
+ 	unsigned long freq;
+-	int ret;
++	int i, ret;
+ 
+ 	ov13858 = devm_kzalloc(&client->dev, sizeof(*ov13858), GFP_KERNEL);
+ 	if (!ov13858)
+@@ -1667,13 +1668,13 @@ static int ov13858_probe(struct i2c_client *client)
+ 
+ 	ov13858->dev = &client->dev;
+ 
+-	ov13858->clk = devm_v4l2_sensor_clk_get(ov13858->dev, NULL);
+-	if (IS_ERR(ov13858->clk))
+-		return dev_err_probe(ov13858->dev, PTR_ERR(ov13858->clk),
++	ov13858->img_clk = devm_v4l2_sensor_clk_get(ov13858->dev, NULL);
++	if (IS_ERR(ov13858->img_clk))
++		return dev_err_probe(ov13858->dev, PTR_ERR(ov13858->img_clk),
+ 				     "failed to get clock\n");
+ 
+-	freq = clk_get_rate(ov13858->clk);
+-	if (freq != 19200000)
++	freq = clk_get_rate(ov13858->img_clk);
++	if (freq != OV13858_MCLK)
+ 		return dev_err_probe(ov13858->dev, -EINVAL,
+ 				     "external clock %lu is not supported\n",
+ 				     freq);
+@@ -1681,11 +1682,27 @@ static int ov13858_probe(struct i2c_client *client)
+ 	/* Initialize subdev */
+ 	v4l2_i2c_subdev_init(&ov13858->sd, client, &ov13858_subdev_ops);
+ 
++	ret = ov13858_check_hwcfg(ov13858);
++	if (ret)
++		return ret;
++
++	ret = ov13858_get_pm_resources(ov13858->dev);
++	if (ret)
++		return ret;
++
++	ov13858->regmap = devm_cci_regmap_init_i2c(client, 16);
++	if (IS_ERR(ov13858->regmap))
++		return PTR_ERR(ov13858->regmap);
++
++	ret = ov13858_power_on(ov13858->dev);
++	if (ret)
++		return ret;
++
+ 	/* Check module identity */
+ 	ret = ov13858_identify_module(ov13858);
+ 	if (ret) {
+ 		dev_err(ov13858->dev, "failed to find sensor: %d\n", ret);
+-		return ret;
++		goto error_power_off;
+ 	}
+ 
+ 	/* Set default mode to max resolution */
+@@ -1693,7 +1710,7 @@ static int ov13858_probe(struct i2c_client *client)
+ 
+ 	ret = ov13858_init_controls(ov13858);
+ 	if (ret)
+-		return ret;
++		goto error_power_off;
+ 
+ 	/* Initialize subdev */
+ 	ov13858->sd.internal_ops = &ov13858_internal_ops;
+@@ -1710,41 +1727,43 @@ static int ov13858_probe(struct i2c_client *client)
+ 		goto error_handler_free;
+ 	}
+ 
+-	ret = v4l2_async_register_subdev_sensor(&ov13858->sd);
+-	if (ret < 0)
++	ov13858->sd.state_lock = ov13858->ctrl_handler.lock;
++	ret = v4l2_subdev_init_finalize(&ov13858->sd);
++	if (ret < 0) {
++		dev_err(ov13858->dev, "failed to init subdev: %d", ret);
+ 		goto error_media_entity;
++	}
+ 
+-	/*
+-	 * Device is already turned on by i2c-core with ACPI domain PM.
+-	 * Enable runtime PM and turn off the device.
+-	 */
+ 	pm_runtime_set_active(ov13858->dev);
+ 	pm_runtime_enable(ov13858->dev);
++
++	ret = v4l2_async_register_subdev_sensor(&ov13858->sd);
++	if (ret < 0)
++		goto error_v4l2_subdev;
++
+ 	pm_runtime_idle(ov13858->dev);
+ 
+ 	return 0;
+ 
++error_v4l2_subdev:
++	pm_runtime_disable(ov13858->dev);
++	pm_runtime_set_suspended(ov13858->dev);
++	v4l2_subdev_cleanup(&ov13858->sd);
++
+ error_media_entity:
+ 	media_entity_cleanup(&ov13858->sd.entity);
+ 
+ error_handler_free:
+-	ov13858_free_controls(ov13858);
+-	dev_err(ov13858->dev, "%s failed:%d\n", __func__, ret);
++	v4l2_ctrl_handler_free(ov13858->sd.ctrl_handler);
+ 
++error_power_off:
++	ov13858_power_off(ov13858->dev);
+ 	return ret;
+ }
+ 
+-static void ov13858_remove(struct i2c_client *client)
+-{
+-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+-	struct ov13858 *ov13858 = to_ov13858(sd);
+-
+-	v4l2_async_unregister_subdev(sd);
+-	media_entity_cleanup(&sd->entity);
+-	ov13858_free_controls(ov13858);
+-
+-	pm_runtime_disable(ov13858->dev);
+-}
++static DEFINE_RUNTIME_DEV_PM_OPS(ov13858_pm_ops,
++				 ov13858_power_off,
++				 ov13858_power_on, NULL);
+ 
+ static const struct i2c_device_id ov13858_id_table[] = {
+ 	{ .name = "ov13858" },
+@@ -1753,6 +1772,13 @@ static const struct i2c_device_id ov13858_id_table[] = {
+ 
+ MODULE_DEVICE_TABLE(i2c, ov13858_id_table);
+ 
++static const struct of_device_id ov13858_of_match[] = {
++	{ .compatible = "ovti,ov13858" },
++	{ /* sentinel */ }
++};
++
++MODULE_DEVICE_TABLE(of, ov13858_of_match);
++
+ #ifdef CONFIG_ACPI
+ static const struct acpi_device_id ov13858_acpi_ids[] = {
+ 	{"OVTID858"},
+@@ -1765,7 +1791,9 @@ MODULE_DEVICE_TABLE(acpi, ov13858_acpi_ids);
+ static struct i2c_driver ov13858_i2c_driver = {
+ 	.driver = {
+ 		.name = "ov13858",
++		.pm = pm_sleep_ptr(&ov13858_pm_ops),
+ 		.acpi_match_table = ACPI_PTR(ov13858_acpi_ids),
++		.of_match_table = ov13858_of_match,
+ 	},
+ 	.probe = ov13858_probe,
+ 	.remove = ov13858_remove,
+diff --git a/drivers/media/platform/qcom/camss/Kconfig b/drivers/media/platform/qcom/camss/Kconfig
+index 4eda48cb1adf049a7fb6cb59b9da3c0870fe57f4..1edc5e5a1829e033812bbadfa0de00625fd0c93a 100644
+--- a/drivers/media/platform/qcom/camss/Kconfig
++++ b/drivers/media/platform/qcom/camss/Kconfig
+@@ -7,3 +7,4 @@ config VIDEO_QCOM_CAMSS
+ 	select VIDEO_V4L2_SUBDEV_API
+ 	select VIDEOBUF2_DMA_SG
+ 	select V4L2_FWNODE
++	select PHY_QCOM_MIPI_CSI2
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+index dac8d2ecf79957dc05c5524dc439791ce097c785..56361fee0cf14bcee9343b47884ccf7dd7618113 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c
+@@ -1141,6 +1141,7 @@ static bool csiphy_is_gen2(u32 version)
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		ret = true;
+ 		break;
+ 	}
+@@ -1240,6 +1241,7 @@ static int csiphy_init(struct csiphy_device *csiphy)
+ 		regs->lane_array_size = ARRAY_SIZE(lane_regs_sc8280xp);
+ 		break;
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		regs->lane_regs = &lane_regs_x1e80100[0];
+ 		regs->lane_array_size = ARRAY_SIZE(lane_regs_x1e80100);
+ 		regs->offset = 0x1000;
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
+index 539ac4888b608b3cc789728365e7e8a39fc54e78..b740edd0c67e604b7c571571b24c86f5cf81eb17 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
+@@ -7,12 +7,14 @@
+  * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
+  * Copyright (C) 2016-2018 Linaro Ltd.
+  */
++#include <dt-bindings/phy/phy.h>
+ #include <linux/clk.h>
+ #include <linux/delay.h>
+ #include <linux/interrupt.h>
+ #include <linux/io.h>
+ #include <linux/kernel.h>
+ #include <linux/of.h>
++#include <linux/phy/phy.h>
+ #include <linux/platform_device.h>
+ #include <linux/pm_runtime.h>
+ #include <media/media-entity.h>
+@@ -131,10 +133,10 @@ static u8 csiphy_get_bpp(const struct csiphy_format_info *formats,
+ }
+ 
+ /*
+- * csiphy_set_clock_rates - Calculate and set clock rates on CSIPHY module
++ * csiphy_set_clock_rates_legacy - Calculate and set clock rates on CSIPHY module
+  * @csiphy: CSIPHY device
+  */
+-static int csiphy_set_clock_rates(struct csiphy_device *csiphy)
++static int csiphy_set_clock_rates_legacy(struct csiphy_device *csiphy)
+ {
+ 	struct device *dev = csiphy->camss->dev;
+ 	s64 link_freq;
+@@ -200,7 +202,7 @@ static int csiphy_set_clock_rates(struct csiphy_device *csiphy)
+  *
+  * Return 0 on success or a negative error code otherwise
+  */
+-static int csiphy_set_power(struct v4l2_subdev *sd, int on)
++static int csiphy_set_power_legacy(struct v4l2_subdev *sd, int on)
+ {
+ 	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
+ 	struct device *dev = csiphy->camss->dev;
+@@ -219,7 +221,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)
+ 			return ret;
+ 		}
+ 
+-		ret = csiphy_set_clock_rates(csiphy);
++		ret = csiphy_set_clock_rates_legacy(csiphy);
+ 		if (ret < 0) {
+ 			regulator_bulk_disable(csiphy->num_supplies,
+ 					       csiphy->supplies);
+@@ -254,7 +256,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)
+ }
+ 
+ /*
+- * csiphy_stream_on - Enable streaming on CSIPHY module
++ * csiphy_stream_on_legacy - Enable streaming on CSIPHY module
+  * @csiphy: CSIPHY device
+  *
+  * Helper function to enable streaming on CSIPHY module.
+@@ -262,7 +264,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)
+  *
+  * Return 0 on success or a negative error code otherwise
+  */
+-static int csiphy_stream_on(struct csiphy_device *csiphy)
++static int csiphy_stream_on_legacy(struct csiphy_device *csiphy)
+ {
+ 	struct csiphy_config *cfg = &csiphy->cfg;
+ 	s64 link_freq;
+@@ -306,11 +308,89 @@ static int csiphy_stream_on(struct csiphy_device *csiphy)
+  *
+  * Helper function to disable streaming on CSIPHY module
+  */
+-static void csiphy_stream_off(struct csiphy_device *csiphy)
++static void csiphy_stream_off_legacy(struct csiphy_device *csiphy)
+ {
+ 	csiphy->res->hw_ops->lanes_disable(csiphy, &csiphy->cfg);
+ }
+ 
++/*
++ * csiphy_stream_on - Enable streaming on CSIPHY module
++ * @csiphy: CSIPHY device
++ *
++ * Helper function to enable streaming on CSIPHY module.
++ * Main configuration of CSIPHY module is also done here.
++ *
++ * Return 0 on success or a negative error code otherwise
++ */
++static int csiphy_stream_on(struct csiphy_device *csiphy)
++{
++	u8 bpp = csiphy_get_bpp(csiphy->res->formats->formats, csiphy->res->formats->nformats,
++				csiphy->fmt[MSM_CSIPHY_PAD_SINK].code);
++	struct csiphy_lanes_cfg *lncfg = &csiphy->cfg.csi2->lane_cfg;
++	struct phy_configure_opts_mipi_dphy *dphy_cfg;
++	union phy_configure_opts dphy_opts = { 0 };
++	struct device *dev = csiphy->camss->dev;
++	u8 num_lanes = lncfg->num_data;
++	s64 link_freq;
++	int i;
++	int ret;
++
++	dphy_cfg = &dphy_opts.mipi_dphy;
++
++	link_freq = camss_get_link_freq(&csiphy->subdev.entity, bpp, num_lanes);
++
++	if (link_freq < 0) {
++		dev_err(dev,
++			"Cannot get CSI2 transmitter's link frequency\n");
++		return -EINVAL;
++	}
++
++	phy_mipi_dphy_get_default_config_for_hsclk(link_freq, num_lanes, dphy_cfg);
++
++	phy_set_mode(csiphy->phy, PHY_MODE_MIPI_DPHY);
++
++	ret = phy_configure(csiphy->phy, &dphy_opts);
++	if (ret) {
++		dev_err(dev, "failed to configure MIPI D-PHY\n");
++		goto error;
++	}
++
++	return phy_power_on(csiphy->phy);
++
++error:
++	return ret;
++}
++
++/*
++ * csiphy_stream_off - Disable streaming on CSIPHY module
++ * @csiphy: CSIPHY device
++ *
++ * Helper function to disable streaming on CSIPHY module
++ */
++static void csiphy_stream_off(struct csiphy_device *csiphy)
++{
++	phy_power_off(csiphy->phy);
++}
++
++/*
++ * csiphy_set_stream - Enable/disable streaming on CSIPHY module
++ * @sd: CSIPHY V4L2 subdevice
++ * @enable: Requested streaming state
++ *
++ * Return 0 on success or a negative error code otherwise
++ */
++static int csiphy_set_stream_legacy(struct v4l2_subdev *sd, int enable)
++{
++	struct csiphy_device *csiphy = v4l2_get_subdevdata(sd);
++	int ret = 0;
++
++	if (enable)
++		ret = csiphy_stream_on_legacy(csiphy);
++	else
++		csiphy_stream_off_legacy(csiphy);
++
++	return ret;
++}
+ 
+ /*
+  * csiphy_set_stream - Enable/disable streaming on CSIPHY module
+@@ -572,16 +652,16 @@ csiphy_match_clock_name(const char *clock_name, const char *format, ...)
+ }
+ 
+ /*
+- * msm_csiphy_subdev_init - Initialize CSIPHY device structure and resources
++ * msm_csiphy_subdev_init_legacy - Initialize CSIPHY device structure and resources
+  * @csiphy: CSIPHY device
+  * @res: CSIPHY module resources table
+  * @id: CSIPHY module id
+  *
+  * Return 0 on success or a negative error code otherwise
+  */
+-int msm_csiphy_subdev_init(struct camss *camss,
+-			   struct csiphy_device *csiphy,
+-			   const struct camss_subdev_resources *res, u8 id)
++int msm_csiphy_subdev_init_legacy(struct camss *camss,
++				  struct csiphy_device *csiphy,
++				  const struct camss_subdev_resources *res, u8 id)
+ {
+ 	struct device *dev = camss->dev;
+ 	struct platform_device *pdev = to_platform_device(dev);
+@@ -709,6 +789,60 @@ int msm_csiphy_subdev_init(struct camss *camss,
+ 	return ret;
+ }
+ 
++/*
++ * msm_csiphy_subdev_init - Initialize CSIPHY device structure and resources
++ * @csiphy: CSIPHY device
++ * @res: CSIPHY module resources table
++ * @id: CSIPHY module id
++ *
++ * Return 0 on success or a negative error code otherwise
++ */
++int msm_csiphy_subdev_init(struct camss *camss,
++			   struct csiphy_device *csiphy,
++			   const struct camss_subdev_resources *res, u8 id)
++{
++	struct device *dev = camss->dev;
++	struct of_phandle_args args;
++	int idx;
++	int ret;
++
++	snprintf(csiphy->name, ARRAY_SIZE(csiphy->name), "csiphy%d", id);
++
++	idx = of_property_match_string(dev->of_node, "phy-names", csiphy->name);
++	if (idx < 0) {
++		dev_err(dev, "%s not found\n", csiphy->name);
++		return idx;
++	}
++
++	ret = of_parse_phandle_with_args(dev->of_node, "phys", "#phy-cells", idx, &args);
++	if (ret < 0) {
++		dev_err(dev, "unable to parse phys args %s\n", csiphy->name);
++		return ret;
++	}
++
++	if (!of_device_is_available(args.np))
++		goto put_np;
++
++	csiphy->phy = devm_phy_get(dev, csiphy->name);
++	if (IS_ERR(csiphy->phy)) {
++		ret = PTR_ERR(csiphy->phy);
++		goto put_np;
++	}
++
++	csiphy->camss = camss;
++	csiphy->id = id;
++	csiphy->res = &res->csiphy;
++
++	ret = phy_init(csiphy->phy);
++	if (ret)
++		dev_err(dev, "phy %s init fail %d\n", csiphy->name, ret);
++
++put_np:
++	of_node_put(args.np);
++
++	return ret;
++}
++
+ /*
+  * csiphy_link_setup - Setup CSIPHY connections
+  * @entity: Pointer to media entity structure
+@@ -743,8 +877,12 @@ static int csiphy_link_setup(struct media_entity *entity,
+ 	return 0;
+ }
+ 
+-static const struct v4l2_subdev_core_ops csiphy_core_ops = {
+-	.s_power = csiphy_set_power,
++static const struct v4l2_subdev_core_ops csiphy_core_ops_legacy = {
++	.s_power = csiphy_set_power_legacy,
++};
++
++static const struct v4l2_subdev_video_ops csiphy_video_ops_legacy = {
++	.s_stream = csiphy_set_stream_legacy,
+ };
+ 
+ static const struct v4l2_subdev_video_ops csiphy_video_ops = {
+@@ -758,8 +896,13 @@ static const struct v4l2_subdev_pad_ops csiphy_pad_ops = {
+ 	.set_fmt = csiphy_set_format,
+ };
+ 
++static const struct v4l2_subdev_ops csiphy_v4l2_ops_legacy = {
++	.core = &csiphy_core_ops_legacy,
++	.video = &csiphy_video_ops_legacy,
++	.pad = &csiphy_pad_ops,
++};
++
+ static const struct v4l2_subdev_ops csiphy_v4l2_ops = {
+-	.core = &csiphy_core_ops,
+ 	.video = &csiphy_video_ops,
+ 	.pad = &csiphy_pad_ops,
+ };
+@@ -788,7 +931,11 @@ int msm_csiphy_register_entity(struct csiphy_device *csiphy,
+ 	struct device *dev = csiphy->camss->dev;
+ 	int ret;
+ 
+-	v4l2_subdev_init(sd, &csiphy_v4l2_ops);
++	if (IS_ERR(csiphy->phy))
++		v4l2_subdev_init(sd, &csiphy_v4l2_ops_legacy);
++	else
++		v4l2_subdev_init(sd, &csiphy_v4l2_ops);
++
+ 	sd->internal_ops = &csiphy_v4l2_internal_ops;
+ 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
+ 	snprintf(sd->name, ARRAY_SIZE(sd->name), "%s%d",
+@@ -828,6 +975,8 @@ int msm_csiphy_register_entity(struct csiphy_device *csiphy,
+  */
+ void msm_csiphy_unregister_entity(struct csiphy_device *csiphy)
+ {
++	if (!IS_ERR(csiphy->phy))
++		phy_exit(csiphy->phy);
+ 	v4l2_device_unregister_subdev(&csiphy->subdev);
+ 	media_entity_cleanup(&csiphy->subdev.entity);
+ }
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.h b/drivers/media/platform/qcom/camss/camss-csiphy.h
+index 9d9657b82f748d02bf6be6139480cfbd0c5001c9..1879826034aac75ca6936a4edf50b222aa8fd00d 100644
+--- a/drivers/media/platform/qcom/camss/camss-csiphy.h
++++ b/drivers/media/platform/qcom/camss/camss-csiphy.h
+@@ -12,6 +12,7 @@
+ 
+ #include <linux/clk.h>
+ #include <linux/interrupt.h>
++#include <linux/phy/phy.h>
+ #include <media/media-entity.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-mediabus.h>
+@@ -97,6 +98,7 @@ struct csiphy_device_regs {
+ 
+ struct csiphy_device {
+ 	struct camss *camss;
++	struct phy *phy;
+ 	u8 id;
+ 	struct v4l2_subdev subdev;
+ 	struct media_pad pads[MSM_CSIPHY_PADS_NUM];
+@@ -104,6 +106,7 @@ struct csiphy_device {
+ 	void __iomem *base_clk_mux;
+ 	u32 irq;
+ 	char irq_name[30];
++	char name[16];
+ 	struct camss_clock *clock;
+ 	bool *rate_set;
+ 	int nclocks;
+@@ -118,6 +121,10 @@ struct csiphy_device {
+ 
+ struct camss_subdev_resources;
+ 
++int msm_csiphy_subdev_init_legacy(struct camss *camss,
++				  struct csiphy_device *csiphy,
++				  const struct camss_subdev_resources *res, u8 id);
++
+ int msm_csiphy_subdev_init(struct camss *camss,
+ 			   struct csiphy_device *csiphy,
+ 			   const struct camss_subdev_resources *res, u8 id);
+diff --git a/drivers/media/platform/qcom/camss/camss-vfe.c b/drivers/media/platform/qcom/camss/camss-vfe.c
+index 319d191589884777bced456867e5a2a4211a2770..973a78da9045a74e346af3c0cf650e7b7969e386 100644
+--- a/drivers/media/platform/qcom/camss/camss-vfe.c
++++ b/drivers/media/platform/qcom/camss/camss-vfe.c
+@@ -354,6 +354,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		switch (sink_code) {
+ 		case MEDIA_BUS_FMT_YUYV8_1X16:
+ 		{
+@@ -2014,6 +2015,7 @@ static int vfe_bpl_align_rdi(struct vfe_device *vfe)
+ 	case CAMSS_8650:
+ 	case CAMSS_8775P:
+ 	case CAMSS_X1E80100:
++	case CAMSS_X1P42100:
+ 		ret = 16;
+ 		break;
+ 	default:
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+index 2123f6388e3d7eafe669efd6b033e22d8eb5cf79..70cabfce1b2be33b9d6fa9c23d672b8dc2aa677e 100644
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -16,6 +16,7 @@
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+ #include <linux/of_graph.h>
++#include <linux/of_platform.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/pm_domain.h>
+ #include <linux/slab.h>
+@@ -4190,15 +4191,6 @@ static const struct resources_icc icc_res_sa8775p[] = {
+ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {
+ 	/* CSIPHY0 */
+ 	{
+-		.regulators = {
+-			{ .supply = "vdd-csiphy-0p8", .init_load_uA = 105000 },
+-			{ .supply = "vdd-csiphy-1p2", .init_load_uA = 58900 }
+-		},
+-		.clock = { "csiphy0", "csiphy0_timer" },
+-		.clock_rate = { { 300000000, 400000000, 480000000 },
+-				{ 266666667, 400000000 } },
+-		.reg = { "csiphy0" },
+-		.interrupt = { "csiphy0" },
+ 		.csiphy = {
+ 			.id = 0,
+ 			.hw_ops = &csiphy_ops_3ph_1_0,
+@@ -4207,15 +4199,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {
+ 	},
+ 	/* CSIPHY1 */
+ 	{
+-		.regulators = {
+-			{ .supply = "vdd-csiphy-0p8", .init_load_uA = 105000 },
+-			{ .supply = "vdd-csiphy-1p2", .init_load_uA = 58900 }
+-		},
+-		.clock = { "csiphy1", "csiphy1_timer" },
+-		.clock_rate = { { 300000000, 400000000, 480000000 },
+-				{ 266666667, 400000000 } },
+-		.reg = { "csiphy1" },
+-		.interrupt = { "csiphy1" },
+ 		.csiphy = {
+ 			.id = 1,
+ 			.hw_ops = &csiphy_ops_3ph_1_0,
+@@ -4224,15 +4207,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {
+ 	},
+ 	/* CSIPHY2 */
+ 	{
+-		.regulators = {
+-			{ .supply = "vdd-csiphy-0p8", .init_load_uA = 105000 },
+-			{ .supply = "vdd-csiphy-1p2", .init_load_uA = 58900 }
+-		},
+-		.clock = { "csiphy2", "csiphy2_timer" },
+-		.clock_rate = { { 300000000, 400000000, 480000000 },
+-				{ 266666667, 400000000 } },
+-		.reg = { "csiphy2" },
+-		.interrupt = { "csiphy2" },
+ 		.csiphy = {
+ 			.id = 2,
+ 			.hw_ops = &csiphy_ops_3ph_1_0,
+@@ -4241,15 +4215,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {
+ 	},
+ 	/* CSIPHY4 */
+ 	{
+-		.regulators = {
+-			{ .supply = "vdd-csiphy-0p8", .init_load_uA = 105000 },
+-			{ .supply = "vdd-csiphy-1p2", .init_load_uA = 58900 }
+-		},
+-		.clock = { "csiphy4", "csiphy4_timer" },
+-		.clock_rate = { { 300000000, 400000000, 480000000 },
+-				{ 266666667, 400000000 } },
+-		.reg = { "csiphy4" },
+-		.interrupt = { "csiphy4" },
+ 		.csiphy = {
+ 			.id = 4,
+ 			.hw_ops = &csiphy_ops_3ph_1_0,
+@@ -4536,6 +4501,98 @@ static const struct resources_wrapper csid_wrapper_res_x1e80100 = {
+ 	.reg = "csid_wrapper",
+ };
+ 
++static const struct camss_subdev_resources csiphy_res_x1p42100[] = {
++	/* CSIPHY0 */
++	{
++		.csiphy = {
++			.id = 0,
++			.hw_ops = &csiphy_ops_3ph_1_0,
++			.formats = &csiphy_formats_sdm845
++		},
++	},
++	/* CSIPHY4 */
++	{
++		.csiphy = {
++			.id = 4,
++			.hw_ops = &csiphy_ops_3ph_1_0,
++			.formats = &csiphy_formats_sdm845
++		},
++	},
++};
++
++static const struct camss_subdev_resources vfe_res_x1p42100[] = {
++	/* IFE0 */
++	{
++		.regulators = {},
++		.clock = {"camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			  "cpas_fast_ahb", "cpas_vfe0", "vfe0_fast_ahb",
++			  "vfe0" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 345600000, 432000000, 594000000, 675000000,
++				  727000000 }, },
++		.reg = { "vfe0" },
++		.interrupt = { "vfe0" },
++		.vfe = {
++			.line_num = 4,
++			.pd_name = "ife0",
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++	/* IFE_LITE_0 */
++	{
++		.regulators = {},
++		.clock = { "camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			   "vfe_lite_ahb", "cpas_vfe_lite", "vfe_lite",
++			   "vfe_lite_csid" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 266666667, 400000000, 480000000 },
++				{ 266666667, 400000000, 480000000 }, },
++		.reg = { "vfe_lite0" },
++		.interrupt = { "vfe_lite0" },
++		.vfe = {
++			.is_lite = true,
++			.line_num = 4,
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++	/* IFE_LITE_1 */
++	{
++		.regulators = {},
++		.clock = { "camnoc_rt_axi", "camnoc_nrt_axi", "cpas_ahb",
++			   "vfe_lite_ahb", "cpas_vfe_lite", "vfe_lite",
++			   "vfe_lite_csid" },
++		.clock_rate = { { 400000000 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 0 },
++				{ 266666667, 400000000, 480000000 },
++				{ 266666667, 400000000, 480000000 }, },
++		.reg = { "vfe_lite1" },
++		.interrupt = { "vfe_lite1" },
++		.vfe = {
++			.is_lite = true,
++			.line_num = 4,
++			.hw_ops = &vfe_ops_680,
++			.formats_rdi = &vfe_formats_rdi_845,
++			.formats_pix = &vfe_formats_pix_845
++		},
++	},
++};
++
+ /*
+  * camss_add_clock_margin - Add margin to clock frequency rate
+  * @rate: Clock frequency rate
+@@ -4793,14 +4850,51 @@ static int camss_parse_endpoint_node(struct device *dev,
+ static int camss_parse_ports(struct camss *camss)
+ {
+ 	struct device *dev = camss->dev;
++	const struct camss_resources *res = camss->res;
+ 	struct fwnode_handle *fwnode = dev_fwnode(dev), *ep;
+ 	int ret;
+ 
+ 	fwnode_graph_for_each_endpoint(fwnode, ep) {
+ 		struct camss_async_subdev *csd;
++		struct fwnode_handle *remote;
++
++		if (!fwnode_device_is_available(ep))
++			continue;
++
++		if (res->legacy_phy) {
++			csd = v4l2_async_nf_add_fwnode_remote(&camss->notifier, ep,
++							      typeof(*csd));
++		} else {
++			struct fwnode_handle *phy_out, *phy_node, *phy_in, *sensor_ep;
++
++			phy_out = fwnode_graph_get_remote_endpoint(ep);
++			if (!phy_out)
++				continue;
++
++			phy_node = fwnode_graph_get_port_parent(phy_out);
++			fwnode_handle_put(phy_out);
++			if (!phy_node)
++				continue;
++
++			phy_in = fwnode_graph_get_endpoint_by_id(phy_node, 0, 0, 0);
++			fwnode_handle_put(phy_node);
++			if (!phy_in)
++				continue;
++
++			sensor_ep = fwnode_graph_get_remote_endpoint(phy_in);
++			fwnode_handle_put(phy_in);
++			if (!sensor_ep)
++				continue;
++
++			csd = v4l2_async_nf_add_fwnode(&camss->notifier, sensor_ep,
++						struct camss_async_subdev);
++			fwnode_handle_put(sensor_ep);
++			if (IS_ERR(csd)) {
++				ret = PTR_ERR(csd);
++				goto err_cleanup;
++			}
++		}
+ 
+-		csd = v4l2_async_nf_add_fwnode_remote(&camss->notifier, ep,
+-						      typeof(*csd));
+ 		if (IS_ERR(csd)) {
+ 			ret = PTR_ERR(csd);
+ 			goto err_cleanup;
+@@ -4832,15 +4926,26 @@ static int camss_init_subdevices(struct camss *camss)
+ 	unsigned int i;
+ 	int ret;
+ 
+-	for (i = 0; i < camss->res->csiphy_num; i++) {
+-		ret = msm_csiphy_subdev_init(camss, &camss->csiphy[i],
+-					     &res->csiphy_res[i],
+-					     res->csiphy_res[i].csiphy.id);
+-		if (ret < 0) {
+-			dev_err(camss->dev,
+-				"Failed to init csiphy%d sub-device: %d\n",
+-				i, ret);
+-			return ret;
++	if (!res->legacy_phy) {
++		for (i = 0; i < camss->res->csiphy_num; i++) {
++			ret = msm_csiphy_subdev_init(camss, &camss->csiphy[i],
++						     &res->csiphy_res[i],
++						     res->csiphy_res[i].csiphy.id);
++			if (ret < 0)
++				return ret;
++		}
++	} else {
++		for (i = 0; i < camss->res->csiphy_num; i++) {
++			ret = msm_csiphy_subdev_init_legacy(camss, &camss->csiphy[i],
++							    &res->csiphy_res[i],
++							    res->csiphy_res[i].csiphy.id);
++			if (ret < 0) {
++				dev_err(camss->dev,
++					"Failed to init csiphy%d sub-device: %d\n",
++					i, ret);
++				return ret;
++			}
++			camss->csiphy[i].phy = ERR_PTR(-ENODEV);
+ 		}
+ 	}
+ 
+@@ -4930,6 +5035,9 @@ static int camss_link_entities(struct camss *camss)
+ 
+ 	for (i = 0; i < camss->res->csiphy_num; i++) {
+ 		for (j = 0; j < camss->res->csid_num; j++) {
++			if (!camss->csiphy[i].phy)
++				continue;
++
+ 			ret = media_create_pad_link(&camss->csiphy[i].subdev.entity,
+ 						    MSM_CSIPHY_PAD_SRC,
+ 						    &camss->csid[j].subdev.entity,
+@@ -5056,6 +5164,9 @@ static int camss_register_entities(struct camss *camss)
+ 	int ret;
+ 
+ 	for (i = 0; i < camss->res->csiphy_num; i++) {
++		if (!camss->csiphy[i].phy)
++			continue;
++
+ 		ret = msm_csiphy_register_entity(&camss->csiphy[i],
+ 						 &camss->v4l2_dev);
+ 		if (ret < 0) {
+@@ -5131,8 +5242,10 @@ static int camss_register_entities(struct camss *camss)
+ 
+ 	i = camss->res->csiphy_num;
+ err_reg_csiphy:
+-	for (i--; i >= 0; i--)
+-		msm_csiphy_unregister_entity(&camss->csiphy[i]);
++	for (i--; i >= 0; i--) {
++		if (camss->csiphy[i].phy)
++			msm_csiphy_unregister_entity(&camss->csiphy[i]);
++	}
+ 
+ 	return ret;
+ }
+@@ -5147,8 +5260,10 @@ static void camss_unregister_entities(struct camss *camss)
+ {
+ 	unsigned int i;
+ 
+-	for (i = 0; i < camss->res->csiphy_num; i++)
+-		msm_csiphy_unregister_entity(&camss->csiphy[i]);
++	for (i = 0; i < camss->res->csiphy_num; i++) {
++		if (camss->csiphy[i].phy)
++			msm_csiphy_unregister_entity(&camss->csiphy[i]);
++	}
+ 
+ 	if (camss->tpg) {
+ 		for (i = 0; i < camss->res->tpg_num; i++)
+@@ -5362,6 +5477,8 @@ static int camss_probe(struct platform_device *pdev)
+ 	if (!camss)
+ 		return -ENOMEM;
+ 
++	devm_of_platform_populate(dev);
++
+ 	camss->res = of_device_get_match_data(dev);
+ 
+ 	atomic_set(&camss->ref_count, 0);
+@@ -5509,6 +5626,7 @@ static void camss_remove(struct platform_device *pdev)
+ 
+ static const struct camss_resources msm8916_resources = {
+ 	.version = CAMSS_8x16,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x16,
+ 	.csid_res = csid_res_8x16,
+ 	.ispif_res = &ispif_res_8x16,
+@@ -5520,6 +5638,7 @@ static const struct camss_resources msm8916_resources = {
+ 
+ static const struct camss_resources msm8939_resources = {
+ 	.version = CAMSS_8x39,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x39,
+ 	.csid_res = csid_res_8x39,
+ 	.ispif_res = &ispif_res_8x39,
+@@ -5531,6 +5650,7 @@ static const struct camss_resources msm8939_resources = {
+ 
+ static const struct camss_resources msm8953_resources = {
+ 	.version = CAMSS_8x53,
++	.legacy_phy = true,
+ 	.icc_res = icc_res_8x53,
+ 	.icc_path_num = ARRAY_SIZE(icc_res_8x53),
+ 	.csiphy_res = csiphy_res_8x96,
+@@ -5544,6 +5664,7 @@ static const struct camss_resources msm8953_resources = {
+ 
+ static const struct camss_resources msm8996_resources = {
+ 	.version = CAMSS_8x96,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8x96,
+ 	.csid_res = csid_res_8x96,
+ 	.ispif_res = &ispif_res_8x96,
+@@ -5555,6 +5676,7 @@ static const struct camss_resources msm8996_resources = {
+ 
+ static const struct camss_resources qcm2290_resources = {
+ 	.version = CAMSS_2290,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_2290,
+ 	.csid_res = csid_res_2290,
+ 	.vfe_res = vfe_res_2290,
+@@ -5568,6 +5690,7 @@ static const struct camss_resources qcm2290_resources = {
+ static const struct camss_resources qcs8300_resources = {
+ 	.version = CAMSS_8300,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8300,
+ 	.tpg_res = tpg_res_8775p,
+ 	.csid_res = csid_res_8775p,
+@@ -5584,6 +5707,7 @@ static const struct camss_resources qcs8300_resources = {
+ static const struct camss_resources sa8775p_resources = {
+ 	.version = CAMSS_8775P,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8775p,
+ 	.tpg_res = tpg_res_8775p,
+ 	.csid_res = csid_res_8775p,
+@@ -5599,6 +5723,7 @@ static const struct camss_resources sa8775p_resources = {
+ 
+ static const struct camss_resources sdm660_resources = {
+ 	.version = CAMSS_660,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_660,
+ 	.csid_res = csid_res_660,
+ 	.ispif_res = &ispif_res_660,
+@@ -5610,6 +5735,7 @@ static const struct camss_resources sdm660_resources = {
+ 
+ static const struct camss_resources sdm670_resources = {
+ 	.version = CAMSS_845,
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_670,
+ 	.csid_res = csid_res_670,
+ 	.vfe_res = vfe_res_670,
+@@ -5621,6 +5747,7 @@ static const struct camss_resources sdm670_resources = {
+ static const struct camss_resources sdm845_resources = {
+ 	.version = CAMSS_845,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_845,
+ 	.csid_res = csid_res_845,
+ 	.vfe_res = vfe_res_845,
+@@ -5632,6 +5759,7 @@ static const struct camss_resources sdm845_resources = {
+ static const struct camss_resources sm6150_resources = {
+ 	.version = CAMSS_6150,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sm6150,
+ 	.csid_res = csid_res_sm6150,
+ 	.vfe_res = vfe_res_sm6150,
+@@ -5658,6 +5786,7 @@ static const struct camss_resources sm6350_resources = {
+ static const struct camss_resources sm8250_resources = {
+ 	.version = CAMSS_8250,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8250,
+ 	.csid_res = csid_res_8250,
+ 	.vfe_res = vfe_res_8250,
+@@ -5671,6 +5800,7 @@ static const struct camss_resources sm8250_resources = {
+ static const struct camss_resources sc8280xp_resources = {
+ 	.version = CAMSS_8280XP,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sc8280xp,
+ 	.csid_res = csid_res_sc8280xp,
+ 	.ispif_res = NULL,
+@@ -5685,6 +5815,7 @@ static const struct camss_resources sc8280xp_resources = {
+ static const struct camss_resources sc7280_resources = {
+ 	.version = CAMSS_7280,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_7280,
+ 	.csid_res = csid_res_7280,
+ 	.vfe_res = vfe_res_7280,
+@@ -5698,6 +5829,7 @@ static const struct camss_resources sc7280_resources = {
+ static const struct camss_resources sm8550_resources = {
+ 	.version = CAMSS_8550,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_8550,
+ 	.csid_res = csid_res_8550,
+ 	.vfe_res = vfe_res_8550,
+@@ -5712,6 +5844,7 @@ static const struct camss_resources sm8550_resources = {
+ static const struct camss_resources sm8650_resources = {
+ 	.version = CAMSS_8650,
+ 	.pd_name = "top",
++	.legacy_phy = true,
+ 	.csiphy_res = csiphy_res_sm8650,
+ 	.csid_res = csid_res_sm8650,
+ 	.csid_wrapper_res = &csid_wrapper_res_sm8550,
+@@ -5739,6 +5872,20 @@ static const struct camss_resources x1e80100_resources = {
+ 	.vfe_num = ARRAY_SIZE(vfe_res_x1e80100),
+ };
+ 
++static const struct camss_resources x1p42100_resources = {
++	.version = CAMSS_X1P42100,
++	.pd_name = "top",
++	.csiphy_res = csiphy_res_x1p42100,
++	.csid_res = csid_res_x1e80100,
++	.vfe_res = vfe_res_x1p42100,
++	.csid_wrapper_res = &csid_wrapper_res_x1e80100,
++	.icc_res = icc_res_x1e80100,
++	.icc_path_num = ARRAY_SIZE(icc_res_x1e80100),
++	.csiphy_num = ARRAY_SIZE(csiphy_res_x1p42100),
++	.csid_num = ARRAY_SIZE(csid_res_x1e80100),
++	.vfe_num = ARRAY_SIZE(vfe_res_x1p42100),
++};
++
+ static const struct of_device_id camss_dt_match[] = {
+ 	{ .compatible = "qcom,msm8916-camss", .data = &msm8916_resources },
+ 	{ .compatible = "qcom,msm8939-camss", .data = &msm8939_resources },
+@@ -5758,6 +5905,7 @@ static const struct of_device_id camss_dt_match[] = {
+ 	{ .compatible = "qcom,sm8550-camss", .data = &sm8550_resources },
+ 	{ .compatible = "qcom,sm8650-camss", .data = &sm8650_resources },
+ 	{ .compatible = "qcom,x1e80100-camss", .data = &x1e80100_resources },
++	{ .compatible = "qcom,x1p42100-camss", .data = &x1p42100_resources },
+ 	{ }
+ };
+ 
+diff --git a/drivers/media/platform/qcom/camss/camss.h b/drivers/media/platform/qcom/camss/camss.h
+index 93d691c8ac63b2a47dbb234856b627d8911a1851..7da0859d6defd1eb491aaa48395c09f9176afac4 100644
+--- a/drivers/media/platform/qcom/camss/camss.h
++++ b/drivers/media/platform/qcom/camss/camss.h
+@@ -97,6 +97,7 @@ enum camss_version {
+ 	CAMSS_8650,
+ 	CAMSS_8775P,
+ 	CAMSS_X1E80100,
++	CAMSS_X1P42100,
+ };
+ 
+ enum icc_count {
+@@ -107,6 +108,7 @@ enum icc_count {
+ struct camss_resources {
+ 	enum camss_version version;
+ 	const char *pd_name;
++	const bool legacy_phy;
+ 	const struct camss_subdev_resources *csiphy_res;
+ 	const struct camss_subdev_resources *tpg_res;
+ 	const struct camss_subdev_resources *csid_res;
+diff --git a/drivers/phy/qualcomm/Kconfig b/drivers/phy/qualcomm/Kconfig
+index 60a0ead127fa9f08749e1bc686e15cc5eb341c28..779a3511ba8521e15c5c9c1d8503f5394577fb8d 100644
+--- a/drivers/phy/qualcomm/Kconfig
++++ b/drivers/phy/qualcomm/Kconfig
+@@ -28,6 +28,20 @@ config PHY_QCOM_EDP
+ 	  Enable this driver to support the Qualcomm eDP PHY found in various
+ 	  Qualcomm chipsets.
+ 
++config PHY_QCOM_MIPI_CSI2
++	tristate "Qualcomm MIPI CSI2 PHY driver"
++	depends on ARCH_QCOM || COMPILE_TEST
++	depends on OF
++	depends on PM
++	depends on COMMON_CLK
++	select GENERIC_PHY
++	select GENERIC_PHY_MIPI_DPHY
++	help
++	  Enable this to support the MIPI CSI2 PHY driver found in various
++	  Qualcomm chipsets. This PHY is used to connect MIPI CSI2
++	  camera sensors to the CSI Decoder in the Qualcomm Camera Subsystem
++	  CAMSS.
++
+ config PHY_QCOM_IPQ4019_USB
+ 	tristate "Qualcomm IPQ4019 USB PHY driver"
+ 	depends on OF && (ARCH_QCOM || COMPILE_TEST)
+diff --git a/drivers/phy/qualcomm/Makefile b/drivers/phy/qualcomm/Makefile
+index b71a6a0bed3f1489b1d07664ecd728f1db145986..382cb594b06b64fe17484fb46eade081c7828544 100644
+--- a/drivers/phy/qualcomm/Makefile
++++ b/drivers/phy/qualcomm/Makefile
+@@ -6,6 +6,11 @@ obj-$(CONFIG_PHY_QCOM_IPQ4019_USB)	+= phy-qcom-ipq4019-usb.o
+ obj-$(CONFIG_PHY_QCOM_IPQ806X_SATA)	+= phy-qcom-ipq806x-sata.o
+ obj-$(CONFIG_PHY_QCOM_M31_USB)		+= phy-qcom-m31.o
+ obj-$(CONFIG_PHY_QCOM_M31_EUSB)		+= phy-qcom-m31-eusb2.o
++
++phy-qcom-mipi-csi2-objs			+= phy-qcom-mipi-csi2-core.o \
++					   phy-qcom-mipi-csi2-3ph-dphy.o
++obj-$(CONFIG_PHY_QCOM_MIPI_CSI2)	+= phy-qcom-mipi-csi2.o
++
+ obj-$(CONFIG_PHY_QCOM_PCIE2)		+= phy-qcom-pcie2.o
+ 
+ obj-$(CONFIG_PHY_QCOM_QMP_COMBO)	+= phy-qcom-qmp-combo.o phy-qcom-qmp-usbc.o
+diff --git a/drivers/platform/surface/aggregator/controller.c b/drivers/platform/surface/aggregator/controller.c
+index 6a8430cb9cbfe1a421f3b995f216171add702e5e..507fb92228182673818edb85c699e633756d47c2 100644
+--- a/drivers/platform/surface/aggregator/controller.c
++++ b/drivers/platform/surface/aggregator/controller.c
+@@ -1155,7 +1155,7 @@ static int ssam_controller_caps_load_from_of(struct device *dev, struct ssam_con
+ 	 * Every device starting with Surface Pro X through Laptop 7 uses these
+ 	 * identical values, which makes them good defaults.
+ 	 */
+-	caps->d3_closes_handle = true;
++	caps->d3_closes_handle = false;
+ 	caps->screen_on_sleep_idle_timeout = 5000;
+ 	caps->screen_off_sleep_idle_timeout = 30;
+ 	caps->ssh_buffer_size = 48;
+diff --git a/drivers/platform/surface/surface_aggregator_registry.c b/drivers/platform/surface/surface_aggregator_registry.c
+index d37a7e4c6b02a6828f4df9afe022df6d9e0b624e..4dd822047b68791c006c33ece8c0782fd0a8b974 100644
+--- a/drivers/platform/surface/surface_aggregator_registry.c
++++ b/drivers/platform/surface/surface_aggregator_registry.c
+@@ -51,6 +51,12 @@ static const struct software_node ssam_node_hub_base = {
+ 	.parent = &ssam_node_root,
+ };
+ 
++/* RTC */
++static const struct software_node ssam_node_rtc = {
++	.name = "ssam:01:01:01:00:00",
++	.parent = &ssam_node_root,
++};
++
+ /* AC adapter. */
+ static const struct software_node ssam_node_bat_ac = {
+ 	.name = "ssam:01:02:01:01:01",
+@@ -423,6 +429,7 @@ static const struct software_node *ssam_node_group_sp11[] = {
+ /* Devices for Surface Pro 12" first edition (ARM/QCOM) */
+ static const struct software_node *ssam_node_group_sp12in[] = {
+ 	&ssam_node_root,
++	&ssam_node_rtc,
+ 	&ssam_node_hub_kip,
+ 	&ssam_node_tmp_sensors,
+ 	&ssam_node_hid_kip_keyboard,
+diff --git a/drivers/rtc/Kconfig b/drivers/rtc/Kconfig
+index 01def82318731cc8b74d7c30f5171683352c5a3e..9580bc4bbb020fd02d884668a504a1a8cc98e687 100644
+--- a/drivers/rtc/Kconfig
++++ b/drivers/rtc/Kconfig
+@@ -1425,6 +1425,13 @@ config RTC_DRV_NTXEC
+ 	  embedded controller found in certain e-book readers designed by the
+ 	  original design manufacturer Netronix.
+ 
++config RTC_DRV_SURFACE
++	tristate "Microsoft Surface Aggregator RTC"
++	depends on SURFACE_AGGREGATOR
++	depends on SURFACE_AGGREGATOR_BUS
++	help
++	  TODO
++
+ comment "on-CPU RTC drivers"
+ 
+ config RTC_DRV_ASM9260
+diff --git a/drivers/rtc/Makefile b/drivers/rtc/Makefile
+index 0347645b021f8f7c05786eecb2e07acc979573dc..34f2cacd017a97af0edf1735df1cd04cc149d4af 100644
+--- a/drivers/rtc/Makefile
++++ b/drivers/rtc/Makefile
+@@ -185,6 +185,7 @@ obj-$(CONFIG_RTC_DRV_SUN4V)	+= rtc-sun4v.o
+ obj-$(CONFIG_RTC_DRV_SUN6I)	+= rtc-sun6i.o
+ obj-$(CONFIG_RTC_DRV_SUNPLUS)	+= rtc-sunplus.o
+ obj-$(CONFIG_RTC_DRV_SUNXI)	+= rtc-sunxi.o
++obj-$(CONFIG_RTC_DRV_SURFACE)	+= rtc-surface.o
+ obj-$(CONFIG_RTC_DRV_TEGRA)	+= rtc-tegra.o
+ obj-$(CONFIG_RTC_DRV_TEST)	+= rtc-test.o
+ obj-$(CONFIG_RTC_DRV_TI_K3)	+= rtc-ti-k3.o
+diff --git a/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts b/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts
+new file mode 100644
+index 0000000000000000000000000000000000000000..e78439966ad5863d9039786dfe626c2121455532
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts
+@@ -0,0 +1,1553 @@
++// SPDX-License-Identifier: BSD-3-Clause
++/*
++ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
++ * Copyright (c) 2024, Linaro Limited
++ * Copyright (c) 2025, Jens Glathe
++ * Copyright (c) 2025, Harrison Vanderbyl
++ */
++
++/dts-v1/;
++
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/gpio-keys.h>
++#include <dt-bindings/input/input.h>
++#include <dt-bindings/leds/common.h>
++#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
++#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
++#include <dt-bindings/clock/qcom,x1e80100-tcsr.h>
++
++#include "purwa.dtsi"
++#include "hamoa-pmics.dtsi"
++
++/delete-node/ &pmc8380_6;
++/delete-node/ &pmc8380_6_thermal;
++
++/ {
++	model = "Surface Pro 12in 1st Edition";
++	compatible = "microsoft,surface-pro-12in", "qcom,x1p42100";
++	chassis-type = "tablet";
++
++	aliases {
++		serial0 = &uart2;
++		serial1 = &uart14;
++	};
++
++	backlight: backlight {
++		compatible = "pwm-backlight";
++		pwms = <&pmk8550_pwm 0 5000000>;
++
++		power-supply = <&vreg_edp_3p3>;
++	};
++
++	gpio-keys {
++		compatible = "gpio-keys";
++
++		pinctrl-0 = <&hall_int_n_default>, <&vol_up_n_default>, <&vol_down_n_default>;
++		pinctrl-names = "default";
++
++		switch-lid {
++			gpios = <&tlmm 2 GPIO_ACTIVE_LOW>;
++			linux,input-type = <EV_SW>;
++			linux,code = <SW_LID>;
++			wakeup-source;
++			wakeup-event-action = <EV_ACT_DEASSERTED>;
++		};
++
++		key-vol-up {
++			gpios = <&pm8550_gpios 6 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_VOLUMEUP>;
++			debounce-interval = <15>;
++			linux,can-disable;
++			wakeup-source;
++		};
++
++		key-vol-down {
++			gpios = <&pm8550_gpios 8 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_VOLUMEDOWN>;
++			debounce-interval = <15>;
++			linux,can-disable;
++			wakeup-source;
++		};
++	};
++
++	leds {
++		compatible = "gpio-leds";
++
++		pinctrl-0 = <&cam_indicator_en>;
++		pinctrl-names = "default";
++
++		privacy_led: privacy-led {
++			function = LED_FUNCTION_INDICATOR;
++			color = <LED_COLOR_ID_WHITE>;
++			gpios = <&tlmm 225 GPIO_ACTIVE_HIGH>;
++			default-state = "off";
++			panic-indicator;
++		};
++	};
++
++	pmic-glink {
++		compatible = "qcom,x1e80100-pmic-glink",
++			     "qcom,sm8550-pmic-glink",
++			     "qcom,pmic-glink";
++		orientation-gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>,
++				    <&tlmm 123 GPIO_ACTIVE_HIGH>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		nvmem-cells = <&charge_limit_en>,
++			      <&charge_limit_end>,
++			      <&charge_limit_delta>;
++		nvmem-cell-names = "charge_limit_en",
++				   "charge_limit_end",
++				   "charge_limit_delta";
++
++		/* Right-side upper port */
++		connector@0 {
++			compatible = "usb-c-connector";
++			reg = <0>;
++			power-role = "dual";
++			data-role = "dual";
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++
++					pmic_glink_ss0_hs_in: endpoint {
++						remote-endpoint = <&usb_1_ss0_dwc3_hs>;
++					};
++				};
++
++				port@1 {
++					reg = <1>;
++
++					pmic_glink_ss0_ss_in: endpoint {
++						remote-endpoint = <&usb_1_ss0_qmpphy_out>;
++					};
++				};
++
++				port@2 {
++					reg = <2>;
++
++					pmic_glink_ss0_sbu: endpoint {
++						remote-endpoint = <&usb_1_ss0_sbu_mux>;
++					};
++				};
++			};
++		};
++
++		/* Right-side lower port */
++		connector@1 {
++			compatible = "usb-c-connector";
++			reg = <1>;
++			power-role = "dual";
++			data-role = "dual";
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++
++					pmic_glink_ss1_hs_in: endpoint {
++						remote-endpoint = <&usb_1_ss1_dwc3_hs>;
++					};
++				};
++
++				port@1 {
++					reg = <1>;
++
++					pmic_glink_ss1_ss_in: endpoint {
++						remote-endpoint = <&usb_1_ss1_qmpphy_out>;
++					};
++				};
++
++				port@2 {
++					reg = <2>;
++
++					pmic_glink_ss1_sbu: endpoint {
++						remote-endpoint = <&usb_1_ss1_sbu_mux>;
++					};
++				};
++			};
++		};
++	};
++
++	reserved-memory {
++		linux,cma {
++			compatible = "shared-dma-pool";
++			size = <0x0 0x20000000>;
++			reusable;
++			linux,cma-default;
++		};
++	};
++
++	vreg_edp_3p3: regulator-edp-3p3 {
++		compatible = "regulator-fixed";
++
++		regulator-name = "VREG_EDP_3P3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++
++		gpio = <&tlmm 70 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++
++		pinctrl-0 = <&edp_reg_en>;
++		pinctrl-names = "default";
++
++		regulator-boot-on;
++		vin-supply = <&vreg_panel_en>;
++	};
++
++	vreg_panel_en: regulator-panel-en {
++		compatible = "regulator-fixed";
++
++		regulator-name = "VREG_PANEL_EN";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++
++		gpio = <&tlmm 29 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++
++		regulator-enable-ramp-delay = <150000>;
++
++		pinctrl-0 = <&panel_en>;
++		pinctrl-names = "default";
++
++		regulator-boot-on;
++	};
++
++	vph_pwr: regulator-vph-pwr {
++		compatible = "regulator-fixed";
++
++		regulator-name = "vph_pwr";
++		regulator-min-microvolt = <3700000>;
++		regulator-max-microvolt = <3700000>;
++	};
++
++	vreg_wcn_0p95: regulator-wcn-0p95 {
++		compatible = "regulator-fixed";
++
++		regulator-name = "VREG_WCN_0P95";
++		regulator-min-microvolt = <950000>;
++		regulator-max-microvolt = <950000>;
++
++		vin-supply = <&vreg_wcn_3p3>;
++	};
++
++	vreg_wcn_1p9: regulator-wcn-1p9 {
++		compatible = "regulator-fixed";
++
++		regulator-name = "VREG_WCN_1P9";
++		regulator-min-microvolt = <1900000>;
++		regulator-max-microvolt = <1900000>;
++
++		vin-supply = <&vreg_wcn_3p3>;
++	};
++
++	vreg_wcn_3p3: regulator-wcn-3p3 {
++		compatible = "regulator-fixed";
++
++		regulator-name = "VREG_WCN_3P3";
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++
++		gpio = <&tlmm 214 GPIO_ACTIVE_HIGH>;
++		enable-active-high;
++
++		pinctrl-0 = <&wcn_sw_en>;
++		pinctrl-names = "default";
++	};
++
++	sound {
++		compatible = "qcom,x1e80100-sndcard";
++		model = "X1P42100-Microsoft-Surface-Pro-12in";
++		audio-routing = "SpkrLeft IN", "WSA WSA_SPK1 OUT",
++				"SpkrRight IN", "WSA WSA_SPK2 OUT",
++				"VA DMIC0", "vdd-micb",
++				"VA DMIC1", "vdd-micb";
++
++		displayport-0-dai-link {
++			link-name = "DisplayPort0 Playback";
++
++			cpu {
++				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_0>;
++			};
++
++			codec {
++				sound-dai = <&mdss_dp0>;
++			};
++
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++
++		displayport-1-dai-link {
++			link-name = "DisplayPort1 Playback";
++
++			cpu {
++				sound-dai = <&q6apmbedai DISPLAY_PORT_RX_1>;
++			};
++
++			codec {
++				sound-dai = <&mdss_dp1>;
++			};
++
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++
++		va-dai-link {
++			link-name = "VA Capture";
++
++			codec {
++				sound-dai = <&lpass_vamacro 0>;
++			};
++
++			cpu {
++				sound-dai = <&q6apmbedai VA_CODEC_DMA_TX_0>;
++			};
++
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++
++		wsa-dai-link {
++			link-name = "WSA Playback";
++
++			codec {
++				sound-dai = <&left_spkr>, <&right_spkr>,
++					    <&swr0 0>, <&lpass_wsamacro 0>;
++			};
++
++			cpu {
++				sound-dai = <&q6apmbedai WSA_CODEC_DMA_RX_0>;
++			};
++
++			platform {
++				sound-dai = <&q6apm>;
++			};
++		};
++	};
++
++	wcn7850-pmu {
++		compatible = "qcom,wcn7850-pmu";
++
++		vdd-supply = <&vreg_wcn_0p95>;
++		vddio-supply = <&vreg_l15b_1p8>;
++		vddaon-supply = <&vreg_wcn_0p95>;
++		vdddig-supply = <&vreg_wcn_0p95>;
++		vddrfa1p2-supply = <&vreg_wcn_1p9>;
++		vddrfa1p8-supply = <&vreg_wcn_1p9>;
++
++		wlan-enable-gpios = <&tlmm 117 GPIO_ACTIVE_HIGH>;
++		bt-enable-gpios = <&tlmm 116 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-0 = <&wcn_wlan_bt_en>;
++		pinctrl-names = "default";
++
++		regulators {
++			vreg_pmu_rfa_cmn: ldo0 {
++				regulator-name = "vreg_pmu_rfa_cmn";
++			};
++
++			vreg_pmu_aon_0p59: ldo1 {
++				regulator-name = "vreg_pmu_aon_0p59";
++			};
++
++			vreg_pmu_wlcx_0p8: ldo2 {
++				regulator-name = "vreg_pmu_wlcx_0p8";
++			};
++
++			vreg_pmu_wlmx_0p85: ldo3 {
++				regulator-name = "vreg_pmu_wlmx_0p85";
++			};
++
++			vreg_pmu_btcmx_0p85: ldo4 {
++				regulator-name = "vreg_pmu_btcmx_0p85";
++			};
++
++			vreg_pmu_rfa_0p8: ldo5 {
++				regulator-name = "vreg_pmu_rfa_0p8";
++			};
++
++			vreg_pmu_rfa_1p2: ldo6 {
++				regulator-name = "vreg_pmu_rfa_1p2";
++			};
++
++			vreg_pmu_rfa_1p8: ldo7 {
++				regulator-name = "vreg_pmu_rfa_1p8";
++			};
++
++			vreg_pmu_pcie_0p9: ldo8 {
++				regulator-name = "vreg_pmu_pcie_0p9";
++			};
++
++			vreg_pmu_pcie_1p8: ldo9 {
++				regulator-name = "vreg_pmu_pcie_1p8";
++			};
++		};
++	};
++
++	usb-1-ss0-sbu-mux {
++		compatible = "onnn,fsusb42", "gpio-sbu-mux";
++
++		enable-gpios = <&tlmm 168 GPIO_ACTIVE_LOW>;
++		select-gpios = <&tlmm 167 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-0 = <&usb_1_ss0_sbu_default>;
++		pinctrl-names = "default";
++
++		mode-switch;
++		orientation-switch;
++
++		port {
++			usb_1_ss0_sbu_mux: endpoint {
++				remote-endpoint = <&pmic_glink_ss0_sbu>;
++			};
++		};
++	};
++
++	usb-1-ss1-sbu-mux {
++		compatible = "onnn,fsusb42", "gpio-sbu-mux";
++
++		enable-gpios = <&tlmm 179 GPIO_ACTIVE_LOW>;
++		select-gpios = <&tlmm 178 GPIO_ACTIVE_HIGH>;
++
++		pinctrl-0 = <&usb_1_ss1_sbu_default>;
++		pinctrl-names = "default";
++
++		mode-switch;
++		orientation-switch;
++
++		port {
++			usb_1_ss1_sbu_mux: endpoint {
++				remote-endpoint = <&pmic_glink_ss1_sbu>;
++			};
++		};
++	};
++};
++
++&apps_rsc {
++	regulators-0 {
++		compatible = "qcom,pm8550-rpmh-regulators";
++		qcom,pmic-id = "b";
++
++		vdd-bob1-supply = <&vph_pwr>;
++		vdd-bob2-supply = <&vph_pwr>;
++		vdd-l1-l4-l10-supply = <&vreg_s4c_1p8>;
++		vdd-l2-l13-l14-supply = <&vreg_bob1>;
++		vdd-l5-l16-supply = <&vreg_bob1>;
++		vdd-l6-l7-supply = <&vreg_bob2>;
++		vdd-l8-l9-supply = <&vreg_bob1>;
++		vdd-l12-supply = <&vreg_s5j_1p2>;
++		vdd-l15-supply = <&vreg_s4c_1p8>;
++		vdd-l17-supply = <&vreg_bob2>;
++
++		vreg_bob1: bob1 {
++			regulator-name = "vreg_bob1";
++			regulator-min-microvolt = <3008000>;
++			regulator-max-microvolt = <3960000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_bob2: bob2 {
++			regulator-name = "vreg_bob2";
++			regulator-min-microvolt = <2504000>;
++			regulator-max-microvolt = <3008000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l1b_1p8: ldo1 {
++			regulator-name = "vreg_l1b_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2b_3p0: ldo2 {
++			regulator-name = "vreg_l2b_3p0";
++			regulator-min-microvolt = <3072000>;
++			regulator-max-microvolt = <3100000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l4b_1p8: ldo4 {
++			regulator-name = "vreg_l4b_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l5b_3p0: ldo5 {
++			regulator-name = "vreg_l5b_3p0";
++			regulator-min-microvolt = <3000000>;
++			regulator-max-microvolt = <3000000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l6b_1p8: ldo6 {
++			regulator-name = "vreg_l6b_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <2960000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l7b_2p8: ldo7 {
++			regulator-name = "vreg_l7b_2p8";
++			regulator-min-microvolt = <2800000>;
++			regulator-max-microvolt = <2800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-always-on;
++		};
++
++		vreg_l8b_3p0: ldo8 {
++			regulator-name = "vreg_l8b_3p0";
++			regulator-min-microvolt = <3072000>;
++			regulator-max-microvolt = <3072000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l9b_2p9: ldo9 {
++			regulator-name = "vreg_l9b_2p9";
++			regulator-min-microvolt = <2960000>;
++			regulator-max-microvolt = <2960000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l10b_1p8: ldo10 {
++			regulator-name = "vreg_l10b_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l12b_1p2: ldo12 {
++			regulator-name = "vreg_l12b_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l13b_3p0: ldo13 {
++			regulator-name = "vreg_l13b_3p0";
++			regulator-min-microvolt = <3072000>;
++			regulator-max-microvolt = <3100000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l14b_3p0: ldo14 {
++			regulator-name = "vreg_l14b_3p0";
++			regulator-min-microvolt = <3072000>;
++			regulator-max-microvolt = <3072000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l15b_1p8: ldo15 {
++			regulator-name = "vreg_l15b_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l16b_2p9: ldo16 {
++			regulator-name = "vreg_l16b_2p9";
++			regulator-min-microvolt = <2900000>;
++			regulator-max-microvolt = <2912000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l17b_2p5: ldo17 {
++			regulator-name = "vreg_l17b_2p5";
++			regulator-min-microvolt = <2504000>;
++			regulator-max-microvolt = <2504000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-1 {
++		compatible = "qcom,pm8550ve-rpmh-regulators";
++		qcom,pmic-id = "c";
++
++		vdd-l1-supply = <&vreg_s5j_1p2>;
++		vdd-s4-supply = <&vph_pwr>;
++
++		vreg_s4c_1p8: smps4 {
++			regulator-name = "vreg_s4c_1p8";
++			regulator-min-microvolt = <1856000>;
++			regulator-max-microvolt = <2000000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l1c_1p2: ldo1 {
++			regulator-name = "vreg_l1c_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2c_0p8: ldo2 {
++			regulator-name = "vreg_l2c_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3c_0p8: ldo3 {
++			regulator-name = "vreg_l3c_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-2 {
++		compatible = "qcom,pmc8380-rpmh-regulators";
++		qcom,pmic-id = "d";
++
++		vdd-l3-supply = <&vreg_s4c_1p8>;
++		vdd-s1-supply = <&vph_pwr>;
++
++		vreg_l1d_0p8: ldo1 {
++			regulator-name = "vreg_l1d_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2d_0p9: ldo2 {
++			regulator-name = "vreg_l2d_0p9";
++			regulator-min-microvolt = <912000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3d_1p8: ldo3 {
++			regulator-name = "vreg_l3d_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-3 {
++		compatible = "qcom,pmc8380-rpmh-regulators";
++		qcom,pmic-id = "e";
++
++		vdd-l3-supply = <&vreg_s5j_1p2>;
++
++		vreg_l2e_0p8: ldo2 {
++			regulator-name = "vreg_l2e_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <880000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3e_1p2: ldo3 {
++			regulator-name = "vreg_l3e_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-6 {
++		compatible = "qcom,pm8550ve-rpmh-regulators";
++		qcom,pmic-id = "i";
++
++		vdd-l1-supply = <&vreg_s4c_1p8>;
++		vdd-l2-supply = <&vreg_s5j_1p2>;
++		vdd-s1-supply = <&vph_pwr>;
++		vdd-s2-supply = <&vph_pwr>;
++
++		vreg_s1i_0p9: smps1 {
++			regulator-name = "vreg_s1i_0p9";
++			regulator-min-microvolt = <900000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_s2i_1p0: smps2 {
++			regulator-name = "vreg_s2i_1p0";
++			regulator-min-microvolt = <1000000>;
++			regulator-max-microvolt = <1100000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l1i_1p8: ldo1 {
++			regulator-name = "vreg_l1i_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2i_1p2: ldo2 {
++			regulator-name = "vreg_l2i_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3i_0p8: ldo3 {
++			regulator-name = "vreg_l3i_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <880000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-7 {
++		compatible = "qcom,pm8550ve-rpmh-regulators";
++		qcom,pmic-id = "j";
++
++		vdd-l2-supply = <&vreg_s5j_1p2>;
++		vdd-s5-supply = <&vph_pwr>;
++
++		vreg_s5j_1p2: smps5 {
++			regulator-name = "vreg_s5j_1p2";
++			regulator-min-microvolt = <1256000>;
++			regulator-max-microvolt = <1304000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l1j_0p8: ldo1 {
++			regulator-name = "vreg_l1j_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <920000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2j_1p2: ldo2 {
++			regulator-name = "vreg_l2j_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1256000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3j_0p8: ldo3 {
++			regulator-name = "vreg_l3j_0p8";
++			regulator-min-microvolt = <880000>;
++			regulator-max-microvolt = <880000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-allow-set-load;
++			regulator-allowed-modes = <RPMH_REGULATOR_MODE_LPM
++						   RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++
++	regulators-8 {
++		compatible = "qcom,pm8010-rpmh-regulators";
++		qcom,pmic-id = "m";
++
++		vdd-l1-l2-supply = <&vreg_s5j_1p2>;
++		vdd-l3-l4-supply = <&vreg_s4c_1p8>;
++		vdd-l7-supply = <&vreg_bob1>;
++
++		vreg_l1m_1p2: ldo1 {
++			regulator-name = "vreg_l1m_1p2";
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1260000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l2m_1p2: ldo2 {
++			regulator-name = "vreg_l2m_1p2";
++			regulator-min-microvolt = <1150000>;
++			regulator-max-microvolt = <1200000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l3m_1p8: ldo3 {
++			regulator-name = "vreg_l3m_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l4m_1p8: ldo4 {
++			regulator-name = "vreg_l4m_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l5m_2p8: ldo5 {
++			regulator-name = "vreg_l5m_2p8";
++			regulator-min-microvolt = <2800000>;
++			regulator-max-microvolt = <2800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l6m_1p8: ldo6 {
++			regulator-name = "vreg_l6m_1p8";
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++
++		vreg_l7m_2p8: ldo7 {
++			regulator-name = "vreg_l7m_2p8";
++			regulator-min-microvolt = <2800000>;
++			regulator-max-microvolt = <2800000>;
++			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++		};
++	};
++};
++
++&camss {
++	status = "okay";
++
++	ports {
++		/*
++		 * port0 => csiphy0
++		 * port1 => csiphy4
++		 */
++		port@0 {
++			camss_in0_ep: endpoint@0 {
++				reg = <0>;
++				data-lanes = <0 1 2 3>;
++				remote-endpoint = <&csiphy0_out_ep>;
++			};
++		};
++
++		port@1 {
++			camss_in1_ep: endpoint@0 {
++				reg = <0>;
++				data-lanes = <0 1>;
++				remote-endpoint = <&csiphy4_out_ep>;
++			};
++		};
++	};
++};
++
++&cci0 {
++	status = "okay";
++};
++
++&cci1 {
++	status = "okay";
++};
++
++&cci0_i2c1 {
++	camera@10 {
++		compatible = "ovti,ov13858";
++		reg = <0x10>;
++
++		reset-gpios = <&tlmm 110 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&cam_rear_default>;
++
++		clocks = <&camcc CAM_CC_MCLK1_CLK>;
++		assigned-clocks = <&camcc CAM_CC_MCLK1_CLK>;
++		assigned-clock-rates = <19200000>;
++
++		rotation = <180>;
++		orientation = <1>;
++
++		afvdd-supply = <&vreg_l16b_2p9>;
++		avdd-supply = <&vreg_l5m_2p8>;
++		dvdd-supply = <&vreg_l1m_1p2>;
++		dovdd-supply = <&vreg_l6m_1p8>;
++
++		port {
++			ov13858_ep: endpoint {
++				data-lanes = <1 2 3 4>;
++				link-frequencies = /bits/ 64 <540000000 270000000>;
++				remote-endpoint = <&csiphy0_in_ep>;
++			};
++		};
++	};
++};
++
++/*&cci0_i2c0 {
++	camera@10 {
++		compatible = "st,vd55g1";
++		reg = <0x10>;
++
++		reset-gpios = <&tlmm 109 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&cam_ir_default>;
++
++		clocks = <&camcc CAM_CC_MCLK0_CLK>;
++		assigned-clocks = <&camcc CAM_CC_MCLK0_CLK>;
++		assigned-clock-rates = <19200000>;
++
++		st,leds = <2>;
++		orientation = <2>;
++
++		vcore-supply = <&vreg_l2m_1p2>;
++		vddio-supply = <&vreg_l4m_1p8>;
++		vana-supply = <&vreg_l7m_2p8>;
++
++		port {
++			vd55g1_ep: endpoint {
++				data-lanes = <1>;
++				link-frequencies = /bits/ 64 <600000000>;
++				remote-endpoint = <&csiphy4_in_ep1>;
++			};
++		};
++	};
++};*/
++
++&cci1_i2c1 {
++	camera@36 {
++		compatible = "ovti,ov02c10";
++		reg = <0x36>;
++
++		reset-gpios = <&tlmm 237 GPIO_ACTIVE_LOW>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&cam_front_default>;
++
++		leds = <&privacy_led>;
++		led-names = "privacy";
++
++		clocks = <&camcc CAM_CC_MCLK4_CLK>;
++		assigned-clocks = <&camcc CAM_CC_MCLK4_CLK>;
++		assigned-clock-rates = <12000000>;
++
++		orientation = <0>;
++
++		avdd-supply = <&vreg_l7b_2p8>;
++		dvdd-supply = <&vreg_l7b_2p8>;
++		dovdd-supply = <&vreg_l3m_1p8>;
++
++		port {
++			ov02c10_ep: endpoint {
++				data-lanes = <1 2>;
++				link-frequencies = /bits/ 64 <400000000>;
++				remote-endpoint = <&csiphy4_in_ep0>;
++			};
++		};
++	};
++};
++
++&csiphy0 {
++	vdda-0p9-supply = <&vreg_l2c_0p8>;
++	vdda-1p2-supply = <&vreg_l1c_1p2>;
++
++	status = "okay";
++
++
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@0 {
++			reg = <0>;
++			csiphy0_in_ep: endpoint {
++				data-lanes = <0 1 2 3>;
++				remote-endpoint = <&ov13858_ep>;
++			};
++		};
++
++		port@2 {
++			reg = <2>;
++			csiphy0_out_ep: endpoint {
++				remote-endpoint = <&camss_in0_ep>;
++			};
++		};
++	};
++};
++
++&csiphy4 {
++	vdda-0p9-supply = <&vreg_l2c_0p8>;
++	vdda-1p2-supply = <&vreg_l1c_1p2>;
++
++	status = "okay";
++
++	ports {
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		port@0 {
++			reg = <0>;
++			csiphy4_in_ep0: endpoint {
++				data-lanes = <0 1>;
++				remote-endpoint = <&ov02c10_ep>;
++			};
++		};
++
++		/*port@1 {
++			reg = <1>;
++			csiphy4_in_ep1: endpoint {
++				data-lanes = <2>;
++				clock-lanes = <4 or 5 or 6 or 7>;
++				remote-endpoint = <&vd55g1_ep>;
++			};
++		};*/
++
++		port@2 {
++			reg = <2>;
++			csiphy4_out_ep: endpoint {
++				remote-endpoint = <&camss_in1_ep>;
++			};
++		};
++	};
++};
++
++&gpu {
++	status = "okay";
++};
++
++&gpu_zap_shader {
++	firmware-name = "qcom/x1p42100/Microsoft/Surface12/qcdxkmsucpurwa.mbn";
++};
++
++&i2c8 {
++	clock-frequency = <1000000>;
++
++	status = "okay";
++
++	touchscreen@16 {
++		compatible = "hid-over-i2c";
++		reg = <0x16>;
++
++		hid-descr-addr = <0x1>;
++		interrupts-extended = <&tlmm 38 IRQ_TYPE_LEVEL_LOW>;
++		wakeup-source;
++
++		vddl-supply = <&vreg_l15b_1p8>;
++
++		pinctrl-0 = <&ts0_default>;
++		pinctrl-names = "default";
++	};
++};
++
++&i2c0 {
++	clock-frequency = <400000>;
++
++	status = "okay";
++};
++
++&i2c4 {
++	clock-frequency = <400000>;
++
++	status = "okay";
++
++	/* MAX34417 @12 */
++	/* MAX34417 @14 */
++	/* MAX34417 @16 */
++	/* MAX34417 @18 */
++	/* MAX34417 @1a */
++};
++
++&i2c9 {
++	clock-frequency = <400000>;
++
++	status = "okay";
++
++	/* NFC @28 Business 2109 sku only */
++};
++
++&lpass_tlmm {
++	spkr_01_sd_n_active: spkr-01-sd-n-active-state {
++		pins = "gpio12";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++		output-low;
++	};
++};
++
++&lpass_vamacro {
++	qcom,dmic-sample-rate = <4800000>;
++
++	vdd-micb-supply = <&vreg_l1b_1p8>;
++
++	pinctrl-0 = <&dmic01_default>;
++	pinctrl-names = "default";
++};
++
++&mdss {
++	status = "okay";
++};
++
++&mdss_dp0 {
++	status = "okay";
++};
++
++&mdss_dp0_out {
++	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
++};
++
++&mdss_dp1 {
++	status = "okay";
++};
++
++&mdss_dp1_out {
++	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
++};
++
++&mdss_dp3 {
++	/delete-property/ #sound-dai-cells;
++
++	pinctrl-0 = <&edp0_hpd_default>;
++	pinctrl-names = "default";
++
++	status = "okay";
++
++	aux-bus {
++		panel: panel {
++			compatible = "edp-panel";
++
++			backlight = <&backlight>;
++
++			power-supply = <&vreg_edp_3p3>;
++
++			port {
++				edp_panel_in: endpoint {
++					remote-endpoint = <&mdss_dp3_out>;
++				};
++			};
++		};
++	};
++};
++
++&mdss_dp3_out {
++	data-lanes = <0 1 2 3>;
++	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
++
++	remote-endpoint = <&edp_panel_in>;
++};
++
++&mdss_dp3_phy {
++	vdda-phy-supply = <&vreg_l3j_0p8>;
++	vdda-pll-supply = <&vreg_l2j_1p2>;
++
++	status = "okay";
++};
++
++&pcie4 {
++	pinctrl-0 = <&pcie4_default>;
++	pinctrl-names = "default";
++
++	status = "okay";
++};
++
++&pcie4_phy {
++	vdda-phy-supply = <&vreg_l3i_0p8>;
++	vdda-pll-supply = <&vreg_l3e_1p2>;
++
++	status = "okay";
++};
++
++&pcie4_port0 {
++	reset-gpios = <&tlmm 146 GPIO_ACTIVE_LOW>;
++	wake-gpios = <&tlmm 148 GPIO_ACTIVE_LOW>;
++
++	wifi@0 {
++		compatible = "pci17cb,1107";
++		reg = <0x10000 0x0 0x0 0x0 0x0>;
++
++		vddaon-supply = <&vreg_pmu_aon_0p59>;
++		vddwlcx-supply = <&vreg_pmu_wlcx_0p8>;
++		vddwlmx-supply = <&vreg_pmu_wlmx_0p85>;
++		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
++		vddrfa0p8-supply = <&vreg_pmu_rfa_0p8>;
++		vddrfa1p2-supply = <&vreg_pmu_rfa_1p2>;
++		vddrfa1p8-supply = <&vreg_pmu_rfa_1p8>;
++		vddpcie0p9-supply = <&vreg_pmu_pcie_0p9>;
++		vddpcie1p8-supply = <&vreg_pmu_pcie_1p8>;
++	};
++};
++
++&pm8550_gpios {
++	vol_up_n_default: vol-up-n-state {
++		pins = "gpio6";
++		function = "normal";
++		power-source = <1>;
++		bias-pull-up;
++		input-enable;
++	};
++
++	vol_down_n_default: vol-down-n-state {
++		pins = "gpio8";
++		function = "normal";
++		power-source = <1>;
++		bias-pull-up;
++		input-enable;
++	};
++};
++
++&pmk8550_pwm {
++	status = "okay";
++};
++
++&qupv3_0 {
++	status = "okay";
++};
++
++&qupv3_1 {
++	status = "okay";
++};
++
++&qupv3_2 {
++	status = "okay";
++};
++
++&remoteproc_adsp {
++	firmware-name = "qcom/x1p42100/Microsoft/Surface12/qcadsp8380.mbn",
++			"qcom/x1p42100/Microsoft/Surface12/adsp_dtbs.elf";
++
++	status = "okay";
++};
++
++&remoteproc_cdsp {
++	firmware-name = "qcom/x1p42100/Microsoft/Surface12/qccdsp8380.mbn",
++			"qcom/x1p42100/Microsoft/Surface12/cdsp_dtbs.elf";
++
++	status = "okay";
++};
++
++&smb2360_0 {
++	status = "okay";
++};
++
++&smb2360_0_eusb2_repeater {
++	vdd18-supply = <&vreg_l3d_1p8>;
++	vdd3-supply = <&vreg_l2b_3p0>;
++};
++
++&smb2360_1 {
++	status = "okay";
++};
++
++&smb2360_1_eusb2_repeater {
++	vdd18-supply = <&vreg_l3d_1p8>;
++	vdd3-supply = <&vreg_l14b_3p0>;
++};
++
++&swr0 {
++	pinctrl-0 = <&wsa_swr_active>, <&spkr_01_sd_n_active>;
++	pinctrl-names = "default";
++
++	status = "okay";
++
++	/* WSA8845, Left speaker */
++	left_spkr: speaker@0,0 {
++		compatible = "sdw20217020400";
++		reg = <0 0>;
++		reset-gpios = <&lpass_tlmm 12 GPIO_ACTIVE_LOW>;
++		#sound-dai-cells = <0>;
++		sound-name-prefix = "SpkrLeft";
++		vdd-1p8-supply = <&vreg_l15b_1p8>;
++		vdd-io-supply = <&vreg_l12b_1p2>;
++		qcom,port-mapping = <1 2 3 7 10 13>;
++	};
++
++	/* WSA8845, Right speaker */
++	right_spkr: speaker@0,1 {
++		compatible = "sdw20217020400";
++		reg = <0 1>;
++		reset-gpios = <&lpass_tlmm 12 GPIO_ACTIVE_LOW>;
++		#sound-dai-cells = <0>;
++		sound-name-prefix = "SpkrRight";
++		vdd-1p8-supply = <&vreg_l15b_1p8>;
++		vdd-io-supply = <&vreg_l12b_1p2>;
++		qcom,port-mapping = <4 5 6 7 11 13>;
++	};
++};
++
++&tlmm {
++	gpio-reserved-ranges = <34 2>, /* Unused */
++			       <44 4>; /* SPI (TPM) */
++
++	cam_indicator_en: cam-indicator-en-state {
++		pins = "gpio225";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	edp_reg_en: edp-reg-en-state {
++		pins = "gpio70";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	hall_int_n_default: hall-int-n-state {
++		pins = "gpio2";
++		function = "gpio";
++		bias-disable;
++	};
++
++	panel_en: panel-en-state {
++		pins = "gpio29";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	pcie4_default: pcie4-default-state {
++		clkreq-n-pins {
++			pins = "gpio147";
++			function = "pcie4_clk";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++
++		perst-n-pins {
++			pins = "gpio146";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++
++		wake-n-pins {
++			pins = "gpio148";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++	};
++
++	ssam_state: ssam-state-state {
++		pins = "gpio91";
++		function = "gpio";
++		bias-disable;
++	};
++
++	ts0_default: ts0-default-state {
++		int-n-pins {
++			pins = "gpio38";
++			function = "gpio";
++			bias-disable;
++		};
++
++		reset-n-pins {
++			pins = "gpio48";
++			function = "gpio";
++			output-high;
++			drive-strength = <16>;
++		};
++	};
++
++	wcn_sw_en: wcn-sw-en-state {
++		pins = "gpio214";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	cam_front_default: cam-front-default-state {
++		mclk-pins {
++			pins = "gpio100";
++			function = "cam_aon";
++			drive-strength = <16>;
++			bias-disable;
++		};
++
++		reset-n-pins {
++			pins = "gpio237";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++	};
++
++	cam_rear_default: cam-rear-default-state {
++		mclk-pins {
++			pins = "gpio97";
++			function = "cam_mclk";
++			drive-strength = <16>;
++			bias-disable;
++		};
++
++		reset-n-pins {
++			pins = "gpio110";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++	};
++
++	cam_ir_default: cam-ir-default-state {
++		mclk-pins {
++			pins = "gpio96";
++			function = "cam_mclk";
++			drive-strength = <16>;
++			bias-disable;
++		};
++
++		reset-n-pins {
++			pins = "gpio109";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++	};
++
++	wcn_wlan_bt_en: wcn-wlan-bt-en-state {
++		pins = "gpio116", "gpio117";
++		function = "gpio";
++		drive-strength = <2>;
++		bias-disable;
++	};
++
++	usb_1_ss0_sbu_default: usb-1-ss0-sbu-state {
++		oe-n-pins {
++			pins = "gpio168";
++			function = "gpio";
++			bias-disable;
++			drive-strength = <2>;
++		};
++
++		sel-pins {
++			pins = "gpio167";
++			function = "gpio";
++			bias-disable;
++			drive-strength = <2>;
++		};
++	};
++
++	usb_1_ss1_sbu_default: usb-1-ss1-sbu-state {
++		oe-n-pins {
++			pins = "gpio179";
++			function = "gpio";
++			bias-disable;
++			drive-strength = <2>;
++		};
++
++		sel-pins {
++			pins = "gpio178";
++			function = "gpio";
++			bias-disable;
++			drive-strength = <2>;
++		};
++	};
++};
++
++&uart2 {
++	status = "okay";
++
++	embedded-controller {
++		compatible = "microsoft,surface-sam";
++
++		interrupts-extended = <&tlmm 91 IRQ_TYPE_EDGE_RISING>;
++
++		current-speed = <4000000>;
++
++		pinctrl-0 = <&ssam_state>;
++		pinctrl-names = "default";
++	};
++};
++
++&uart14 {
++	status = "okay";
++
++	bluetooth {
++		compatible = "qcom,wcn7850-bt";
++		max-speed = <3200000>;
++
++		vddaon-supply = <&vreg_pmu_aon_0p59>;
++		vddwlcx-supply = <&vreg_pmu_wlcx_0p8>;
++		vddwlmx-supply = <&vreg_pmu_wlmx_0p85>;
++		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
++		vddrfa0p8-supply = <&vreg_pmu_rfa_0p8>;
++		vddrfa1p2-supply = <&vreg_pmu_rfa_1p2>;
++		vddrfa1p8-supply = <&vreg_pmu_rfa_1p8>;
++	};
++};
++
++&ufs_mem_hc {
++	vcc-supply = <&vreg_l17b_2p5>;
++	vcc-max-microamp = <800000>;
++	vccq-supply = <&vreg_l2i_1p2>;
++	vccq-max-microamp = <900000>;
++
++	vdd-hba-supply = <&vreg_l3j_0p8>;
++
++	status = "okay";
++};
++
++&ufs_mem_phy {
++	status = "okay";
++
++	vdda-phy-supply = <&vreg_l3i_0p8>;
++	vdda-pll-supply = <&vreg_l3e_1p2>;
++};
++
++&usb_1_ss0_hsphy {
++	vdd-supply = <&vreg_l3j_0p8>;
++	vdda12-supply = <&vreg_l2j_1p2>;
++
++	phys = <&smb2360_0_eusb2_repeater>;
++
++	status = "okay";
++};
++
++&usb_1_ss0_qmpphy {
++	vdda-phy-supply = <&vreg_l2j_1p2>;
++	vdda-pll-supply = <&vreg_l1j_0p8>;
++
++	status = "okay";
++};
++
++&usb_1_ss0 {
++	dr_mode = "host";
++
++	status = "okay";
++};
++
++&usb_1_ss0_dwc3_hs {
++	remote-endpoint = <&pmic_glink_ss0_hs_in>;
++};
++
++&usb_1_ss0_qmpphy_out {
++	remote-endpoint = <&pmic_glink_ss0_ss_in>;
++};
++
++&usb_1_ss1_hsphy {
++	vdd-supply = <&vreg_l3j_0p8>;
++	vdda12-supply = <&vreg_l2j_1p2>;
++
++	phys = <&smb2360_1_eusb2_repeater>;
++
++	status = "okay";
++};
++
++&usb_1_ss1_qmpphy {
++	vdda-phy-supply = <&vreg_l2j_1p2>;
++	vdda-pll-supply = <&vreg_l2d_0p9>;
++
++	status = "okay";
++};
++
++&usb_1_ss1 {
++	dr_mode = "host";
++
++	status = "okay";
++};
++
++&usb_1_ss1_dwc3_hs {
++	remote-endpoint = <&pmic_glink_ss1_hs_in>;
++};
++
++&usb_1_ss1_qmpphy_out {
++	remote-endpoint = <&pmic_glink_ss1_ss_in>;
++};
+diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..6495aed5b9a5f6eff110f7cc102e8292f5d13f6b
+--- /dev/null
++++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c
+@@ -0,0 +1,386 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Qualcomm MSM Camera Subsystem - CSIPHY Module 3phase v1.0
++ *
++ * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
++ * Copyright (C) 2016-2026 Linaro Ltd.
++ */
++
++#include <linux/delay.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/time64.h>
++
++#include "phy-qcom-mipi-csi2.h"
++
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(offset, n)	((offset) + 0x4 * (n))
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRL0_PHY_SW_RESET	BIT(0)
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRL5_CLK_ENABLE	BIT(7)
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRL6_COMMON_PWRDN_B	BIT(0)
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRL6_SHOW_REV_ID	BIT(1)
++#define CSIPHY_3PH_CMN_CSI_COMMON_CTRL10_IRQ_CLEAR_CMD	BIT(0)
++#define CSIPHY_3PH_CMN_CSI_COMMON_STATUSn(offset, n)	((offset) + 0xb0 + 0x4 * (n))
++
++#define CSIPHY_2PH_LN_CSI_2PHASE_CTRL9n(n)		((0x200 * (n)) + 0x24)
++
++/*
++ * 3 phase CSI has 19 common status regs with only 0-10 being used
++ * and 11-18 being reserved.
++ */
++#define CSI_COMMON_STATUS_NUM				11
++/*
++ * There are a number of common control registers
++ * The offset to clear the CSIPHY IRQ status starts @ 22
++ * So to clear CSI_COMMON_STATUS0 this is CSI_COMMON_CONTROL22, STATUS1 is
++ * CONTROL23 and so on
++ */
++#define CSI_CTRL_STATUS_INDEX				22
++
++/*
++ * There are 43 COMMON_CTRL registers with regs after # 33 being reserved
++ */
++#define CSI_CTRL_MAX					33
++
++#define CSIPHY_DEFAULT_PARAMS				0
++#define CSIPHY_SETTLE_CNT_LOWER_BYTE			2
++#define CSIPHY_SKEW_CAL					7
++
++/* 4nm 2PH v 2.1.2 2p5Gbps 4 lane DPHY mode */
++static const struct
++mipi_csi2phy_lane_regs lane_regs_x1e80100[] = {
++	/* Power up lanes 2ph mode */
++	{.reg_addr = 0x101c, .reg_data = 0x7a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x1018, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++
++	{.reg_addr = 0x0094, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x00a0, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0090, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0098, .reg_data = 0x08, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0094, .reg_data = 0x07, .delay_us = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0030, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0000, .reg_data = 0x8e, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0038, .reg_data = 0xfe, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x002c, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0034, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x001c, .reg_data = 0x0a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0014, .reg_data = 0x60, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x003c, .reg_data = 0xb8, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0004, .reg_data = 0x0c, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0020, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0008, .reg_data = 0x10, .param_type = CSIPHY_SETTLE_CNT_LOWER_BYTE},
++	{.reg_addr = 0x0010, .reg_data = 0x52, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0094, .reg_data = 0xd7, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x005c, .reg_data = 0x00, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0060, .reg_data = 0xbd, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0064, .reg_data = 0x7f, .param_type = CSIPHY_SKEW_CAL},
++
++	{.reg_addr = 0x0e94, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0ea0, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e90, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e98, .reg_data = 0x08, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e94, .reg_data = 0x07, .delay_us =  0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e30, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e28, .reg_data = 0x04, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e00, .reg_data = 0x80, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e0c, .reg_data = 0xff, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e38, .reg_data = 0x1f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e2c, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e34, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e1c, .reg_data = 0x0a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e14, .reg_data = 0x60, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e3c, .reg_data = 0xb8, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e04, .reg_data = 0x0c, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e20, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0e08, .reg_data = 0x10, .param_type = CSIPHY_SETTLE_CNT_LOWER_BYTE},
++	{.reg_addr = 0x0e10, .reg_data = 0x52, .param_type = CSIPHY_DEFAULT_PARAMS},
++
++	{.reg_addr = 0x0494, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x04a0, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0490, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0498, .reg_data = 0x08, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0494, .reg_data = 0x07, .delay_us =  0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0430, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0400, .reg_data = 0x8e, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0438, .reg_data = 0xfe, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x042c, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0434, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x041c, .reg_data = 0x0a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0414, .reg_data = 0x60, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x043c, .reg_data = 0xb8, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0404, .reg_data = 0x0c, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0420, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0408, .reg_data = 0x10, .param_type = CSIPHY_SETTLE_CNT_LOWER_BYTE},
++	{.reg_addr = 0x0410, .reg_data = 0x52, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0494, .reg_data = 0xd7, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x045c, .reg_data = 0x00, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0460, .reg_data = 0xbd, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0464, .reg_data = 0x7f, .param_type = CSIPHY_SKEW_CAL},
++
++	{.reg_addr = 0x0894, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x08a0, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0890, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0898, .reg_data = 0x08, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0894, .reg_data = 0x07, .delay_us =  0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0830, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0800, .reg_data = 0x8e, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0838, .reg_data = 0xfe, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x082c, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0834, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x081c, .reg_data = 0x0a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0814, .reg_data = 0x60, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x083c, .reg_data = 0xb8, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0804, .reg_data = 0x0c, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0820, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0808, .reg_data = 0x10, .param_type = CSIPHY_SETTLE_CNT_LOWER_BYTE},
++	{.reg_addr = 0x0810, .reg_data = 0x52, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0894, .reg_data = 0xd7, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x085c, .reg_data = 0x00, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0860, .reg_data = 0xbd, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0864, .reg_data = 0x7f, .param_type = CSIPHY_SKEW_CAL},
++
++	{.reg_addr = 0x0c94, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0ca0, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c90, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c98, .reg_data = 0x08, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c94, .reg_data = 0x07, .delay_us =  0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c30, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c00, .reg_data = 0x8e, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c38, .reg_data = 0xfe, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c2c, .reg_data = 0x01, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c34, .reg_data = 0x0f, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c1c, .reg_data = 0x0a, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c14, .reg_data = 0x60, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c3c, .reg_data = 0xb8, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c04, .reg_data = 0x0c, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c20, .reg_data = 0x00, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c08, .reg_data = 0x10, .param_type = CSIPHY_SETTLE_CNT_LOWER_BYTE},
++	{.reg_addr = 0x0c10, .reg_data = 0x52, .param_type = CSIPHY_DEFAULT_PARAMS},
++	{.reg_addr = 0x0c94, .reg_data = 0xd7, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0c5c, .reg_data = 0x00, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0c60, .reg_data = 0xbd, .param_type = CSIPHY_SKEW_CAL},
++	{.reg_addr = 0x0c64, .reg_data = 0x7f, .param_type = CSIPHY_SKEW_CAL},
++};
++
++static inline const struct mipi_csi2phy_device_regs *
++csi2phy_dev_to_regs(struct mipi_csi2phy_device *csi2phy)
++{
++	return &csi2phy->soc_cfg->reg_info;
++}
++
++static void phy_qcom_mipi_csi2_hw_version_read(struct mipi_csi2phy_device *csi2phy)
++{
++	const struct mipi_csi2phy_device_regs *regs = csi2phy_dev_to_regs(csi2phy);
++	u32 tmp;
++
++	writel(CSIPHY_3PH_CMN_CSI_COMMON_CTRL6_SHOW_REV_ID, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 6));
++
++	tmp = readl_relaxed(csi2phy->base +
++			    CSIPHY_3PH_CMN_CSI_COMMON_STATUSn(regs->common_regs_offset, 12));
++	csi2phy->hw_version = tmp;
++
++	tmp = readl_relaxed(csi2phy->base +
++			    CSIPHY_3PH_CMN_CSI_COMMON_STATUSn(regs->common_regs_offset, 13));
++	csi2phy->hw_version |= (tmp << 8) & 0xFF00;
++
++	tmp = readl_relaxed(csi2phy->base +
++			    CSIPHY_3PH_CMN_CSI_COMMON_STATUSn(regs->common_regs_offset, 14));
++	csi2phy->hw_version |= (tmp << 16) & 0xFF0000;
++
++	tmp = readl_relaxed(csi2phy->base +
++			    CSIPHY_3PH_CMN_CSI_COMMON_STATUSn(regs->common_regs_offset, 15));
++	csi2phy->hw_version |= (tmp << 24) & 0xFF000000;
++
++	dev_dbg_once(csi2phy->dev, "CSIPHY 3PH HW Version = 0x%08x\n", csi2phy->hw_version);
++}
++
++/*
++ * phy_qcom_mipi_csi2_reset - Perform software reset on CSIPHY module
++ * @phy_qcom_mipi_csi2: CSIPHY device
++ */
++static void phy_qcom_mipi_csi2_reset(struct mipi_csi2phy_device *csi2phy)
++{
++	const struct mipi_csi2phy_device_regs *regs = csi2phy_dev_to_regs(csi2phy);
++
++	writel(CSIPHY_3PH_CMN_CSI_COMMON_CTRL0_PHY_SW_RESET,
++	       csi2phy->base + CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 0));
++	usleep_range(5000, 8000);
++	writel(0x0, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 0));
++}
++
++/*
++ * phy_qcom_mipi_csi2_settle_cnt_calc - Calculate settle count value
++ *
++ * Helper function to calculate settle count value. This is
++ * based on the CSI2 T_hs_settle parameter which in turn
++ * is calculated based on the CSI2 transmitter link frequency.
++ *
++ * Return settle count value or 0 if the CSI2 link frequency
++ * is not available
++ */
++static u8 phy_qcom_mipi_csi2_settle_cnt_calc(s64 link_freq, u32 timer_clk_rate)
++{
++	u32 t_hs_prepare_max_ps;
++	u32 timer_period_ps;
++	u32 t_hs_settle_ps;
++	u8 settle_cnt;
++	u32 ui_ps;
++
++	if (link_freq <= 0)
++		return 0;
++
++	ui_ps = div64_u64(PSEC_PER_SEC, link_freq);
++	ui_ps /= 2;
++	t_hs_prepare_max_ps = 85000 + 6 * ui_ps;
++	t_hs_settle_ps = t_hs_prepare_max_ps;
++
++	timer_period_ps = div_u64(PSEC_PER_SEC, timer_clk_rate);
++
++	if ((t_hs_settle_ps / timer_period_ps) < 6)
++		return 0;
++
++	settle_cnt = t_hs_settle_ps / timer_period_ps - 6;
++
++	return settle_cnt;
++}
++
++static void
++phy_qcom_mipi_csi2_gen2_config_lanes(struct mipi_csi2phy_device *csi2phy,
++				     u8 settle_cnt)
++{
++	const struct mipi_csi2phy_device_regs *regs = csi2phy_dev_to_regs(csi2phy);
++	const struct mipi_csi2phy_lane_regs *r = regs->init_seq;
++	int i, array_size = regs->lane_array_size;
++	u32 val;
++
++	for (i = 0; i < array_size; i++, r++) {
++		switch (r->param_type) {
++		case CSIPHY_SETTLE_CNT_LOWER_BYTE:
++			val = settle_cnt & 0xff;
++			break;
++		case CSIPHY_SKEW_CAL:
++			/* TODO: support application of skew from dt flag */
++			continue;
++		default:
++			val = r->reg_data;
++			break;
++		}
++		writel(val, csi2phy->base + r->reg_addr);
++		if (r->delay_us)
++			udelay(r->delay_us);
++	}
++}
++
++static int phy_qcom_mipi_csi2_lanes_enable(struct mipi_csi2phy_device *csi2phy,
++					   struct mipi_csi2phy_stream_cfg *cfg)
++{
++	const struct mipi_csi2phy_device_regs *regs = csi2phy_dev_to_regs(csi2phy);
++	struct mipi_csi2phy_lanes_cfg *lane_cfg = &cfg->lane_cfg;
++	u8 settle_cnt;
++	u8 val;
++	int i;
++
++	settle_cnt = phy_qcom_mipi_csi2_settle_cnt_calc(cfg->link_freq, csi2phy->timer_clk_rate);
++	if (!settle_cnt)
++		return -EINVAL;
++
++	/*
++	 * CSI_COMMON_CTRL5 is a physical lane power-up bitmap:
++	 * - Bits [0,2,4,6] → D-PHY data lanes(LN0, LN2, LN4, LN6)
++	 * - Bits [1,3,5] → C-PHY trio lanes(LN1, LN3, LN5)
++	 * - Bit [7] → D-PHY clock lane(LNCK) dedicated clock enable
++	 */
++	val = BIT(lane_cfg->clk.pos);
++	for (i = 0; i < cfg->num_data_lanes; i++)
++		val |= BIT(lane_cfg->data[i].pos * 2);
++
++	writel(val, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 5));
++
++	/* Lane configuration for polarity @ CSIPHY-base + CTRL9 */
++	for (i = 0; i < cfg->num_data_lanes; i++) {
++		if (lane_cfg->data[i].pol) {
++			u8 pos = lane_cfg->data[i].pos;
++
++			writel(BIT(2), csi2phy->base + CSIPHY_2PH_LN_CSI_2PHASE_CTRL9n(pos * 2));
++		}
++	}
++
++	if (lane_cfg->clk.pol)
++		writel(BIT(2), csi2phy->base + CSIPHY_2PH_LN_CSI_2PHASE_CTRL9n(lane_cfg->clk.pos));
++
++	val = CSIPHY_3PH_CMN_CSI_COMMON_CTRL6_COMMON_PWRDN_B;
++	writel(val, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 6));
++
++	val = 0x02;
++	writel(val, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 7));
++
++	val = 0x00;
++	writel(val, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 0));
++
++	phy_qcom_mipi_csi2_gen2_config_lanes(csi2phy, settle_cnt);
++
++	/* IRQ_MASK registers - disable all interrupts */
++	for (i = CSI_COMMON_STATUS_NUM; i < CSI_CTRL_STATUS_INDEX; i++) {
++		writel(0, csi2phy->base +
++		       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, i));
++	}
++
++	return 0;
++}
++
++static void
++phy_qcom_mipi_csi2_lanes_disable(struct mipi_csi2phy_device *csi2phy,
++				 struct mipi_csi2phy_stream_cfg *cfg)
++{
++	const struct mipi_csi2phy_device_regs *regs = csi2phy_dev_to_regs(csi2phy);
++
++	writel(0, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 5));
++
++	writel(0, csi2phy->base +
++	       CSIPHY_3PH_CMN_CSI_COMMON_CTRLn(regs->common_regs_offset, 6));
++}
++
++static const struct mipi_csi2phy_hw_ops phy_qcom_mipi_csi2_ops_3ph_1_0 = {
++	.hw_version_read = phy_qcom_mipi_csi2_hw_version_read,
++	.reset = phy_qcom_mipi_csi2_reset,
++	.lanes_enable = phy_qcom_mipi_csi2_lanes_enable,
++	.lanes_disable = phy_qcom_mipi_csi2_lanes_disable,
++};
++
++static const char * const x1e_clks[] = {
++	"core",
++	"timer",
++	"ahb"
++};
++
++static const char * const x1e_supplies[] = {
++	"vdda-0p9",
++	"vdda-1p2"
++};
++
++static struct mipi_csi2_genpd x1e_genpds[] = {
++	{ .name = "top", .scaled = false },
++	{ .name = "mmcx", .scaled = true },
++	{ .name = "mx", .scaled = true },
++};
++
++const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_4nm_x1e = {
++	.ops = &phy_qcom_mipi_csi2_ops_3ph_1_0,
++	.reg_info = {
++		.init_seq = lane_regs_x1e80100,
++		.lane_array_size = ARRAY_SIZE(lane_regs_x1e80100),
++		.common_regs_offset = 0x1000,
++	},
++	.supply_names = (const char **)x1e_supplies,
++	.num_supplies = ARRAY_SIZE(x1e_supplies),
++	.clk_names = (const char **)x1e_clks,
++	.num_clk = ARRAY_SIZE(x1e_clks),
++	.genpds = x1e_genpds,
++	.num_genpds = ARRAY_SIZE(x1e_genpds),
++};
+diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..892f802efb3ee6593e1eba2b6ac4c8a2bc59d007
+--- /dev/null
++++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c
+@@ -0,0 +1,446 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026, Linaro Ltd.
++ */
++
++#include <dt-bindings/phy/phy.h>
++#include <linux/clk.h>
++#include <linux/delay.h>
++#include <linux/err.h>
++#include <linux/io.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/of.h>
++#include <linux/pm_opp.h>
++#include <linux/phy/phy.h>
++#include <linux/phy/phy-mipi-dphy.h>
++#include <linux/platform_device.h>
++#include <linux/pm_domain.h>
++#include <linux/pm_runtime.h>
++#include <linux/regmap.h>
++#include <linux/regulator/consumer.h>
++#include <linux/reset.h>
++#include <linux/slab.h>
++
++#include "phy-qcom-mipi-csi2.h"
++
++static int
++phy_qcom_mipi_csi2_set_clock_rates(struct mipi_csi2phy_device *csi2phy,
++				   s64 link_freq)
++{
++	struct device *dev = csi2phy->dev;
++	unsigned long opp_rate = link_freq / 4;
++	struct dev_pm_opp *opp;
++	long timer_rate;
++	int i, pstate;
++	int ret;
++
++	opp = dev_pm_opp_find_freq_ceil(dev, &opp_rate);
++	if (IS_ERR(opp)) {
++		dev_err(csi2phy->dev, "Couldn't find ceiling for %lld Hz\n",
++			link_freq);
++		return PTR_ERR(opp);
++	}
++
++	pstate = 0;
++	for (i = 0; i < csi2phy->pd_list->num_pds; i++) {
++		unsigned int perf;
++
++		if (!csi2phy->soc_cfg->genpds[i].scaled)
++			continue;
++
++		perf = dev_pm_opp_get_required_pstate(opp, pstate);
++		pstate += 1;
++
++		ret = dev_pm_genpd_set_performance_state(csi2phy->pd_list->pd_devs[i], perf);
++		if (ret) {
++			dev_err(csi2phy->dev, "Couldn't set perf state %u\n",
++				perf);
++			dev_pm_opp_put(opp);
++			goto unset_pstate;
++		}
++	}
++	dev_pm_opp_put(opp);
++
++	ret = dev_pm_opp_set_rate(dev, opp_rate);
++	if (ret) {
++		dev_err(csi2phy->dev, "dev_pm_opp_set_rate() fail\n");
++		goto unset_opp_rate;
++	}
++
++	timer_rate = clk_round_rate(csi2phy->timer_clk, link_freq / 4);
++	if (timer_rate <= 0) {
++		ret = -ENODEV;
++		goto unset_opp_rate;
++	}
++
++	ret = clk_set_rate(csi2phy->timer_clk, timer_rate);
++	if (ret)
++		goto unset_opp_rate;
++
++	csi2phy->timer_clk_rate = timer_rate;
++
++	return 0;
++
++unset_opp_rate:
++	dev_pm_opp_set_rate(dev, 0);
++
++unset_pstate:
++	while (i--) {
++		if (!csi2phy->soc_cfg->genpds[i].scaled)
++			continue;
++
++		dev_pm_genpd_set_performance_state(csi2phy->pd_list->pd_devs[i], 0);
++	}
++
++	return ret;
++}
++
++static int phy_qcom_mipi_csi2_configure(struct phy *phy,
++					union phy_configure_opts *opts)
++{
++	struct mipi_csi2phy_device *csi2phy = phy_get_drvdata(phy);
++	struct phy_configure_opts_mipi_dphy *dphy_cfg = &opts->mipi_dphy;
++	struct mipi_csi2phy_stream_cfg *stream_cfg = &csi2phy->stream_cfg;
++	int ret;
++
++	ret = phy_mipi_dphy_config_validate(dphy_cfg);
++	if (ret)
++		return ret;
++
++	if (dphy_cfg->lanes < 1 || dphy_cfg->lanes > CSI2_MAX_DATA_LANES)
++		return -EINVAL;
++
++	stream_cfg->link_freq = dphy_cfg->hs_clk_rate;
++
++	return 0;
++}
++
++static int phy_qcom_mipi_csi2_power_on(struct phy *phy)
++{
++	struct mipi_csi2phy_device *csi2phy = phy_get_drvdata(phy);
++	const struct mipi_csi2phy_hw_ops *ops = csi2phy->soc_cfg->ops;
++	int i, ret;
++
++	ret = regulator_bulk_enable(csi2phy->soc_cfg->num_supplies,
++				    csi2phy->supplies);
++	if (ret)
++		return ret;
++
++	ret = pm_runtime_resume_and_get(csi2phy->dev);
++	if (ret < 0)
++		goto disable_regulators;
++
++	ret = phy_qcom_mipi_csi2_set_clock_rates(csi2phy, csi2phy->stream_cfg.link_freq);
++	if (ret)
++		goto poweroff_phy;
++
++	ret = clk_bulk_prepare_enable(csi2phy->soc_cfg->num_clk,
++				      csi2phy->clks);
++	if (ret) {
++		dev_err(csi2phy->dev, "failed to enable clocks, %d\n", ret);
++		goto unset_rate;
++	}
++
++	ops->reset(csi2phy);
++
++	ops->hw_version_read(csi2phy);
++
++	ret = ops->lanes_enable(csi2phy, &csi2phy->stream_cfg);
++	if (ret)
++		goto unset_clocks;
++
++	return 0;
++
++unset_clocks:
++	clk_bulk_disable_unprepare(csi2phy->soc_cfg->num_clk,
++				   csi2phy->clks);
++
++unset_rate:
++	dev_pm_opp_set_rate(csi2phy->dev, 0);
++
++	for (i = 0; i < csi2phy->pd_list->num_pds; i++) {
++		if (!csi2phy->soc_cfg->genpds[i].scaled)
++			continue;
++
++		dev_pm_genpd_set_performance_state(csi2phy->pd_list->pd_devs[i], 0);
++	}
++
++poweroff_phy:
++	pm_runtime_put_sync(csi2phy->dev);
++
++disable_regulators:
++	regulator_bulk_disable(csi2phy->soc_cfg->num_supplies,
++			       csi2phy->supplies);
++
++	return ret;
++}
++
++static int phy_qcom_mipi_csi2_power_off(struct phy *phy)
++{
++	struct mipi_csi2phy_device *csi2phy = phy_get_drvdata(phy);
++	const struct mipi_csi2phy_hw_ops *ops = csi2phy->soc_cfg->ops;
++	int i;
++
++	ops->lanes_disable(csi2phy, &csi2phy->stream_cfg);
++
++	clk_bulk_disable_unprepare(csi2phy->soc_cfg->num_clk,
++				   csi2phy->clks);
++
++	dev_pm_opp_set_rate(csi2phy->dev, 0);
++
++	for (i = 0; i < csi2phy->pd_list->num_pds; i++) {
++		if (!csi2phy->soc_cfg->genpds[i].scaled)
++			continue;
++
++		dev_pm_genpd_set_performance_state(csi2phy->pd_list->pd_devs[i], 0);
++	}
++
++	pm_runtime_put_sync(csi2phy->dev);
++
++	regulator_bulk_disable(csi2phy->soc_cfg->num_supplies,
++			       csi2phy->supplies);
++
++	return 0;
++}
++
++static const struct phy_ops phy_qcom_mipi_csi2_ops = {
++	.configure	= phy_qcom_mipi_csi2_configure,
++	.power_on	= phy_qcom_mipi_csi2_power_on,
++	.power_off	= phy_qcom_mipi_csi2_power_off,
++	.owner		= THIS_MODULE,
++};
++
++static struct phy *qcom_csi2_phy_xlate(struct device *dev,
++				       const struct of_phandle_args *args)
++{
++	struct mipi_csi2phy_device *csi2phy = dev_get_drvdata(dev);
++
++	if (args->args_count < 1 || args->args[0] != PHY_TYPE_DPHY) {
++		dev_err(csi2phy->dev, "invalid phy mode in DTB\n");
++		return ERR_PTR(-EOPNOTSUPP);
++	}
++
++	csi2phy->phy_mode = args->args[0];
++
++	return csi2phy->phy;
++}
++
++static int phy_qcom_mipi_csi2_attach_pm_domains(struct mipi_csi2phy_device *csi2phy)
++{
++	struct dev_pm_domain_attach_data pd_data = { 0 };
++	const char **pd_names;
++	int i;
++
++	pd_names = devm_kzalloc(csi2phy->dev,
++				sizeof(char *) * csi2phy->soc_cfg->num_genpds,
++				GFP_KERNEL);
++	if (!pd_names)
++		return -ENOMEM;
++
++	for (i = 0; i < csi2phy->soc_cfg->num_genpds; i++)
++		pd_names[i] = csi2phy->soc_cfg->genpds[i].name;
++
++	pd_data.pd_names = pd_names;
++	pd_data.num_pd_names = csi2phy->soc_cfg->num_genpds;
++
++	return devm_pm_domain_attach_list(csi2phy->dev, &pd_data,
++					  &csi2phy->pd_list);
++}
++
++static int phy_qcom_mipi_csi2_parse_routing(struct mipi_csi2phy_device *csi2phy)
++{
++	struct mipi_csi2phy_stream_cfg *stream_cfg = &csi2phy->stream_cfg;
++	u32 lane_polarities[CSI2_MAX_DATA_LANES + 1];
++	u32 data_lanes[CSI2_MAX_DATA_LANES];
++	struct device *dev = csi2phy->dev;
++	struct fwnode_handle *ep;
++	int num_polarities;
++	int num_data_lanes;
++	int i, ret;
++
++	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev), 0, 1, 0);
++	if (ep) {
++		fwnode_handle_put(ep);
++		dev_err(dev, "DPHY split mode is not supported\n");
++		return -EOPNOTSUPP;
++	}
++
++	ep = fwnode_graph_get_endpoint_by_id(dev_fwnode(dev), 0, 0, 0);
++	if (!ep) {
++		dev_err(dev, "Missing port@0\n");
++		return -ENODEV;
++	}
++
++	num_data_lanes = fwnode_property_count_u32(ep, "data-lanes");
++	if (num_data_lanes < 1 || num_data_lanes > CSI2_MAX_DATA_LANES) {
++		ret = -EINVAL;
++		dev_err(dev, "Invalid data-lanes count: %d\n", num_data_lanes);
++		goto out_put;
++	}
++	stream_cfg->num_data_lanes = num_data_lanes;
++
++	ret = fwnode_property_read_u32_array(ep, "data-lanes", data_lanes,
++					     stream_cfg->num_data_lanes);
++	if (ret) {
++		dev_err(dev, "Failed to read data-lanes: %d\n", ret);
++		goto out_put;
++	}
++
++	/* lane-polarities: optional, up to num_data_lanes + 1 entries */
++	memset(lane_polarities, 0x00, sizeof(lane_polarities));
++	num_polarities = fwnode_property_count_u32(ep, "lane-polarities");
++	if (num_polarities > 0) {
++		if (num_polarities != stream_cfg->num_data_lanes + 1) {
++			ret = -EINVAL;
++			dev_err(dev, "clock+data-lane %d/polarities %d mismatch\n",
++				stream_cfg->num_data_lanes + 1, num_polarities);
++			goto out_put;
++		}
++
++		ret = fwnode_property_read_u32_array(ep, "lane-polarities", lane_polarities,
++						     num_polarities);
++		if (ret) {
++			dev_err(dev, "Failed to read lane-polarities: %d\n", ret);
++			goto out_put;
++		}
++	}
++
++	csi2phy->stream_cfg.lane_cfg.clk.pos = CSI2_DEFAULT_CLK_LANE;
++	csi2phy->stream_cfg.lane_cfg.clk.pol = lane_polarities[0];
++
++	for (i = 0; i < csi2phy->stream_cfg.num_data_lanes; i++) {
++		if (data_lanes[i] >= CSI2_MAX_DATA_LANES) {
++			dev_err(dev, "Invalid lane %d\n", data_lanes[i]);
++			ret = -EINVAL;
++			goto out_put;
++		}
++		csi2phy->stream_cfg.lane_cfg.data[i].pos = data_lanes[i];
++		csi2phy->stream_cfg.lane_cfg.data[i].pol = lane_polarities[i + 1];
++	}
++
++	ret = 0;
++
++out_put:
++	fwnode_handle_put(ep);
++
++	return ret;
++}
++
++static int phy_qcom_mipi_csi2_probe(struct platform_device *pdev)
++{
++	unsigned int i, num_clk, num_supplies;
++	struct mipi_csi2phy_device *csi2phy;
++	struct phy_provider *phy_provider;
++	struct device *dev = &pdev->dev;
++	struct phy *generic_phy;
++	int ret;
++
++	csi2phy = devm_kzalloc(dev, sizeof(*csi2phy), GFP_KERNEL);
++	if (!csi2phy)
++		return -ENOMEM;
++
++	csi2phy->dev = dev;
++	dev_set_drvdata(dev, csi2phy);
++
++	csi2phy->soc_cfg = device_get_match_data(&pdev->dev);
++
++	if (!csi2phy->soc_cfg)
++		return -EINVAL;
++
++	num_clk = csi2phy->soc_cfg->num_clk;
++
++	ret = phy_qcom_mipi_csi2_parse_routing(csi2phy);
++	if (ret)
++		return ret;
++
++	ret = phy_qcom_mipi_csi2_attach_pm_domains(csi2phy);
++	if (ret < 0 || csi2phy->pd_list == NULL) {
++		if (ret == 0)
++			ret = -ENODEV;
++		return dev_err_probe(dev, ret, "Failed to attach power-domain list\n");
++	}
++
++	ret = devm_pm_runtime_enable(dev);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "Failed to enable pm runtime\n");
++
++	ret = devm_clk_bulk_get_all(dev, &csi2phy->clks);
++	if (ret < 0)
++		return dev_err_probe(dev, ret, "Failed to get clocks\n");
++
++	if (num_clk != ret) {
++		return dev_err_probe(dev, -ENODEV, "clock count %d expected %d\n",
++				     ret, num_clk);
++	}
++
++	for (i = 0; i < num_clk; i++) {
++		if (!strcmp(csi2phy->clks[i].id, "timer")) {
++			csi2phy->timer_clk = csi2phy->clks[i].clk;
++			break;
++		}
++	}
++	if (!csi2phy->timer_clk)
++		return dev_err_probe(dev, -ENODEV, "no timer clock\n");
++
++	ret = devm_pm_opp_set_clkname(dev, "core");
++	if (ret)
++		return dev_err_probe(dev, ret, "Failed to set opp clkname\n");
++
++	ret = devm_pm_opp_of_add_table(dev);
++	if (ret)
++		return dev_err_probe(dev, ret, "invalid OPP table in device tree\n");
++
++	num_supplies = csi2phy->soc_cfg->num_supplies;
++	csi2phy->supplies = devm_kzalloc(dev, sizeof(*csi2phy->supplies) * num_supplies,
++					 GFP_KERNEL);
++	if (!csi2phy->supplies)
++		return -ENOMEM;
++
++	for (i = 0; i < num_supplies; i++)
++		csi2phy->supplies[i].supply = csi2phy->soc_cfg->supply_names[i];
++
++	ret = devm_regulator_bulk_get(dev, num_supplies, csi2phy->supplies);
++	if (ret)
++		return dev_err_probe(dev, ret,
++				     "failed to get regulator supplies\n");
++
++	csi2phy->base = devm_platform_ioremap_resource(pdev, 0);
++	if (IS_ERR(csi2phy->base))
++		return PTR_ERR(csi2phy->base);
++
++	generic_phy = devm_phy_create(dev, NULL, &phy_qcom_mipi_csi2_ops);
++	if (IS_ERR(generic_phy)) {
++		ret = PTR_ERR(generic_phy);
++		return dev_err_probe(dev, ret, "failed to create phy\n");
++	}
++	csi2phy->phy = generic_phy;
++
++	phy_set_drvdata(generic_phy, csi2phy);
++
++	phy_provider = devm_of_phy_provider_register(dev, qcom_csi2_phy_xlate);
++	if (!IS_ERR(phy_provider))
++		dev_dbg(dev, "Registered MIPI CSI2 PHY device\n");
++
++	return PTR_ERR_OR_ZERO(phy_provider);
++}
++
++static const struct of_device_id phy_qcom_mipi_csi2_of_match_table[] = {
++	{ .compatible	= "qcom,x1e80100-csi2-phy", .data = &mipi_csi2_dphy_4nm_x1e },
++	{ }
++};
++MODULE_DEVICE_TABLE(of, phy_qcom_mipi_csi2_of_match_table);
++
++static struct platform_driver phy_qcom_mipi_csi2_driver = {
++	.probe		= phy_qcom_mipi_csi2_probe,
++	.driver = {
++		.name	= "qcom-mipi-csi2-phy",
++		.of_match_table = phy_qcom_mipi_csi2_of_match_table,
++	},
++};
++
++module_platform_driver(phy_qcom_mipi_csi2_driver);
++
++MODULE_DESCRIPTION("Qualcomm MIPI CSI2 PHY driver");
++MODULE_AUTHOR("Bryan O'Donoghue <bod@kernel.org>");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e55ae00737047f2d0384728a9c98780851eec05
+--- /dev/null
++++ b/drivers/phy/qualcomm/phy-qcom-mipi-csi2.h
+@@ -0,0 +1,97 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ *
++ * Qualcomm MIPI CSI2 CPHY/DPHY driver
++ *
++ * Copyright (C) 2025 Linaro Ltd.
++ */
++#ifndef __PHY_QCOM_MIPI_CSI2_H__
++#define __PHY_QCOM_MIPI_CSI2_H__
++
++#include <linux/phy/phy.h>
++
++#define CSI2_MAX_DATA_LANES	4
++#define CSI2_DEFAULT_CLK_LANE	7
++
++struct mipi_csi2phy_lane {
++	u8 pos;
++	u8 pol;
++};
++
++struct mipi_csi2phy_lanes_cfg {
++	struct mipi_csi2phy_lane data[CSI2_MAX_DATA_LANES];
++	struct mipi_csi2phy_lane clk;
++};
++
++struct mipi_csi2phy_stream_cfg {
++	s64 link_freq;
++	u8 num_data_lanes;
++	struct mipi_csi2phy_lanes_cfg lane_cfg;
++};
++
++struct mipi_csi2phy_device;
++
++struct mipi_csi2phy_hw_ops {
++	void (*hw_version_read)(struct mipi_csi2phy_device *csi2phy_dev);
++	void (*reset)(struct mipi_csi2phy_device *csi2phy_dev);
++	int (*lanes_enable)(struct mipi_csi2phy_device *csi2phy_dev,
++			    struct mipi_csi2phy_stream_cfg *cfg);
++	void (*lanes_disable)(struct mipi_csi2phy_device *csi2phy_dev,
++			      struct mipi_csi2phy_stream_cfg *cfg);
++};
++
++struct mipi_csi2phy_lane_regs {
++	const s32 reg_addr;
++	const s32 reg_data;
++	const u32 delay_us;
++	const u32 param_type;
++};
++
++struct mipi_csi2phy_device_regs {
++	const struct mipi_csi2phy_lane_regs *init_seq;
++	const int lane_array_size;
++	const u32 common_regs_offset;
++};
++
++struct mipi_csi2_genpd {
++	const char *name;
++	bool scaled;
++};
++
++struct mipi_csi2phy_soc_cfg {
++	const struct mipi_csi2phy_hw_ops *ops;
++	const struct mipi_csi2phy_device_regs reg_info;
++
++	const char ** const supply_names;
++	const unsigned int num_supplies;
++
++	const char ** const clk_names;
++	const unsigned int num_clk;
++
++	const struct mipi_csi2_genpd *genpds;
++	const unsigned int num_genpds;
++};
++
++struct mipi_csi2phy_device {
++	struct device *dev;
++	u8 phy_mode;
++
++	struct phy *phy;
++	void __iomem *base;
++
++	struct clk_bulk_data *clks;
++	struct clk *timer_clk;
++	u32 timer_clk_rate;
++
++	struct regulator_bulk_data *supplies;
++	struct dev_pm_domain_list *pd_list;
++
++	const struct mipi_csi2phy_soc_cfg *soc_cfg;
++	struct mipi_csi2phy_stream_cfg stream_cfg;
++
++	u32 hw_version;
++};
++
++extern const struct mipi_csi2phy_soc_cfg mipi_csi2_dphy_4nm_x1e;
++
++#endif /* __PHY_QCOM_MIPI_CSI2_H__ */
+diff --git a/drivers/rtc/rtc-surface.c b/drivers/rtc/rtc-surface.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..f6c17c4e98d5f15a529a2f808226fbb25974ee9c
+--- /dev/null
++++ b/drivers/rtc/rtc-surface.c
+@@ -0,0 +1,129 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * AC driver for 7th-generation Microsoft Surface devices via Surface System
++ * Aggregator Module (SSAM).
++ *
++ * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/rtc.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++
++#include <linux/surface_aggregator/device.h>
++
++struct surface_rtc {
++	struct ssam_device *sdev;
++	struct rtc_device *rtc;
++};
++
++SSAM_DEFINE_SYNC_REQUEST_R(__ssam_rtc_get_unix_time, __le32, {
++	.target_category = SSAM_SSH_TC_SAM,
++	.target_id       = SSAM_SSH_TID_SAM,
++	.instance_id     = 0x00,
++	.command_id      = 0x10,
++});
++
++SSAM_DEFINE_SYNC_REQUEST_W(__ssam_rtc_set_unix_time, __le32, {
++	.target_category = SSAM_SSH_TC_SAM,
++	.target_id       = SSAM_SSH_TID_SAM,
++	.instance_id     = 0x00,
++	.command_id      = 0x0f,
++});
++
++static int ssam_rtc_get_unix_time(struct surface_rtc *srtc, u32 *time)
++{
++	__le32 time_le;
++	int status;
++
++	status = __ssam_rtc_get_unix_time(srtc->sdev->ctrl, &time_le);
++	if (status)
++		return status;
++
++	*time = le32_to_cpu(time_le);
++	return 0;
++}
++
++static int ssam_rtc_set_unix_time(struct surface_rtc *srtc, u32 time)
++{
++	__le32 time_le = cpu_to_le32(time);
++
++	return __ssam_rtc_set_unix_time(srtc->sdev->ctrl, &time_le);
++}
++
++static int surface_rtc_read_time(struct device *dev, struct rtc_time *tm)
++{
++	struct surface_rtc *srtc = dev_get_drvdata(dev);
++	int status;
++	u32 time;
++
++	status = ssam_rtc_get_unix_time(srtc, &time);
++	if (status)
++		return status;
++
++	rtc_time64_to_tm(time, tm);
++	return 0;
++}
++
++static int surface_rtc_set_time(struct device *dev, struct rtc_time *tm)
++{
++	struct surface_rtc *srtc = dev_get_drvdata(dev);
++	time64_t time = rtc_tm_to_time64(tm);
++
++	return ssam_rtc_set_unix_time(srtc, (u32)time);
++}
++
++static const struct rtc_class_ops surface_rtc_ops = {
++	.read_time = surface_rtc_read_time,
++	.set_time = surface_rtc_set_time,
++};
++
++static int surface_rtc_probe(struct ssam_device *sdev)
++{
++	struct surface_rtc *srtc;
++
++	srtc = devm_kzalloc(&sdev->dev, sizeof(*srtc), GFP_KERNEL);
++	if (!srtc)
++		return -ENOMEM;
++
++	srtc->sdev = sdev;
++
++	srtc->rtc = devm_rtc_allocate_device(&sdev->dev);
++	if (IS_ERR(srtc->rtc))
++		return PTR_ERR(srtc->rtc);
++
++	srtc->rtc->ops = &surface_rtc_ops;
++	srtc->rtc->range_max = U32_MAX;
++
++	ssam_device_set_drvdata(sdev, srtc);
++
++	return devm_rtc_register_device(srtc->rtc);
++}
++
++static void surface_rtc_remove(struct ssam_device *sdev)
++{
++	/* Device-managed allocations take care of everything... */
++}
++
++static const struct ssam_device_id surface_rtc_match[] = {
++	{ SSAM_SDEV(SAM, SAM, 0x00, 0x00) },
++	{ },
++};
++MODULE_DEVICE_TABLE(ssam, surface_rtc_match);
++
++static struct ssam_device_driver surface_rtc_driver = {
++	.probe = surface_rtc_probe,
++	.remove = surface_rtc_remove,
++	.match_table = surface_rtc_match,
++	.driver = {
++		.name = "surface_rtc",
++		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
++	},
++};
++module_ssam_device_driver(surface_rtc_driver);
++
++MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
++MODULE_DESCRIPTION("RTC driver for Surface System Aggregator Module");
++MODULE_LICENSE("GPL");

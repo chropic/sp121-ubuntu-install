@@ -1,0 +1,27 @@
+schema: 1
+base_kernel: v7.2-rc7
+target_release: 7.2.0-rc7-sp12-extra-camera
+status: inventory-in-progress
+provenance:
+  linux_base_commit: db2ddb87143519e20a95aa36c60b36107b736a58
+  mias_overlay_commit: 877e0707f816b83ef8ce66a23277febdc2ff6448
+  release_snapshot: patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch
+  release_snapshot_sha256: 02450df6b1996572e1d76571b10cb279d4f8b7b2a0c5d777a6243623ecc3744d
+  exact_config: config/config-7.2.0-rc7-sp12-extra-camera
+patches:
+  - id: sharp-lq120p1jx51-panel
+    active: true
+    purpose: Recognize the Sharp LQ120P1JX51 eDP panel.
+    origin: https://github.com/franzelverbier/surface-pro-12-linux
+    upstream_commit: 6ed8d820cea9cae226f500d3af86e156eede27f6
+    notes: Remove once the selected base kernel contains the upstream commit.
+  - id: obsolete-harrison-v1-dts
+    active: false
+    purpose: Historical early Surface Pro 12 device tree.
+    origin: https://github.com/harrisonvanderbyl/surface-pro-12-inch-linux
+    rejection_reason: Contains incorrect touchscreen GPIOs 51/52; corrected wiring is 38/48.
+  - id: el2-remoteproc-attach-series
+    active: false
+    purpose: Experimental EL2/KVM DSP attachment.
+    origin: https://github.com/franzelverbier/surface-pro-12-linux
+    rejection_reason: Outside the supported daily-driver path and carries a documented DSP recovery crash.

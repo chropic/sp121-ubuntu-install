@@ -1,0 +1,54 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: prepare-tree --source DIR [--apply]'
+}
+
+source_dir=
+apply=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; source_dir=$2; shift 2 ;;
+        --apply) apply=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ -n "$source_dir" ] || { printf 'Missing --source\n' >&2; exit 2; }
+source_dir=$(readlink -f "$source_dir")
+[ -d "$source_dir/.git" ] || { printf 'Not a Git kernel checkout: %s\n' "$source_dir" >&2; exit 1; }
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+snapshot=$repo_root/kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch
+config=$repo_root/kernel/config/config-7.2.0-rc7-sp12-extra-camera
+expected_base=db2ddb87143519e20a95aa36c60b36107b736a58
+actual_base=$(git -C "$source_dir" rev-parse HEAD)
+
+[ "$actual_base" = "$expected_base" ] || {
+    printf 'Wrong base commit. Expected %s, found %s\n' "$expected_base" "$actual_base" >&2
+    exit 1
+}
+[ -z "$(git -C "$source_dir" status --porcelain)" ] || {
+    printf 'Source tree is not clean: %s\n' "$source_dir" >&2
+    exit 1
+}
+git -C "$source_dir" apply --check "$snapshot"
+
+printf 'Base commit: %s\n' "$actual_base"
+sha256sum "$snapshot" "$config"
+printf 'Snapshot applies cleanly.\n'
+
+if [ "$apply" -ne 1 ]; then
+    printf 'DRY RUN: source tree was not changed. Re-run with --apply to prepare it.\n'
+    exit 0
+fi
+
+git -C "$source_dir" apply "$snapshot"
+cp "$config" "$source_dir/.config"
+make -C "$source_dir" olddefconfig
+
+printf 'Prepared patched source tree: %s\n' "$source_dir"
+printf 'Next: kernel/build-packages --source %s\n' "$source_dir"

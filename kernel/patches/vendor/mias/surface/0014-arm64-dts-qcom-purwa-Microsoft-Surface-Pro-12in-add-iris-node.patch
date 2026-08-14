@@ -1,0 +1,13 @@
+--- a/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 11:24:40.739199095 +0200
++++ b/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 11:31:58.310559472 +0200
+@@ -1099,6 +1099,10 @@
+ 	pinctrl-names = "default";
+ };
+ 
++&iris {
++        status = "okay";
++};
++
+ &mdss {
+ 	status = "okay";
+ };

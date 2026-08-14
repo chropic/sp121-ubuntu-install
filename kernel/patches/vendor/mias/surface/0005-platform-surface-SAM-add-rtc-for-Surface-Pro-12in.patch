@@ -1,0 +1,23 @@
+--- a/drivers/platform/surface/surface_aggregator_registry.c	2026-07-19 17:34:35.643257842 +0200
++++ b/drivers/platform/surface/surface_aggregator_registry.c	2026-07-19 17:36:01.491398959 +0200
+@@ -51,6 +51,12 @@
+ 	.parent = &ssam_node_root,
+ };
+ 
++/* RTC */
++static const struct software_node ssam_node_rtc = {
++	.name = "ssam:01:01:01:00:00",
++	.parent = &ssam_node_root,
++};
++
+ /* AC adapter. */
+ static const struct software_node ssam_node_bat_ac = {
+ 	.name = "ssam:01:02:01:01:01",
+@@ -423,6 +429,7 @@
+ /* Devices for Surface Pro 12" first edition (ARM/QCOM) */
+ static const struct software_node *ssam_node_group_sp12in[] = {
+ 	&ssam_node_root,
++	&ssam_node_rtc,
+ 	&ssam_node_hub_kip,
+ 	&ssam_node_tmp_sensors,
+ 	&ssam_node_hid_kip_keyboard,

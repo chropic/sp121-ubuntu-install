@@ -1,0 +1,154 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+encoder_commit=6df4dae3e2f5e4c2903f3cafd40996fc1b3639ce
+encoder_sha256=fdcc8dc9628d67e500d496a1de22e82e136ddeaec32669ea1b3add93f2980652
+encoder_url=https://raw.githubusercontent.com/qca/qca-swiss-army-knife/$encoder_commit/tools/scripts/ath12k/ath12k-bdencoder
+board_name='bus=pci,vendor=17cb,device=1107,subsystem-vendor=17cb,subsystem-device=3378,qmi-chip-id=2,qmi-board-id=255.bin'
+board_sha256=0ef5f6f3cb124f33c6de52371819ccd7c13763ceb86d476a178fd56e4cdc26a3
+firmware_dir=/lib/firmware/ath12k/WCN7850/hw2.0
+bundle=
+encoder=
+apply=0
+
+usage() {
+    printf 'Usage: %s [--firmware-dir DIR] [--board-bundle FILE] [--encoder FILE] [--apply]\n' "$0"
+    printf 'Extract and verify the tested WCN7850 board file. Default mode does not install.\n'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --firmware-dir)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            firmware_dir=$2
+            shift 2
+            ;;
+        --board-bundle)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            bundle=$2
+            shift 2
+            ;;
+        --encoder)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            encoder=$2
+            shift 2
+            ;;
+        --apply)
+            apply=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+if [ -z "$bundle" ]; then
+    if [ -f "$firmware_dir/board-2.bin" ]; then
+        bundle=$firmware_dir/board-2.bin
+    else
+        bundle=$firmware_dir/board-2.bin.zst
+    fi
+fi
+[ -f "$bundle" ] || {
+    printf 'FAIL: board bundle not found: %s\n' "$bundle" >&2
+    exit 1
+}
+command -v python3 >/dev/null 2>&1 || {
+    printf 'FAIL: python3 is required\n' >&2
+    exit 1
+}
+command -v sha256sum >/dev/null 2>&1 || {
+    printf 'FAIL: sha256sum is required\n' >&2
+    exit 1
+}
+
+work_dir=$(mktemp -d /tmp/sp12-wifi-board.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+
+if [ -z "$encoder" ]; then
+    command -v curl >/dev/null 2>&1 || {
+        printf 'FAIL: curl is required unless --encoder is supplied\n' >&2
+        exit 1
+    }
+    encoder=$work_dir/ath12k-bdencoder
+    printf 'FETCH: pinned encoder commit %s\n' "$encoder_commit"
+    curl -fsSL --proto '=https' --tlsv1.2 --output "$encoder" "$encoder_url"
+fi
+
+printf '%s  %s\n' "$encoder_sha256" "$encoder" | sha256sum -c - >/dev/null || {
+    printf 'FAIL: encoder checksum does not match the pinned source\n' >&2
+    exit 1
+}
+printf 'PASS: encoder checksum matches pinned commit %s\n' "$encoder_commit"
+
+case "$bundle" in
+    *.zst)
+        command -v zstd >/dev/null 2>&1 || {
+            printf 'FAIL: zstd is required for %s\n' "$bundle" >&2
+            exit 1
+        }
+        zstd -q -d -c "$bundle" > "$work_dir/board-2.bin"
+        ;;
+    *)
+        cp "$bundle" "$work_dir/board-2.bin"
+        ;;
+esac
+
+mkdir "$work_dir/extracted"
+(
+    cd "$work_dir/extracted"
+    python3 "$encoder" --extract "$work_dir/board-2.bin" >/dev/null
+)
+candidate=$work_dir/extracted/$board_name
+[ -f "$candidate" ] || {
+    printf 'FAIL: the tested compatible board entry is absent from this bundle\n' >&2
+    exit 1
+}
+printf '%s  %s\n' "$board_sha256" "$candidate" | sha256sum -c - >/dev/null || {
+    printf 'FAIL: extracted board data differs from the tested file\n' >&2
+    exit 1
+}
+printf 'PASS: extracted board data matches the tested SHA-256\n'
+
+destination=$firmware_dir/board.bin
+if [ -f "$destination" ] && \
+    printf '%s  %s\n' "$board_sha256" "$destination" | sha256sum -c - >/dev/null 2>&1; then
+    printf 'RESULT: already installed and verified: %s\n' "$destination"
+    exit 0
+fi
+
+if [ "$apply" -eq 0 ]; then
+    printf 'PLAN: install verified board data at %s\n' "$destination"
+    [ ! -e "$destination" ] || printf 'PLAN: preserve existing file as %s.before-sp12\n' "$destination"
+    printf 'RESULT: DRY RUN -- no system files changed\n'
+    exit 0
+fi
+
+[ "$(id -u)" -eq 0 ] || {
+    printf 'FAIL: --apply must run as root\n' >&2
+    exit 1
+}
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+"$script_dir/sp12-preflight"
+
+mkdir -p "$firmware_dir"
+if [ -e "$destination" ]; then
+    backup=$destination.before-sp12
+    [ ! -e "$backup" ] || {
+        printf 'FAIL: backup already exists; review it first: %s\n' "$backup" >&2
+        exit 1
+    }
+    cp -a "$destination" "$backup"
+    printf 'BACKUP: %s\n' "$backup"
+fi
+install -o root -g root -m 0644 "$candidate" "$destination"
+printf 'RESULT: installed verified Wi-Fi board data at %s\n' "$destination"
+printf 'NEXT: rebuild and synchronize the exact initramfs you intend to boot\n'

@@ -1,0 +1,2 @@
+# Reapply policy when the Qualcomm AC/USB state changes.
+ACTION=="add|change", SUBSYSTEM=="power_supply", KERNEL=="qcom-battmgr-*", RUN+="/usr/local/sbin/sp12-power-tune"

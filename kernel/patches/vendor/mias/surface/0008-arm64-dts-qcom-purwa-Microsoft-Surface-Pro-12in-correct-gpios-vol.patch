@@ -1,0 +1,38 @@
+--- a/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 10:20:50.089767412 +0200
++++ b/arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts	2026-07-11 10:29:10.013686660 +0200
+@@ -53,7 +53,7 @@
+ 		};
+ 
+ 		key-vol-up {
+-			gpios = <&pm8550_gpios 8 GPIO_ACTIVE_LOW>;
++			gpios = <&pm8550_gpios 6 GPIO_ACTIVE_LOW>;
+ 			linux,code = <KEY_VOLUMEUP>;
+ 			debounce-interval = <15>;
+ 			linux,can-disable;
+@@ -61,7 +61,7 @@
+ 		};
+ 
+ 		key-vol-down {
+-			gpios = <&pm8550_gpios 6 GPIO_ACTIVE_LOW>;
++			gpios = <&pm8550_gpios 8 GPIO_ACTIVE_LOW>;
+ 			linux,code = <KEY_VOLUMEDOWN>;
+ 			debounce-interval = <15>;
+ 			linux,can-disable;
+@@ -873,7 +873,7 @@
+ 
+ &pm8550_gpios {
+ 	vol_up_n_default: vol-up-n-state {
+-		pins = "gpio8";
++		pins = "gpio6";
+ 		function = "normal";
+ 		power-source = <1>;
+ 		bias-pull-up;
+@@ -881,7 +881,7 @@
+ 	};
+ 
+ 	vol_down_n_default: vol-down-n-state {
+-		pins = "gpio6";
++		pins = "gpio8";
+ 		function = "normal";
+ 		power-source = <1>;
+ 		bias-pull-up;

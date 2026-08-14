@@ -1,0 +1,145 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: install-fallback-target --kernel-release RELEASE --dtb-source FILE [--apply]'
+    printf '%s\n' 'This command operates only on a separately mounted /target and /target/boot/efi.'
+}
+
+kver=
+dtb_source=
+apply=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --kernel-release) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kver=$2; shift 2 ;;
+        --dtb-source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb_source=$2; shift 2 ;;
+        --apply) apply=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ -n "$kver" ] || { printf 'Missing --kernel-release\n' >&2; exit 2; }
+case "$kver" in
+    *[!A-Za-z0-9._+~-]*) printf 'Invalid kernel release: %s\n' "$kver" >&2; exit 2 ;;
+esac
+[ -f "$dtb_source" ] || { printf 'DTB source not found: %s\n' "$dtb_source" >&2; exit 1; }
+dtb_source=$(readlink -f "$dtb_source")
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+target=/target
+esp=$target/boot/efi
+dest=$esp/sp12
+target_dtb=$target/boot/dtb-$kver
+kernel=$target/boot/vmlinuz-$kver
+initrd=$target/boot/initrd.img-$kver
+
+"$repo_root/scripts/inspect-install-target" --target "$target" --kernel-release "$kver"
+root_uuid=$(findmnt -n -o UUID --mountpoint "$target")
+
+printf '\nRequested fallback installation\n'
+printf '  kernel: %s\n' "$kernel"
+printf '  initramfs: %s\n' "$initrd"
+printf '  source DTB: %s\n' "$dtb_source"
+printf '  installed DTB: %s\n' "$target_dtb"
+printf '  ESP destination: %s\n' "$dest"
+printf '  root UUID embedded in loader: %s\n' "$root_uuid"
+
+for source in "$kernel" "$initrd" "$dtb_source"; do
+    if [ -r "$source" ]; then
+        sha256sum "$source"
+    else
+        printf '  checksum unavailable without root: %s\n' "$source"
+    fi
+done
+
+if [ "$apply" -ne 1 ]; then
+    printf '\nDRY RUN: /target and its ESP were not changed.\n'
+    printf 'Re-run as root with --apply only after checking every source and mount.\n'
+    exit 0
+fi
+[ "$(id -u)" -eq 0 ] || { printf -- '--apply requires root\n' >&2; exit 1; }
+
+esp_was_ro=0
+if findmnt -n -o OPTIONS --mountpoint "$esp" | tr ',' '\n' | grep -qx ro; then
+    esp_was_ro=1
+    mount -o remount,rw "$esp"
+fi
+
+mkdir -p "$target/tmp" "$esp/EFI/BOOT" "$dest"
+config=$(mktemp "$target/tmp/sp12-fat.cfg.XXXXXX")
+config_inside=${config#"$target"}
+loader_new=$esp/EFI/BOOT/BOOTAA64.NEW
+
+cleanup() {
+    rm -f "$config" "$loader_new" "$dest/vmlinuz.new" "$dest/initrd.img.new" "$dest/dtb.new" "$target_dtb.new"
+    sync
+    if [ "$esp_was_ro" -eq 1 ]; then
+        mount -o remount,ro "$esp" || true
+    fi
+}
+trap cleanup EXIT HUP INT TERM
+
+{
+    printf '%s\n' 'insmod part_gpt'
+    printf '%s\n' 'insmod fat'
+    printf '%s\n' 'insmod search_fs_file'
+    printf '%s\n' 'search --no-floppy --file --set=root /sp12/SP12BOOT'
+    printf 'linux /sp12/vmlinuz root=UUID=%s ro clk_ignore_unused pd_ignore_unused cma=128M efi=noruntime quiet splash console=tty0 stubble.dtb_override=true\n' "$root_uuid"
+    printf '%s\n' 'initrd /sp12/initrd.img'
+    printf '%s\n' 'devicetree /sp12/dtb'
+    printf '%s\n' 'boot'
+} > "$config"
+
+cp -f "$dtb_source" "$target_dtb.new"
+cmp -s "$dtb_source" "$target_dtb.new"
+
+cp -f "$kernel" "$dest/vmlinuz.new"
+cp -f "$initrd" "$dest/initrd.img.new"
+cp -f "$target_dtb.new" "$dest/dtb.new"
+cmp -s "$kernel" "$dest/vmlinuz.new"
+cmp -s "$initrd" "$dest/initrd.img.new"
+cmp -s "$target_dtb.new" "$dest/dtb.new"
+
+chroot "$target" grub-mkstandalone --format=arm64-efi \
+    --modules='part_gpt fat search search_fs_file linux' \
+    --output=/boot/efi/EFI/BOOT/BOOTAA64.NEW \
+    "boot/grub/grub.cfg=$config_inside"
+chroot "$target" grub-file --is-arm64-efi /boot/efi/EFI/BOOT/BOOTAA64.NEW
+
+loader=$esp/EFI/BOOT/BOOTAA64.EFI
+loader_backup=$esp/EFI/BOOT/BOOTAA64.EFI.pre-sp12
+if [ -f "$loader" ] && [ ! -e "$loader_backup" ]; then
+    cp -a "$loader" "$loader_backup"
+fi
+
+mv -f "$target_dtb.new" "$target_dtb"
+mv -f "$dest/vmlinuz.new" "$dest/vmlinuz"
+mv -f "$dest/initrd.img.new" "$dest/initrd.img"
+mv -f "$dest/dtb.new" "$dest/dtb"
+touch "$dest/SP12BOOT"
+mv -f "$loader_new" "$loader"
+
+install -d -m 0755 "$target/etc/sp12-linux" "$target/usr/local/sbin" \
+    "$target/etc/kernel/postinst.d" "$target/etc/initramfs/post-update.d"
+install -m 0755 "$repo_root/system/usr-local-sbin/sp12-sync-boot" \
+    "$target/usr/local/sbin/sp12-sync-boot"
+install -m 0755 "$repo_root/system/etc/kernel/postinst.d/zzzz-sp12-sync" \
+    "$target/etc/kernel/postinst.d/zzzz-sp12-sync"
+install -m 0755 "$repo_root/system/etc/initramfs/post-update.d/zzzz-sp12-sync" \
+    "$target/etc/initramfs/post-update.d/zzzz-sp12-sync"
+{
+    printf 'KVER=%s\n' "$kver"
+    printf 'DTB=/boot/dtb-%s\n' "$kver"
+} > "$target/etc/sp12-linux/boot.conf"
+chmod 0644 "$target/etc/sp12-linux/boot.conf"
+
+sync
+cmp -s "$kernel" "$dest/vmlinuz"
+cmp -s "$initrd" "$dest/initrd.img"
+cmp -s "$target_dtb" "$dest/dtb"
+chroot "$target" grub-file --is-arm64-efi /boot/efi/EFI/BOOT/BOOTAA64.EFI
+
+printf '\nFallback loader and matching payload installed successfully.\n'
+printf 'Do not reboot until post-install firmware and target verification are complete.\n'

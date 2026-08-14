@@ -1,0 +1,85 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+expected_commit=ea0f07e66beea95898d96fbeb6daa472f4735af3
+expected_origin=https://github.com/harrisonvanderbyl/surface-pro-12-inch-linux.git
+source_dir=
+
+usage() {
+    printf 'Usage: %s --source DIR\n' "$0"
+    printf 'Read-only verification of the pinned Surface Pro 12 support checkout.\n'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            source_dir=$2
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -n "$source_dir" ] || { usage >&2; exit 2; }
+[ -d "$source_dir/.git" ] || {
+    printf 'FAIL: not a Git checkout: %s\n' "$source_dir" >&2
+    exit 1
+}
+command -v git >/dev/null 2>&1 || {
+    printf 'FAIL: git is required\n' >&2
+    exit 1
+}
+
+git_safe="safe.directory=$source_dir"
+head=$(git -c "$git_safe" -C "$source_dir" rev-parse --verify HEAD)
+[ "$head" = "$expected_commit" ] || {
+    printf 'FAIL: expected commit %s, found %s\n' "$expected_commit" "$head" >&2
+    exit 1
+}
+printf 'PASS: support source is pinned at %s\n' "$head"
+
+origin=$(git -c "$git_safe" -C "$source_dir" remote get-url origin)
+case "$origin" in
+    "$expected_origin"|https://github.com/harrisonvanderbyl/surface-pro-12-inch-linux)
+        printf 'PASS: expected origin: %s\n' "$origin"
+        ;;
+    *)
+        printf 'FAIL: unexpected origin: %s\n' "$origin" >&2
+        exit 1
+        ;;
+esac
+
+if ! git -c "$git_safe" -C "$source_dir" diff --quiet -- HEAD -- \
+    lib/firmware/qcom usr/share/qcom; then
+    printf 'FAIL: tracked platform files differ from pinned commit\n' >&2
+    exit 1
+fi
+printf 'PASS: tracked platform files match the pinned commit\n'
+
+for required in \
+    lib/firmware/qcom/x1p42100/Microsoft/Surface12/qcadsp8380.mbn \
+    lib/firmware/qcom/x1p42100/Microsoft/Surface12/qccdsp8380.mbn \
+    usr/share/qcom/x1p42100/Surface/surface-pro-12in/dsp/fastrpc_shell_0 \
+    usr/share/qcom/x1p42100/Surface/surface-pro-12in/sensors/config/default_sensors.json; do
+    git -c "$git_safe" -C "$source_dir" ls-files --error-unmatch -- "$required" \
+        >/dev/null 2>&1 || {
+        printf 'FAIL: required tracked file is absent: %s\n' "$required" >&2
+        exit 1
+    }
+done
+printf 'PASS: required firmware, DSP, and sensor paths are present\n'
+
+file_count=$(git -c "$git_safe" -C "$source_dir" ls-tree -r --name-only HEAD -- \
+    lib/firmware/qcom usr/share/qcom | wc -l | tr -d ' ')
+printf 'INFO: %s committed files are inside the installation allowlist\n' "$file_count"
+printf 'RESULT: PASS -- source is suitable for a dry-run installation preview\n'

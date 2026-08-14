@@ -1,0 +1,108 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: sp12-diagnostics [--output FILE]'
+    printf '%s\n' 'Creates a private-by-default report without journal logs, UUIDs, MAC addresses, or firmware blobs.'
+}
+
+output=sp12-diagnostics-$(date -u +%Y%m%dT%H%M%SZ).txt
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+[ ! -e "$output" ] || { printf 'Refusing to overwrite: %s\n' "$output" >&2; exit 1; }
+umask 077
+
+section() {
+    printf '\n== %s ==\n' "$1"
+}
+
+{
+    printf 'Surface Pro 12 diagnostics\n'
+    printf 'generated_utc=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+    section 'Identity'
+    printf 'architecture=%s\n' "$(uname -m)"
+    printf 'kernel=%s\n' "$(uname -r)"
+    if [ -r /proc/device-tree/model ]; then
+        printf 'model='; tr -d '\000' < /proc/device-tree/model; printf '\n'
+    fi
+    if [ -r /proc/device-tree/compatible ]; then
+        tr '\000' '\n' < /proc/device-tree/compatible
+    fi
+
+    section 'Operating system'
+    if [ -r /etc/os-release ]; then
+        grep -E '^(NAME|VERSION|VERSION_ID)=' /etc/os-release || true
+    fi
+
+    section 'Storage without UUIDs or serial numbers'
+    lsblk -e 7 -o NAME,SIZE,TYPE,FSTYPE,MODEL 2>&1 || true
+    findmnt -n -o TARGET,SOURCE,FSTYPE,OPTIONS /boot/efi 2>&1 || true
+
+    section 'Boot payload'
+    for path in /boot/efi/EFI/BOOT/BOOTAA64.EFI \
+        /boot/efi/sp12/vmlinuz /boot/efi/sp12/initrd.img /boot/efi/sp12/dtb; do
+        if [ -r "$path" ]; then
+            sha256sum "$path"
+        elif [ -e "$path" ]; then
+            printf 'present but unreadable without root: %s\n' "$path"
+        else
+            printf 'missing: %s\n' "$path"
+        fi
+    done
+
+    section 'Relevant packages'
+    dpkg-query -W -f='${Package}\t${Version}\t${Architecture}\t${db:Status-Status}\n' \
+        'linux-image*sp12*' 'linux-headers*sp12*' 2>/dev/null || true
+
+    section 'Kernel modules'
+    lsmod 2>/dev/null | grep -E '^(Module|surface|scmi|ath12k|qcom|rtc)' || true
+
+    section 'CPU frequency policies'
+    for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+        [ -d "$policy" ] || continue
+        printf '%s cpus=%s driver=%s governor=%s min=%s max=%s\n' \
+            "${policy##*/}" \
+            "$(cat "$policy/affected_cpus")" \
+            "$(cat "$policy/scaling_driver")" \
+            "$(cat "$policy/scaling_governor")" \
+            "$(cat "$policy/scaling_min_freq")" \
+            "$(cat "$policy/scaling_max_freq")"
+    done
+
+    section 'Power policy service'
+    systemctl show sp12-power-tune.service -p LoadState -p Result -p ExecMainStatus 2>&1 || true
+    if command -v powerprofilesctl >/dev/null 2>&1; then
+        powerprofilesctl get 2>&1 || true
+    fi
+
+    section 'Graphics'
+    if command -v glxinfo >/dev/null 2>&1; then
+        glxinfo -B 2>&1 | grep -E 'direct rendering|OpenGL vendor|OpenGL renderer' || true
+    else
+        printf 'glxinfo not installed\n'
+    fi
+
+    section 'Audio inventory'
+    aplay -l 2>&1 || true
+    arecord -l 2>&1 || true
+
+    section 'Media inventory'
+    if command -v v4l2-ctl >/dev/null 2>&1; then
+        v4l2-ctl --list-devices 2>&1 || true
+    fi
+
+    section 'Privacy notice'
+    printf '%s\n' 'Kernel journals are intentionally excluded.'
+    printf '%s\n' 'Review this entire file before attaching it to a public issue.'
+} > "$output"
+
+printf 'Created private diagnostics report: %s\n' "$output"
+printf 'Review every line before sharing it publicly.\n'

@@ -1,0 +1,143 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+ucm_commit=c68dcb174f432234dd224a3dc5270fa1f4856afd
+ucm_sha256=76eec2a1f34b9bea9c36c76a75de24c83d8840f73c57dadf1ed397bb5063edaa
+ucm_url=https://raw.githubusercontent.com/alsa-project/alsa-ucm-conf/$ucm_commit/ucm2/Qualcomm/x1e80100/Surface12in-HiFi.conf
+relative_dir=usr/share/alsa/ucm2/Qualcomm/x1e80100
+config=
+target_root=/
+apply=0
+
+usage() {
+    printf 'Usage: %s [--config FILE] [--target-root DIR] [--apply]\n' "$0"
+    printf 'Verify and install the pinned SP12 ALSA UCM routing fix. Default mode does not install.\n'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --config)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            config=$2
+            shift 2
+            ;;
+        --target-root)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            target_root=$2
+            shift 2
+            ;;
+        --apply)
+            apply=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -d "$target_root" ] || {
+    printf 'FAIL: target root is not a directory: %s\n' "$target_root" >&2
+    exit 1
+}
+command -v sha256sum >/dev/null 2>&1 || {
+    printf 'FAIL: sha256sum is required\n' >&2
+    exit 1
+}
+
+work_dir=$(mktemp -d /tmp/sp12-audio-ucm.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+if [ -z "$config" ]; then
+    command -v curl >/dev/null 2>&1 || {
+        printf 'FAIL: curl is required unless --config is supplied\n' >&2
+        exit 1
+    }
+    config=$work_dir/Surface12in-HiFi.conf
+    printf 'FETCH: pinned ALSA UCM commit %s\n' "$ucm_commit"
+    curl -fsSL --proto '=https' --tlsv1.2 --output "$config" "$ucm_url"
+fi
+[ -f "$config" ] || {
+    printf 'FAIL: UCM config not found: %s\n' "$config" >&2
+    exit 1
+}
+printf '%s  %s\n' "$ucm_sha256" "$config" | sha256sum -c - >/dev/null || {
+    printf 'FAIL: UCM config checksum does not match the pinned source\n' >&2
+    exit 1
+}
+printf 'PASS: UCM config matches upstream commit %s\n' "$ucm_commit"
+
+destination=${target_root%/}/$relative_dir/Surface12in-HiFi.conf
+card_config=${target_root%/}/$relative_dir/MICROSOFT-Surface-Pro-12in.conf
+[ -f "$card_config" ] || {
+    printf 'FAIL: required Surface card configuration is absent: %s\n' "$card_config" >&2
+    exit 1
+}
+
+current_matches=0
+if [ -f "$destination" ] && \
+    printf '%s  %s\n' "$ucm_sha256" "$destination" | sha256sum -c - >/dev/null 2>&1; then
+    current_matches=1
+fi
+current_mode=
+[ ! -e "$destination" ] || current_mode=$(stat -c '%a' "$destination")
+if [ "$current_matches" -eq 1 ] && [ "$current_mode" = 644 ]; then
+    printf 'RESULT: already installed, verified, and world-readable: %s\n' "$destination"
+    exit 0
+fi
+
+if [ "$apply" -eq 0 ]; then
+    printf 'PLAN: install pinned UCM routing at %s with mode 0644\n' "$destination"
+    if [ "$target_root" = / ] && command -v dpkg-divert >/dev/null 2>&1; then
+        printf 'PLAN: protect the package-owned original with dpkg-divert\n'
+    elif [ -e "$destination" ]; then
+        printf 'PLAN: preserve existing file as %s.before-sp12\n' "$destination"
+    fi
+    printf 'RESULT: DRY RUN -- no system files changed\n'
+    exit 0
+fi
+
+[ "$(id -u)" -eq 0 ] || {
+    printf 'FAIL: --apply must run as root\n' >&2
+    exit 1
+}
+if [ "$target_root" = / ]; then
+    script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    "$script_dir/sp12-preflight"
+fi
+
+if [ "$target_root" = / ] && command -v dpkg-divert >/dev/null 2>&1; then
+    diversion=$(dpkg-divert --list "$destination")
+    if [ -z "$diversion" ]; then
+        dpkg-divert --local --rename --divert "$destination.stock" --add "$destination"
+    elif ! printf '%s\n' "$diversion" | grep -Fq "to $destination.stock"; then
+        printf 'FAIL: an unexpected diversion already manages %s\n' "$destination" >&2
+        exit 1
+    elif [ -e "$destination" ] && [ "$current_matches" -eq 0 ]; then
+        backup=$destination.before-sp12
+        [ ! -e "$backup" ] || {
+            printf 'FAIL: backup already exists; review it first: %s\n' "$backup" >&2
+            exit 1
+        }
+        cp -a "$destination" "$backup"
+        printf 'BACKUP: %s\n' "$backup"
+    fi
+elif [ -e "$destination" ] && [ "$current_matches" -eq 0 ]; then
+    backup=$destination.before-sp12
+    [ ! -e "$backup" ] || {
+        printf 'FAIL: backup already exists; review it first: %s\n' "$backup" >&2
+        exit 1
+    }
+    cp -a "$destination" "$backup"
+    printf 'BACKUP: %s\n' "$backup"
+fi
+
+install -D -o root -g root -m 0644 "$config" "$destination"
+printf 'RESULT: installed verified UCM routing at %s\n' "$destination"
+printf 'NEXT: restart the user PipeWire and WirePlumber services, then run wpctl status\n'

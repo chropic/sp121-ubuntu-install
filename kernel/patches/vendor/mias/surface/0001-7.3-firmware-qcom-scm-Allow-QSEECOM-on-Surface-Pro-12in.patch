@@ -1,0 +1,26 @@
+Add the Surface Pro 12in to the QSEECOM allowlist
+so that the Qualcomm Secure Execution Environment
+interface is available on this device.
+
+Signed-off-by: Harrison Vanderbyl <harrison.vanderbyl@gmail.com>
+Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>
+Link: https://lore.kernel.org/r/92171ad5e7851e6758dd205246b4289f32e12655.1778498477.git.harrison.vanderbyl@gmail.com
+Signed-off-by: Bjorn Andersson <andersson@kernel.org>
+---
+ drivers/firmware/qcom/qcom_scm.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+(limited to 'drivers/firmware/qcom/qcom_scm.c')
+
+diff --git a/drivers/firmware/qcom/qcom_scm.c b/drivers/firmware/qcom/qcom_scm.c
+index 9b06a69d3a6d7..6b601a4b89dbf 100644
+--- a/drivers/firmware/qcom/qcom_scm.c
++++ b/drivers/firmware/qcom/qcom_scm.c
+@@ -2306,6 +2306,7 @@ static const struct of_device_id qcom_scm_qseecom_allowlist[] __maybe_unused = {
+ 	{ .compatible = "lenovo,yoga-slim7x" },
+ 	{ .compatible = "medion,sprchrgd14s1" },
+ 	{ .compatible = "microsoft,arcata", },
++	{ .compatible = "microsoft,surface-pro-12in", },
+ 	{ .compatible = "microsoft,blackrock" },
+ 	{ .compatible = "microsoft,denali", },
+ 	{ .compatible = "microsoft,romulus13", },

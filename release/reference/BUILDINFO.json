@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "installed-reference-not-a-public-release",
+  "verified_date": "2026-08-14",
+  "device": {
+    "model": "Surface Pro 12in 1st Edition",
+    "compatible": [
+      "microsoft,surface-pro-12in",
+      "qcom,x1p42100"
+    ],
+    "architecture": "arm64"
+  },
+  "operating_system": "Ubuntu 26.04",
+  "kernel": {
+    "release": "7.2.0-rc7-sp12-extra-camera",
+    "image_package_version": "7.2.0~rc7-6",
+    "headers_package_version": "7.2.0~rc7-6",
+    "config_sha256": "f1cf894800c08e5d7c920c6a125f7296304bc7ef71858ccc94b0326ee2f0b87a"
+  },
+  "boot_payload": {
+    "kernel_sha256": "ce277ca8a5dd5a5cec1f7b724fa0604a1aba29392cc81b28ec8268d269a53532",
+    "initramfs_sha256": "0577e19b5f0885d61a11f6a39488589d1527f19e449517e8cfd9e60e218158b2",
+    "dtb_sha256": "b82bb69552f22d007601c6cefd4a6187cf908c9032d566d430d430cd9031b472"
+  },
+  "recovery_payload": {
+    "label": "7.2.0-rc7-sp12-panel",
+    "kernel_sha256": "31f62bebc7dc0483b157021dcd4b295c256a48f9555b64dcf98cd1ac205460c2",
+    "initramfs_sha256": "b2e5bfcc05e7f070581a197d3a6d7a3a8a34833bb825d0979d54d444bc8b10e4",
+    "dtb_sha256": "d7ed4b073c7344cb0bb2c3f7d00655df60b473588a5c0364af54537dc2c672c7"
+  },
+  "source_guide_sha256": "a7e829a06184262506f1e39fa2231ca00ce39e0ee889ea049544d511010e6e61",
+  "secure_boot": "disabled-setup-mode",
+  "notes": [
+    "The ESP was mounted read-only during verification.",
+    "This manifest describes the installed reference and is not a downloadable release attestation."
+  ]
+}

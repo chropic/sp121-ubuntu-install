@@ -1,0 +1,66 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: sp12-restore-recovery [--source /boot/efi/DIR] [--apply]'
+}
+
+source_dir=/boot/efi/sp12-recovery-panel
+apply=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; source_dir=$2; shift 2 ;;
+        --apply) apply=1; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+case "$source_dir" in
+    /boot/efi/*) ;;
+    *) printf 'Recovery source must be an absolute directory below /boot/efi\n' >&2; exit 2 ;;
+esac
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+"$repo_root/scripts/sp12-preflight"
+
+esp=/boot/efi
+dest=$esp/sp12
+for name in vmlinuz initrd.img dtb; do
+    [ -f "$source_dir/$name" ] || { printf 'Missing recovery file: %s/%s\n' "$source_dir" "$name" >&2; exit 1; }
+done
+[ -f "$dest/SP12BOOT" ] || { printf 'Active SP12 marker is missing: %s/SP12BOOT\n' "$dest" >&2; exit 1; }
+
+printf '\nRecovery source: %s\n' "$source_dir"
+for name in vmlinuz initrd.img dtb; do
+    if [ -r "$source_dir/$name" ]; then
+        sha256sum "$source_dir/$name"
+    else
+        printf '  checksum unavailable without root: %s/%s\n' "$source_dir" "$name"
+    fi
+done
+
+if [ "$apply" -ne 1 ]; then
+    printf '\nDRY RUN: active ESP files were not changed.\n'
+    printf 'Re-run as root with --apply only if this is the intended recovery set.\n'
+    exit 0
+fi
+[ "$(id -u)" -eq 0 ] || { printf -- '--apply requires root\n' >&2; exit 1; }
+
+mountpoint -q "$esp" || mount "$esp"
+mount -o remount,rw "$esp"
+trap 'sync; mount -o remount,ro "$esp" || true' EXIT HUP INT TERM
+
+for name in vmlinuz initrd.img dtb; do
+    cp -f "$source_dir/$name" "$dest/$name.new"
+    cmp -s "$source_dir/$name" "$dest/$name.new"
+done
+for name in vmlinuz initrd.img dtb; do
+    mv -f "$dest/$name.new" "$dest/$name"
+done
+touch "$dest/SP12BOOT"
+sync
+
+printf 'Recovery payload restored. The ESP will now return to read-only mode.\n'

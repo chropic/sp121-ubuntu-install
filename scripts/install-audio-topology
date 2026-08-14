@@ -1,0 +1,149 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+expected_commit=d7a5e9d80ad18a7a6844eeb32cacbdeea0e7e677
+expected_origin=https://github.com/linux-msm/audioreach-topology.git
+expected_sha256=89b731f3f98fc2b84699bca39a56e390925a44a26d5aea80382cf617e00c08d8
+relative_output=qcom/x1e80100/X1P42100-Microsoft-Surface-Pro-12in-tplg.bin
+source_dir=
+target_root=/
+apply=0
+
+usage() {
+    printf 'Usage: %s --source DIR [--target-root DIR] [--apply]\n' "$0"
+    printf 'Build and verify the pinned SP12 AudioReach topology. Default mode does not install.\n'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --source)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            source_dir=$2
+            shift 2
+            ;;
+        --target-root)
+            [ "$#" -ge 2 ] || { usage >&2; exit 2; }
+            target_root=$2
+            shift 2
+            ;;
+        --apply)
+            apply=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'Unknown argument: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -n "$source_dir" ] || { usage >&2; exit 2; }
+[ -d "$source_dir/.git" ] || {
+    printf 'FAIL: not a Git checkout: %s\n' "$source_dir" >&2
+    exit 1
+}
+[ -d "$target_root" ] || {
+    printf 'FAIL: target root is not a directory: %s\n' "$target_root" >&2
+    exit 1
+}
+for command_name in git cmake m4 alsatplg sha256sum; do
+    command -v "$command_name" >/dev/null 2>&1 || {
+        printf 'FAIL: required command is missing: %s\n' "$command_name" >&2
+        exit 1
+    }
+done
+
+git_safe="safe.directory=$source_dir"
+head=$(git -c "$git_safe" -C "$source_dir" rev-parse --verify HEAD)
+[ "$head" = "$expected_commit" ] || {
+    printf 'FAIL: expected topology commit %s, found %s\n' "$expected_commit" "$head" >&2
+    exit 1
+}
+origin=$(git -c "$git_safe" -C "$source_dir" remote get-url origin)
+case "$origin" in
+    "$expected_origin"|https://github.com/linux-msm/audioreach-topology)
+        ;;
+    *)
+        printf 'FAIL: unexpected topology origin: %s\n' "$origin" >&2
+        exit 1
+        ;;
+esac
+git -c "$git_safe" -C "$source_dir" diff --quiet -- HEAD -- || {
+    printf 'FAIL: tracked topology source differs from the pinned commit\n' >&2
+    exit 1
+}
+printf 'PASS: topology source and origin match pinned commit %s\n' "$expected_commit"
+
+work_dir=$(mktemp -d /tmp/sp12-audio-topology.XXXXXX)
+trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
+archive=$work_dir/source.tar
+git -c "$git_safe" -C "$source_dir" archive --format=tar --output="$archive" \
+    "$expected_commit"
+mkdir "$work_dir/source"
+tar -xf "$archive" -C "$work_dir/source"
+if ! cmake -S "$work_dir/source" -B "$work_dir/build" \
+    >"$work_dir/configure.log" 2>&1; then
+    sed -n '1,240p' "$work_dir/configure.log" >&2
+    printf 'FAIL: CMake configuration failed\n' >&2
+    exit 1
+fi
+if ! cmake --build "$work_dir/build" --target \
+    topology_X1P42100-Microsoft-Surface-Pro-12in \
+    >"$work_dir/build.log" 2>&1; then
+    sed -n '1,240p' "$work_dir/build.log" >&2
+    printf 'FAIL: topology build failed\n' >&2
+    exit 1
+fi
+
+candidate=$work_dir/build/$relative_output
+[ -f "$candidate" ] || {
+    printf 'FAIL: build did not produce %s\n' "$relative_output" >&2
+    exit 1
+}
+printf '%s  %s\n' "$expected_sha256" "$candidate" | sha256sum -c - >/dev/null || {
+    printf 'FAIL: topology output differs from the machine-tested file\n' >&2
+    exit 1
+}
+printf 'PASS: built topology matches the tested SHA-256\n'
+
+destination=${target_root%/}/lib/firmware/$relative_output
+if [ -f "$destination" ] && \
+    printf '%s  %s\n' "$expected_sha256" "$destination" | sha256sum -c - >/dev/null 2>&1; then
+    printf 'RESULT: already installed and verified: %s\n' "$destination"
+    exit 0
+fi
+
+if [ "$apply" -eq 0 ]; then
+    printf 'PLAN: install verified topology at %s\n' "$destination"
+    [ ! -e "$destination" ] || printf 'PLAN: preserve existing file as %s.before-sp12\n' "$destination"
+    printf 'RESULT: DRY RUN -- no system files changed\n'
+    exit 0
+fi
+
+[ "$(id -u)" -eq 0 ] || {
+    printf 'FAIL: --apply must run as root\n' >&2
+    exit 1
+}
+if [ "$target_root" = / ]; then
+    script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    "$script_dir/sp12-preflight"
+fi
+
+if [ -e "$destination" ]; then
+    backup=$destination.before-sp12
+    [ ! -e "$backup" ] || {
+        printf 'FAIL: backup already exists; review it first: %s\n' "$backup" >&2
+        exit 1
+    }
+    cp -a "$destination" "$backup"
+    printf 'BACKUP: %s\n' "$backup"
+fi
+install -D -o root -g root -m 0644 "$candidate" "$destination"
+printf 'RESULT: installed verified audio topology at %s\n' "$destination"
+printf 'NEXT: verify the separately managed ALSA UCM profile before restarting audio services\n'

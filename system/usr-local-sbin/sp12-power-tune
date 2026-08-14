@@ -1,0 +1,61 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+write_value() {
+    path=$1
+    value=$2
+    [ ! -w "$path" ] || printf '%s\n' "$value" > "$path"
+}
+
+on_ac=0
+for supply in qcom-battmgr-ac qcom-battmgr-usb; do
+    path=/sys/class/power_supply/$supply/online
+    if [ -r "$path" ] && [ "$(cat "$path")" = 1 ]; then
+        on_ac=1
+    fi
+done
+
+modprobe scmi_perf_domain >/dev/null 2>&1 || true
+modprobe scmi_cpufreq >/dev/null 2>&1 || true
+
+for device in a600000.usb a800000.usb xhci-hcd.1.auto xhci-hcd.2.auto; do
+    write_value "/sys/bus/platform/devices/$device/power/control" auto
+done
+
+gpu=/sys/class/devfreq/3d00000.gpu
+aspm=/sys/module/pcie_aspm/parameters/policy
+boost=/sys/devices/system/cpu/cpufreq/boost
+
+for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+    [ -d "$policy" ] || continue
+    write_value "$policy/scaling_governor" schedutil
+    write_value "$policy/scaling_min_freq" 710400
+done
+write_value "$boost" 0
+
+if [ "$on_ac" = 1 ]; then
+    powerprofilesctl set balanced >/dev/null 2>&1 || true
+    for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+        [ -d "$policy" ] || continue
+        write_value "$policy/scaling_max_freq" 3244800
+    done
+    write_value "$gpu/max_freq" 1107000000
+    write_value "$gpu/min_freq" 280000000
+    write_value "$aspm" default
+else
+    powerprofilesctl set power-saver >/dev/null 2>&1 || true
+    for policy in /sys/devices/system/cpu/cpufreq/policy*; do
+        [ -d "$policy" ] || continue
+        write_value "$policy/scaling_max_freq" 2188800
+    done
+    write_value "$gpu/min_freq" 280000000
+    write_value "$gpu/max_freq" 550000000
+    write_value "$aspm" powersave
+
+    backlight=/sys/class/backlight/backlight
+    if [ -r "$backlight/brightness" ] &&
+       [ "$(cat "$backlight/brightness")" -gt 2048 ]; then
+        write_value "$backlight/brightness" 2048
+    fi
+fi

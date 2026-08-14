@@ -1,0 +1,51 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+apply=0
+case "${1:-}" in
+    --apply) apply=1 ;;
+    -h|--help|'') ;;
+    *) printf 'Usage: install-power-policy [--apply]\n' >&2; exit 2 ;;
+esac
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+"$repo_root/scripts/sp12-preflight"
+
+printf '%s\n' 'Policy to install:'
+printf '%s\n' '  battery CPU ceiling: 2.1888 GHz'
+printf '%s\n' '  battery GPU ceiling: 550 MHz'
+printf '%s\n' '  AC CPU/GPU ceilings: full tested range'
+printf '%s\n' '  PCIe ASPM: powersave on battery, default on AC'
+printf '%s\n' '  backlight: clamp to 50% on battery only when above it'
+printf '%s\n' '  GNOME automatic brightness: disabled; sensor service remains enabled'
+
+if [ "$apply" -ne 1 ]; then
+    printf '\nDRY RUN: no files changed. Re-run as root with --apply to install.\n'
+    exit 0
+fi
+[ "$(id -u)" -eq 0 ] || { printf -- '--apply requires root\n' >&2; exit 1; }
+
+install -d -m 0755 /usr/local/sbin /etc/systemd/system /etc/udev/rules.d \
+    /etc/modules-load.d /etc/dconf/profile /etc/dconf/db/local.d/locks
+install -m 0755 "$repo_root/system/usr-local-sbin/sp12-power-tune" \
+    /usr/local/sbin/sp12-power-tune
+install -m 0644 "$repo_root/system/etc/systemd/system/sp12-power-tune.service" \
+    /etc/systemd/system/sp12-power-tune.service
+install -m 0644 "$repo_root/system/etc/udev/rules.d/80-sp12-power.rules" \
+    /etc/udev/rules.d/80-sp12-power.rules
+install -m 0644 "$repo_root/system/etc/modules-load.d/sp12-cpufreq.conf" \
+    /etc/modules-load.d/sp12-cpufreq.conf
+install -m 0644 "$repo_root/system/etc/dconf/profile/user" /etc/dconf/profile/user
+install -m 0644 "$repo_root/system/etc/dconf/db/local.d/00-sp12-display" \
+    /etc/dconf/db/local.d/00-sp12-display
+install -m 0644 "$repo_root/system/etc/dconf/db/local.d/locks/sp12-display" \
+    /etc/dconf/db/local.d/locks/sp12-display
+
+systemctl daemon-reload
+systemctl enable --now sp12-power-tune.service
+udevadm control --reload
+dconf update
+
+systemctl show sp12-power-tune.service -p Result -p ExecMainStatus
+printf 'Installed measured SP12 power policy.\n'

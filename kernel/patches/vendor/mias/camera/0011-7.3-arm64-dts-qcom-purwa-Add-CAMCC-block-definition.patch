@@ -1,0 +1,16 @@
+Override the compatible for camcc node on Purwa to match with the respective Purwa (X1P42100)
+specific driver.
+
+--- a/arch/arm64/boot/dts/qcom/purwa.dtsi	2026-01-30 16:35:37.053051623 +0100
++++ b/arch/arm64/boot/dts/qcom/purwa.dtsi	2026-01-30 16:35:52.201093087 +0100
+@@ -25,6 +25,10 @@
+ /delete-node/ &pcie3_phy;
+ /delete-node/ &thermal_zones;
+ 
++&camcc {
++	compatible = "qcom,x1p42100-camcc";
++};
++
+ &gcc {
+ 	compatible = "qcom,x1p42100-gcc", "qcom,x1e80100-gcc";
+ };

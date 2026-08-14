@@ -1,0 +1,36 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+"$(dirname "$0")/sp12-preflight"
+
+printf '\nRunning system\n'
+printf 'kernel: %s\n' "$(uname -r)"
+
+if findmnt -rn /boot/efi >/dev/null 2>&1; then
+    printf 'PASS: ESP is mounted at /boot/efi\n'
+    findmnt /boot/efi
+else
+    printf 'FAIL: /boot/efi is not mounted\n' >&2
+    exit 1
+fi
+
+for path in \
+    /boot/efi/EFI/BOOT/BOOTAA64.EFI \
+    /boot/efi/sp12/vmlinuz \
+    /boot/efi/sp12/initrd.img \
+    /boot/efi/sp12/dtb \
+    /boot/efi/sp12/SP12BOOT
+do
+    if [ -f "$path" ]; then
+        printf 'PASS: %s\n' "$path"
+    else
+        printf 'FAIL: missing %s\n' "$path" >&2
+        exit 1
+    fi
+done
+
+printf '\nESP payload checksums\n'
+sha256sum /boot/efi/sp12/vmlinuz /boot/efi/sp12/initrd.img /boot/efi/sp12/dtb
+
+printf '\nVerification completed. Hardware feature tests are documented separately.\n'

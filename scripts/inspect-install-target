@@ -1,0 +1,85 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: inspect-install-target [--target DIR] [--kernel-release RELEASE]'
+}
+
+target=/target
+kver=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --target) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; target=$2; shift 2 ;;
+        --kernel-release) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kver=$2; shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+    esac
+done
+
+repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+"$repo_root/scripts/sp12-preflight"
+
+target=$(readlink -f "$target")
+[ -d "$target" ] || { printf 'Target directory not found: %s\n' "$target" >&2; exit 1; }
+mountpoint -q "$target" || { printf 'Target is not a separate mountpoint: %s\n' "$target" >&2; exit 1; }
+
+if [ "$target" = / ]; then
+    esp=/boot/efi
+else
+    esp=$target/boot/efi
+fi
+mountpoint -q "$esp" || { printf 'Target ESP is not mounted at %s\n' "$esp" >&2; exit 1; }
+
+root_source=$(findmnt -n -o SOURCE --mountpoint "$target")
+root_uuid=$(findmnt -n -o UUID --mountpoint "$target")
+root_fstype=$(findmnt -n -o FSTYPE --mountpoint "$target")
+esp_source=$(findmnt -n -o SOURCE --mountpoint "$esp")
+esp_fstype=$(findmnt -n -o FSTYPE --mountpoint "$esp")
+
+[ -n "$root_uuid" ] || { printf 'Target root has no filesystem UUID\n' >&2; exit 1; }
+[ "$root_source" != "$esp_source" ] || { printf 'Root and ESP unexpectedly use the same source\n' >&2; exit 1; }
+case "$esp_fstype" in
+    vfat|fat|fat32) ;;
+    *) printf 'Target ESP is not FAT: %s\n' "$esp_fstype" >&2; exit 1 ;;
+esac
+
+os_release=$target/etc/os-release
+[ -f "$os_release" ] || { printf 'Missing target OS metadata: %s\n' "$os_release" >&2; exit 1; }
+os_id=$(sed -n 's/^ID=//p' "$os_release" | tr -d '"' | tail -n 1)
+os_version=$(sed -n 's/^VERSION_ID=//p' "$os_release" | tr -d '"' | tail -n 1)
+[ "$os_id" = ubuntu ] || { printf 'Unsupported target OS: %s\n' "$os_id" >&2; exit 1; }
+[ "$os_version" = 26.04 ] || { printf 'Unsupported target Ubuntu version: %s\n' "$os_version" >&2; exit 1; }
+
+modules=$target/usr/lib/grub/arm64-efi
+for module in part_gpt fat search search_fs_file linux; do
+    [ -f "$modules/$module.mod" ] || { printf 'Missing target GRUB module: %s.mod\n' "$module" >&2; exit 1; }
+done
+[ -x "$target/usr/bin/grub-mkstandalone" ] || [ -x "$target/usr/sbin/grub-mkstandalone" ] || {
+    printf 'grub-mkstandalone is missing inside the target\n' >&2
+    exit 1
+}
+[ -x "$target/usr/bin/grub-file" ] || [ -x "$target/usr/sbin/grub-file" ] || {
+    printf 'grub-file is missing inside the target\n' >&2
+    exit 1
+}
+
+if [ -n "$kver" ]; then
+    case "$kver" in
+        *[!A-Za-z0-9._+~-]*) printf 'Invalid kernel release: %s\n' "$kver" >&2; exit 2 ;;
+    esac
+    [ -f "$target/boot/vmlinuz-$kver" ] || { printf 'Missing target kernel release: %s\n' "$kver" >&2; exit 1; }
+    [ -f "$target/boot/initrd.img-$kver" ] || { printf 'Missing target initramfs release: %s\n' "$kver" >&2; exit 1; }
+fi
+
+printf '\nValidated installation target\n'
+printf '  root mount:    %s\n' "$target"
+printf '  root source:   %s\n' "$root_source"
+printf '  root type:     %s\n' "$root_fstype"
+printf '  root UUID:     %s\n' "$root_uuid"
+printf '  ESP mount:     %s\n' "$esp"
+printf '  ESP source:    %s\n' "$esp_source"
+printf '  ESP type:      %s\n' "$esp_fstype"
+printf '  target OS:     Ubuntu %s\n' "$os_version"
+[ -z "$kver" ] || printf '  kernel release: %s\n' "$kver"
+printf 'RESULT: PASS -- target root and ESP are structurally ready\n'
