@@ -37,3 +37,29 @@ observed DTB installation race. The scripts never install the resulting packages
 
 Do not distribute a kernel binary without the base reference, aggregate snapshot,
 config, original patch corpus, build information, and checksums.
+
+## Patch provenance
+
+`patches/release/` is the exact aggregate difference from pristine `v7.2-rc7`
+to the worktree that built `7.2.0-rc7-sp12-extra-camera`, package revision
+`7.2.0~rc7-6`. It recreates every tracked modification and required new file
+byte-for-byte; generated `.orig` files and the patch-tool `err` file are excluded.
+The snapshot is necessary because the tested worktree contained applied and
+manually reconciled patches as uncommitted changes. It does not assign their
+combined authorship to one person.
+
+`patches/vendor/mias/` contains unmodified files from Mias van Klei's Gentoo
+overlay:
+
+```text
+repository: https://github.com/miasvanklei/Gentoo-overlay
+commit:     877e0707f816b83ef8ce66a23277febdc2ff6448
+```
+
+The Surface directory contains hardware enablement; the camera directory holds
+the dependency/sensor series considered during the build. Not every patch is
+active: some were already present, some conflicted after earlier patches, one
+OV13858 patch was deliberately not forced, and unrelated Surface Go work is not
+part of this release. Future work should split the release snapshot into a
+reviewed series while preserving original authorship and producing the identical
+final tree.

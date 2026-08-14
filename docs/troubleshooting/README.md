@@ -11,7 +11,7 @@ firmware contents by design. Review it manually before sharing it.
 
 ## Device will not boot
 
-Use [Recovery](../07-recovery.md). Restore a matching kernel, initramfs, and DTB
+Use [Recovery](../../GUIDE.md#9-recover). Restore a matching kernel, initramfs, and DTB
 as a set. Do not start by rebuilding the kernel.
 
 ## Internal storage is missing

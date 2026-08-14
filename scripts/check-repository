@@ -3,25 +3,19 @@
 set -eu
 
 required_files='README.md
-QUICKSTART.md
+GUIDE.md
 CREDITS.md
 SOURCES.md
 SUPPORT.md
 SECURITY.md
 LICENSE.md
-docs/00-before-you-start.md
-docs/04-hardware-verification.md
-docs/05-power-and-battery.md
-docs/07-recovery.md
 docs/troubleshooting/README.md
-docs/development/fallback-loader.md
-docs/development/target-fallback-install.md
-docs/development/sensor-stack.md
+docs/DEVELOPMENT.md
 docs/reference/original-tested-guide.md
 kernel/patches.yaml
 release/reference/BUILDINFO.json
 release/CANDIDATE.json
-release/LAUNCH-CHECKLIST.md
+release/README.md
 firmware/README.md
 firmware/sources.yaml'
 
