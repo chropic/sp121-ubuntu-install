@@ -29,7 +29,7 @@ case "$dtb" in
     *) printf -- '--dtb must name an existing absolute path below /boot\n' >&2; exit 2 ;;
 esac
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 kernel=/boot/vmlinuz-$kver
 initrd=/boot/initrd.img-$kver
 

@@ -9,7 +9,7 @@ case "${1:-}" in
     *) printf 'Usage: install-power-policy [--apply]\n' >&2; exit 2 ;;
 esac
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 "$repo_root/scripts/sp12-preflight"
 
 printf '%s\n' 'Policy to install:'

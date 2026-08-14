@@ -23,7 +23,7 @@ case "$source_dir" in
     *) printf 'Recovery source must be an absolute directory below /boot/efi\n' >&2; exit 2 ;;
 esac
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 "$repo_root/scripts/sp12-preflight"
 
 esp=/boot/efi

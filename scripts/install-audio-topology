@@ -131,7 +131,7 @@ fi
     exit 1
 }
 if [ "$target_root" = / ]; then
-    script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
     "$script_dir/sp12-preflight"
 fi
 

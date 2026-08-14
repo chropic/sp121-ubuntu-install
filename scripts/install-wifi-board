@@ -136,7 +136,7 @@ fi
     printf 'FAIL: --apply must run as root\n' >&2
     exit 1
 }
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 "$script_dir/sp12-preflight"
 
 mkdir -p "$firmware_dir"

@@ -51,7 +51,7 @@ done
     exit 1
 }
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 "$script_dir/inspect-support-source" --source "$source_dir"
 
 git_safe="safe.directory=$source_dir"

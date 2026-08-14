@@ -27,7 +27,7 @@ esac
 [ -f "$dtb_source" ] || { printf 'DTB source not found: %s\n' "$dtb_source" >&2; exit 1; }
 dtb_source=$(readlink -f "$dtb_source")
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 target=/target
 esp=$target/boot/efi
 dest=$esp/sp12

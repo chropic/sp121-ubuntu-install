@@ -17,7 +17,7 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 "$repo_root/scripts/sp12-preflight"
 
 target=$(readlink -f "$target")
