@@ -231,9 +231,25 @@ sudo scripts/install-fallback-target \
 ```
 
 Before rebooting, verify the first-boot tools were copied into the installed
-system and kept executable. These checks must pass:
+system and kept executable. No additional Wi-Fi, audio, sensor, or platform
+firmware is required merely to attempt the first boot; install those components
+later from the installed system when their documented prerequisites are
+available. These checks must all pass with the same exact kernel release used
+above:
 
 ```bash
+findmnt /target
+findmnt /target/boot/efi
+test -f /target/boot/vmlinuz-YOUR_EXACT_KERNEL_RELEASE
+test -f /target/boot/initrd.img-YOUR_EXACT_KERNEL_RELEASE
+test -f /target/boot/dtb-YOUR_EXACT_KERNEL_RELEASE
+test -f /target/boot/efi/EFI/BOOT/BOOTAA64.EFI
+test -f /target/boot/efi/sp12/SP12BOOT
+cmp -s /target/boot/vmlinuz-YOUR_EXACT_KERNEL_RELEASE /target/boot/efi/sp12/vmlinuz
+cmp -s /target/boot/initrd.img-YOUR_EXACT_KERNEL_RELEASE /target/boot/efi/sp12/initrd.img
+cmp -s /target/boot/dtb-YOUR_EXACT_KERNEL_RELEASE /target/boot/efi/sp12/dtb
+grep -Fx "KVER=YOUR_EXACT_KERNEL_RELEASE" /target/etc/sp12-linux/boot.conf
+grep -Fx "DTB=/boot/dtb-YOUR_EXACT_KERNEL_RELEASE" /target/etc/sp12-linux/boot.conf
 test -x /target/opt/sp12-linux/scripts/sp12-verify
 test -x /target/opt/sp12-linux/scripts/install-platform-files
 test -x /target/opt/sp12-linux/scripts/install-wifi-board
@@ -274,6 +290,65 @@ lsblk
 findmnt /boot/efi
 ls -lh /boot/efi/EFI/BOOT/BOOTAA64.EFI /boot/efi/sp12/*
 sudo /opt/sp12-linux/scripts/sp12-verify
+```
+
+### Enable the Ubuntu package repositories
+
+Have a tested wired USB Ethernet connection attached before relying on APT.
+First inspect the installer-generated source state; do not delete or blindly
+overwrite any source file:
+
+```bash
+find /etc/apt -maxdepth 2 -type f -print
+sudo sed -n '1,160p' /etc/apt/sources.list 2>/dev/null || true
+sudo sed -n '1,160p' /etc/apt/sources.list.d/cdrom.sources 2>/dev/null || true
+sudo sed -n '1,160p' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+sudo sed -n '1,160p' /etc/apt/sources.list.d/ubuntu.sources.curtin.orig 2>/dev/null || true
+```
+
+An active `cdrom.sources` can make APT request installation media. Preserve it
+as a rollback copy while disabling it:
+
+```bash
+if test -f /etc/apt/sources.list.d/cdrom.sources; then
+  sudo mv /etc/apt/sources.list.d/cdrom.sources \
+    /etc/apt/sources.list.d/cdrom.sources.disabled
+fi
+```
+
+If `ubuntu.sources` is absent but `ubuntu.sources.curtin.orig` exists, inspect
+the template first. It must use only official Ubuntu archive/security HTTPS
+URIs and suites for the installed Ubuntu codename reported by `/etc/os-release`.
+Stop if the template is missing, names another release, or contains an
+unexpected URI. Only then preserve the template and activate a copy:
+
+```bash
+. /etc/os-release
+printf 'Installed codename: %s\n' "$VERSION_CODENAME"
+sudo cat /etc/apt/sources.list.d/ubuntu.sources.curtin.orig
+test ! -e /etc/apt/sources.list.d/ubuntu.sources
+sudo cp -a /etc/apt/sources.list.d/ubuntu.sources.curtin.orig \
+  /etc/apt/sources.list.d/ubuntu.sources
+```
+
+Review the active file again, confirm wired connectivity, and update package
+metadata. Do not continue to package-dependent steps unless this succeeds:
+
+```bash
+sudo cat /etc/apt/sources.list.d/ubuntu.sources
+ip route
+sudo apt update
+```
+
+To roll back these source-file changes, remove only the copy created above (if
+you created it), then restore the preserved CD-ROM source:
+
+```bash
+sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
+if test -f /etc/apt/sources.list.d/cdrom.sources.disabled; then
+  sudo mv /etc/apt/sources.list.d/cdrom.sources.disabled \
+    /etc/apt/sources.list.d/cdrom.sources
+fi
 ```
 
 ### Platform files

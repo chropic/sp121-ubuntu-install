@@ -57,6 +57,18 @@ before sharing it. Do not repeatedly run the graphical installer against the
 same target; a retry can erase the evidence or alter the partially installed
 system.
 
+## APT requests installation media after first boot
+
+The installer may leave an active `/etc/apt/sources.list.d/cdrom.sources` while
+the installer medium is unavailable. Do not delete source files or substitute
+unverified mirrors. Follow the guide's guarded procedure to
+[inspect, preserve, and enable the Ubuntu package repositories](../../GUIDE.md#enable-the-ubuntu-package-repositories).
+It disables the CD-ROM entry reversibly and uses
+`ubuntu.sources.curtin.orig` only after its release suites and official Ubuntu
+URIs have been reviewed. Keep a tested wired connection attached and stop if
+the template is absent, names the wrong release, contains an unexpected URI, or
+`apt update` fails.
+
 ## Device will not boot
 
 Use [Recovery](../../GUIDE.md#9-recover). Restore a matching kernel, initramfs, and DTB

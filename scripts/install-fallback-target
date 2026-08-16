@@ -171,4 +171,4 @@ chroot "$target" grub-file --is-arm64-efi /boot/efi/EFI/BOOT/BOOTAA64.EFI
 
 printf '\nFallback loader and matching payload installed successfully.\n'
 printf 'Persistent first-boot tools installed at /opt/sp12-linux.\n'
-printf 'Do not reboot until post-install firmware and target verification are complete.\n'
+printf 'Do not reboot until the guide\047s exact-kernel, ESP payload, configuration, and persistent-tool checks pass.\n'

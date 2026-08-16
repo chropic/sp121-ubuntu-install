@@ -691,7 +691,11 @@ sudo apt clean
 
 Do not install or retain `-dbg` kernels unless needed. `kdump-tools` reserves about 512 MiB on this 16 GiB system; keep it while testing custom kernels, and disable it deliberately only when crash capture is no longer valuable.
 
-The `cdrom.sources.disabld` APT notice is cosmetic because APT ignores the invalid extension. Remove or rename it only after confirming it is not intentionally retained.
+The historical installation had a misspelled `cdrom.sources.disabld` file. Its
+APT notice was cosmetic because APT ignored that invalid extension. This is not
+the current recovery procedure; follow the maintained guide's
+[package-repository instructions](../../GUIDE.md#enable-the-ubuntu-package-repositories)
+instead.
 
 ## 12. Known non-blocking messages
 
