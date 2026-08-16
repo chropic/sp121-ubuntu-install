@@ -220,6 +220,31 @@ non-Ubuntu 26.04 roots, missing ARM64 GRUB modules or exact kernel files, and th
 wrong hardware; it derives the root UUID from the mounted target. Its complete
 design is documented in [the development notes](docs/DEVELOPMENT.md#installing-the-fallback-path-into-target).
 
+After checking the preview, install the fallback path and a clean, root-owned
+snapshot of this repository at the stable target location `/opt/sp12-linux`:
+
+```bash
+sudo scripts/install-fallback-target \
+  --kernel-release YOUR_EXACT_KERNEL_RELEASE \
+  --dtb-source /cdrom/casper/x1p42100-microsoft-sp12in.dtb \
+  --apply
+```
+
+Before rebooting, verify the first-boot tools were copied into the installed
+system and kept executable. These checks must pass:
+
+```bash
+test -x /target/opt/sp12-linux/scripts/sp12-verify
+test -x /target/opt/sp12-linux/scripts/install-platform-files
+test -x /target/opt/sp12-linux/scripts/install-wifi-board
+test -x /target/opt/sp12-linux/scripts/install-audio-topology
+test -x /target/opt/sp12-linux/scripts/install-audio-ucm
+test -x /target/opt/sp12-linux/scripts/install-power-policy
+test -x /target/opt/sp12-linux/scripts/sp12-restore-recovery
+test -x /target/opt/sp12-linux/scripts/sp12-diagnostics
+test ! -e /target/opt/sp12-linux/.git
+```
+
 ### Boot design
 
 ```text
@@ -248,7 +273,7 @@ uname -r
 lsblk
 findmnt /boot/efi
 ls -lh /boot/efi/EFI/BOOT/BOOTAA64.EFI /boot/efi/sp12/*
-sudo scripts/sp12-verify
+sudo /opt/sp12-linux/scripts/sp12-verify
 ```
 
 ### Platform files
@@ -258,15 +283,15 @@ The tested installation placed Harrison van der Byl's support checkout at
 `/lib`. Read [the firmware policy](firmware/README.md), inspect, and preview:
 
 ```bash
-scripts/inspect-support-source --source /opt/surface-pro-12-linux
-sudo scripts/install-platform-files --source /opt/surface-pro-12-linux
+/opt/sp12-linux/scripts/inspect-support-source --source /opt/surface-pro-12-linux
+sudo /opt/sp12-linux/scripts/install-platform-files --source /opt/surface-pro-12-linux
 ```
 
 Both must end in `PASS` or `DRY RUN`. If you obtained the checkout legitimately
 and accept its third-party terms:
 
 ```bash
-sudo scripts/install-platform-files \
+sudo /opt/sp12-linux/scripts/install-platform-files \
   --source /opt/surface-pro-12-linux \
   --apply --acknowledge-third-party-files
 ```
@@ -284,8 +309,8 @@ extracts the tested compatible entry from installed `board-2.bin`, verifies the
 data, and previews by default:
 
 ```bash
-sudo scripts/install-wifi-board
-sudo scripts/install-wifi-board --apply
+sudo /opt/sp12-linux/scripts/install-wifi-board
+sudo /opt/sp12-linux/scripts/install-wifi-board --apply
 ```
 
 A different existing `board.bin` is preserved as `board.bin.before-sp12`; an
@@ -309,7 +334,7 @@ The tested topology comes from audioreach-topology `v1.0.4`, commit
 From a checkout at that revision, build and verify without installing:
 
 ```bash
-sudo scripts/install-audio-topology \
+sudo /opt/sp12-linux/scripts/install-audio-topology \
   --source /opt/surface-pro-12-linux/audioreach-topology
 ```
 
@@ -318,8 +343,8 @@ the SP12 target, saves a different existing file as `.before-sp12`, and does not
 change UCM. Ubuntu 26.04's `alsa-ucm-conf` predates corrected Surface routing:
 
 ```bash
-sudo scripts/install-audio-ucm
-sudo scripts/install-audio-ucm --apply
+sudo /opt/sp12-linux/scripts/install-audio-ucm
+sudo /opt/sp12-linux/scripts/install-audio-ucm --apply
 systemctl --user restart pipewire.service pipewire-pulse.service wireplumber.service
 wpctl status
 aplay -l
@@ -388,8 +413,8 @@ The reference policy reduced one light active-discharge workload from about
 Preview, then deliberately apply:
 
 ```bash
-scripts/install-power-policy
-sudo scripts/install-power-policy --apply
+/opt/sp12-linux/scripts/install-power-policy
+sudo /opt/sp12-linux/scripts/install-power-policy --apply
 ```
 
 It installs measured CPU/GPU limits, SCMI module loading, AC/battery event
@@ -450,8 +475,8 @@ file alone. The tested recovery set is:
 Preview its paths and hashes, then apply only if correct:
 
 ```bash
-scripts/sp12-restore-recovery
-sudo scripts/sp12-restore-recovery --apply
+/opt/sp12-linux/scripts/sp12-restore-recovery
+sudo /opt/sp12-linux/scripts/sp12-restore-recovery --apply
 ```
 
 The script validates the tablet and all three files, stages `.new` copies,
@@ -483,7 +508,7 @@ Review logs for Wi-Fi names, UUIDs, hostnames, usernames, and other identifiers
 before sharing them. The safer default is the redacted diagnostic report:
 
 ```bash
-scripts/sp12-diagnostics --output ~/sp12-diagnostics.txt
+/opt/sp12-linux/scripts/sp12-diagnostics --output ~/sp12-diagnostics.txt
 ```
 
 For symptom-specific checks, see [Troubleshooting](docs/troubleshooting/README.md).

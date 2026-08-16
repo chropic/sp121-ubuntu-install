@@ -1,0 +1,36 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+repo_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+
+# Exercise the snapshot operation used by the installer without requiring a
+# mounted installation or modifying the host's /target.
+test_root=$(mktemp -d "${TMPDIR:-/tmp}/sp12-fallback-target-test.XXXXXX")
+trap 'rm -rf "$test_root"' EXIT HUP INT TERM
+source_tree=$test_root/source
+tool_root=$test_root/target/opt/sp12-linux
+mkdir -p "$source_tree/scripts" "$source_tree/.git" "$source_tree/build" \
+    "$source_tree/dist" "$source_tree/.cache" "$source_tree/pkg/__pycache__"
+printf '#!/bin/sh\nexit 0\n' > "$source_tree/scripts/sp12-verify"
+chmod 0755 "$source_tree/scripts/sp12-verify"
+touch "$source_tree/.git/config" "$source_tree/build/output" \
+    "$source_tree/dist/output" "$source_tree/.cache/output" \
+    "$source_tree/pkg/cache.pyc"
+
+install -d -m 0755 "$tool_root"
+tar -C "$source_tree" \
+    --exclude='./.git' --exclude='./build' --exclude='./dist' \
+    --exclude='./.cache' --exclude='*.pyc' --exclude='__pycache__' \
+    -cf - . | tar -C "$tool_root" --no-same-owner -xf -
+
+[ -x "$tool_root/scripts/sp12-verify" ]
+[ ! -e "$tool_root/.git" ]
+[ ! -e "$tool_root/build" ]
+[ ! -e "$tool_root/dist" ]
+[ ! -e "$tool_root/.cache" ]
+[ ! -e "$tool_root/pkg/cache.pyc" ]
+grep -q 'chown -R 0:0 "$tool_root"' "$repo_root/scripts/install-fallback-target"
+grep -q 'chmod -R u-s,g-s,go-w "$tool_root"' "$repo_root/scripts/install-fallback-target"
+
+printf 'Fallback target installer tests passed.\n'
