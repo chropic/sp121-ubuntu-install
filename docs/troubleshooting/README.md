@@ -9,6 +9,54 @@ scripts/sp12-diagnostics --output ~/sp12-diagnostics.txt
 The report excludes journals, filesystem UUIDs, MAC addresses, hostnames, and
 firmware contents by design. Review it manually before sharing it.
 
+## System Program Problem Detected during installation
+
+Ubuntu 26.04's installer can display this generic error late in installation on
+the Surface Pro 12. Check the actual failure before retrying or rebooting:
+
+```bash
+sudo tail -n 120 /var/log/installer/curtin-install.log
+```
+
+If the log ends in the `install-grub` stage with all of these details:
+
+```text
+Command: ... chroot /target efibootmgr -v
+Exit code: 2
+Stderr: EFI variables are not supported on this system.
+```
+
+then curtin failed while querying firmware boot entries. This is distinct from
+an earlier storage, filesystem, package-extraction, or kernel failure. The system
+copy may be usable, but do not assume it is complete merely because `/target`
+exists.
+
+Keep the installer open, open a live-session terminal, and return to
+[Install Linux and prepare boot](../../GUIDE.md#4-install-linux-and-prepare-boot).
+Both `/target` and `/target/boot/efi` must still be mounted. Select the exact
+installed kernel from `/target/boot`, then run the repository's structural check:
+
+```bash
+ls -1 /target/boot/vmlinuz-* /target/boot/initrd.img-*
+scripts/inspect-install-target \
+  --target /target \
+  --kernel-release YOUR_EXACT_KERNEL_RELEASE
+```
+
+Only a `RESULT: PASS` makes it appropriate to preview
+`scripts/install-fallback-target`. The preview is non-mutating; its `--apply`
+path remains release-unsupported until a fresh physical installation validates
+it. If the target check fails, preserve the evidence before doing anything else:
+
+```bash
+sudo tar -czf /tmp/installer-logs.tar.gz /var/log/installer
+```
+
+Copy that archive to separate removable storage and review it for private data
+before sharing it. Do not repeatedly run the graphical installer against the
+same target; a retry can erase the evidence or alter the partially installed
+system.
+
 ## Device will not boot
 
 Use [Recovery](../../GUIDE.md#9-recover). Restore a matching kernel, initramfs, and DTB

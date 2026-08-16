@@ -181,7 +181,13 @@ procedure exists. Record the internal disk's name, model/manufacturer, and size;
 confirm all three in the graphical installer's final summary.
 
 The ordinary installer can copy Linux successfully yet fail to create a usable
-Surface boot entry. Before rebooting, confirm its target and ESP:
+Surface boot entry. On the Surface firmware, Ubuntu 26.04's installer may show
+**System Program Problem Detected** near the end because `efibootmgr -v` reports
+`EFI variables are not supported on this system`; curtin currently treats that
+response as a fatal bootloader error. Do not restart the installer or reboot.
+The target may already contain the copied system, kernel, initramfs, ARM64 GRUB
+modules, and mounted ESP, but the error dialog alone does not establish that all
+of them are present. Open a live-session terminal and confirm the target and ESP:
 
 ```bash
 findmnt /target
@@ -192,6 +198,12 @@ scripts/inspect-install-target \
   --target /target \
   --kernel-release YOUR_EXACT_KERNEL_RELEASE
 ```
+
+Obtain `YOUR_EXACT_KERNEL_RELEASE` from the filename printed by
+`ls /target/boot/vmlinuz-*`; do not guess it or use `uname -r`, which describes
+the live environment. If either `findmnt` command or the inspection script fails,
+stop, save `/var/log/installer`, and do not run the fallback installer. See the
+[installer-error troubleshooting procedure](docs/troubleshooting/README.md#system-program-problem-detected-during-installation).
 
 Preview construction of the fallback path:
 
@@ -222,9 +234,9 @@ Surface UEFI
 This avoids EFI NVRAM entries and GRUB reading ext4. The three `/sp12/` files are
 an inseparable release set. The ESP is normally read-only; updates stage `.new`
 files, compare them byte-for-byte, rename them into place, sync storage, and
-restore read-only mode. An “EFI variables unsupported” message alone does not
-prove installation failed; inspect the target root, ESP, OS metadata, and boot
-files first.
+restore read-only mode. The fallback path is deliberately independent of EFI
+variables. This is why the late installer error can be recoverable, but only when
+all of the preceding target checks pass.
 
 ## 5. Configure the first boot
 
