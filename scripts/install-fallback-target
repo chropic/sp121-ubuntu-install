@@ -157,11 +157,11 @@ for required_tool in sp12-verify install-platform-files install-wifi-board \
         exit 1
     }
 done
-[ ! -e "$tool_root/.git" ] && [ ! -e "$tool_root/build" ] && \
-    [ ! -e "$tool_root/dist" ] && [ ! -e "$tool_root/.cache" ] || {
+if [ -e "$tool_root/.git" ] || [ -e "$tool_root/build" ] || \
+    [ -e "$tool_root/dist" ] || [ -e "$tool_root/.cache" ]; then
     printf 'Transient repository artifacts reached persistent tools\n' >&2
     exit 1
-}
+fi
 
 sync
 cmp -s "$kernel" "$dest/vmlinuz"

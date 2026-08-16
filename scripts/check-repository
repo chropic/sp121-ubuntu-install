@@ -54,7 +54,7 @@ fi
 grep -q 'active: false' kernel/patches.yaml
 grep -q 'touchscreen GPIOs 51/52' SOURCES.md
 grep -q 'known incorrect' SOURCES.md
-grep -q 'tool_root=\$target/opt/sp12-linux' scripts/install-fallback-target
+grep -Fq "tool_root=\$target/opt/sp12-linux" scripts/install-fallback-target
 grep -q 'test -x /target/opt/sp12-linux/scripts/sp12-verify' GUIDE.md
 if sed -n '/^## 5\./,$p' GUIDE.md | grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/'; then
     printf 'First-boot guide still uses a live-session-relative scripts path\n' >&2

@@ -30,7 +30,8 @@ tar -C "$source_tree" \
 [ ! -e "$tool_root/dist" ]
 [ ! -e "$tool_root/.cache" ]
 [ ! -e "$tool_root/pkg/cache.pyc" ]
-grep -q 'chown -R 0:0 "$tool_root"' "$repo_root/scripts/install-fallback-target"
-grep -q 'chmod -R u-s,g-s,go-w "$tool_root"' "$repo_root/scripts/install-fallback-target"
+grep -Fq "chown -R 0:0 \"\$tool_root\"" "$repo_root/scripts/install-fallback-target"
+grep -Fq "chmod -R u-s,g-s,go-w \"\$tool_root\"" \
+    "$repo_root/scripts/install-fallback-target"
 
 printf 'Fallback target installer tests passed.\n'
