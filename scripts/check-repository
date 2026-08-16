@@ -54,6 +54,12 @@ fi
 grep -q 'active: false' kernel/patches.yaml
 grep -q 'touchscreen GPIOs 51/52' SOURCES.md
 grep -q 'known incorrect' SOURCES.md
+grep -Fq "tool_root=\$target/opt/sp12-linux" scripts/install-fallback-target
+grep -q 'test -x /target/opt/sp12-linux/scripts/sp12-verify' GUIDE.md
+if sed -n '/^## 5\./,$p' GUIDE.md | grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/'; then
+    printf 'First-boot guide still uses a live-session-relative scripts path\n' >&2
+    exit 1
+fi
 grep -q 'ea0f07e66beea95898d96fbeb6daa472f4735af3' firmware/sources.yaml
 grep -q 'repository_contains_third_party_firmware: false' firmware/sources.yaml
 grep -q '6df4dae3e2f5e4c2903f3cafd40996fc1b3639ce' firmware/sources.yaml
@@ -80,5 +86,6 @@ if command -v python3 >/dev/null 2>&1; then
 fi
 
 tests/build-installer
+tests/install-fallback-target
 
 printf 'Repository checks passed.\n'

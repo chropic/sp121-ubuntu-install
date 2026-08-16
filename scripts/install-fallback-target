@@ -31,6 +31,7 @@ repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 target=/target
 esp=$target/boot/efi
 dest=$esp/sp12
+tool_root=$target/opt/sp12-linux
 target_dtb=$target/boot/dtb-$kver
 kernel=$target/boot/vmlinuz-$kver
 initrd=$target/boot/initrd.img-$kver
@@ -45,6 +46,7 @@ printf '  source DTB: %s\n' "$dtb_source"
 printf '  installed DTB: %s\n' "$target_dtb"
 printf '  ESP destination: %s\n' "$dest"
 printf '  root UUID embedded in loader: %s\n' "$root_uuid"
+printf '  persistent tools: %s\n' "$tool_root"
 
 for source in "$kernel" "$initrd" "$dtb_source"; do
     if [ -r "$source" ]; then
@@ -135,6 +137,32 @@ install -m 0755 "$repo_root/system/etc/initramfs/post-update.d/zzzz-sp12-sync" \
 } > "$target/etc/sp12-linux/boot.conf"
 chmod 0644 "$target/etc/sp12-linux/boot.conf"
 
+# The live-session checkout disappears at reboot.  Install a clean snapshot for
+# first-boot work, retaining its executable bits but never its live-user owner.
+rm -rf "$tool_root"
+install -d -o 0 -g 0 -m 0755 "$tool_root"
+tar -C "$repo_root" \
+    --exclude='./.git' --exclude='./build' --exclude='./dist' \
+    --exclude='./.cache' --exclude='*.pyc' --exclude='__pycache__' \
+    -cf - . | tar -C "$tool_root" --no-same-owner -xf -
+chown -R 0:0 "$tool_root"
+chmod -R u-s,g-s,go-w "$tool_root"
+
+for required_tool in sp12-verify install-platform-files install-wifi-board \
+    install-audio-topology install-audio-ucm install-power-policy \
+    sp12-restore-recovery sp12-diagnostics; do
+    [ -x "$tool_root/scripts/$required_tool" ] || {
+        printf 'Persistent tool missing or not executable: %s/scripts/%s\n' \
+            "$tool_root" "$required_tool" >&2
+        exit 1
+    }
+done
+if [ -e "$tool_root/.git" ] || [ -e "$tool_root/build" ] || \
+    [ -e "$tool_root/dist" ] || [ -e "$tool_root/.cache" ]; then
+    printf 'Transient repository artifacts reached persistent tools\n' >&2
+    exit 1
+fi
+
 sync
 cmp -s "$kernel" "$dest/vmlinuz"
 cmp -s "$initrd" "$dest/initrd.img"
@@ -142,4 +170,5 @@ cmp -s "$target_dtb" "$dest/dtb"
 chroot "$target" grub-file --is-arm64-efi /boot/efi/EFI/BOOT/BOOTAA64.EFI
 
 printf '\nFallback loader and matching payload installed successfully.\n'
+printf 'Persistent first-boot tools installed at /opt/sp12-linux.\n'
 printf 'Do not reboot until post-install firmware and target verification are complete.\n'
