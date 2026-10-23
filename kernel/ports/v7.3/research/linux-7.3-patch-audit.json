@@ -1,0 +1,680 @@
+{
+  "schema": 1,
+  "research_date": "2026-10-20",
+  "project_commit": "6f0de3d84223e7395eb6fe47648b979ffa7aadd7",
+  "upstream_url": "https://github.com/torvalds/linux.git",
+  "upstream_tag": "v7.3",
+  "upstream_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "upstream_tag_object": "091b06388b117fefdcb63336ac09956a4914b961",
+  "tag_signature_verified": false,
+  "method": "Each included vendor patch checked independently against pristine v7.3 with git apply --check, then git apply --check --reverse; no patches applied. Surface Go 2 patch excluded as unrelated.",
+  "limitations": [
+    "Applicability is a text/context check, not semantic equivalence, dependency validation, compilation, or hardware validation.",
+    "A reverse-check failure does not establish that a change is absent upstream.",
+    "Both checks passing is ambiguous, not proof that a patch should be retained.",
+    "The 37 vendor files are provenance inputs, not an established active series; the tested release is the aggregate snapshot."
+  ],
+  "summary": {
+    "neither": 16,
+    "forward-only": 16,
+    "excluded-unrelated-intel-surface-go": 1,
+    "reverse-only": 3,
+    "ambiguous-both-pass": 1
+  },
+  "aggregate": {
+    "patch": "kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch",
+    "sha256": "02450df6b1996572e1d76571b10cb279d4f8b7b2a0c5d777a6243623ecc3744d",
+    "exit_code": 1,
+    "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/Makefile:457\nerror: arch/arm64/boot/dts/qcom/Makefile: patch does not apply\nerror: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:6\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply\nerror: patch failed: arch/arm64/boot/dts/qcom/purwa.dtsi:5\nerror: arch/arm64/boot/dts/qcom/purwa.dtsi: patch does not apply\nerror: patch failed: drivers/gpu/drm/panel/panel-edp.c:2144\nerror: drivers/gpu/drm/panel/panel-edp.c: patch does not apply\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: already exists in working directory"
+  },
+  "patches": [
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0002-7.2-clk-qcom-camcc-x1p42100-add-support-for-camera-clock-controller.patch",
+      "sha256": "9c4ebd849cf0a1fe949690c1f9dc8885e9e0d8b8a6f2029a26d994f1fd6808bb",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/clk/qcom/Kconfig:200\nerror: drivers/clk/qcom/Kconfig: patch does not apply\nerror: patch failed: drivers/clk/qcom/Makefile:42\nerror: drivers/clk/qcom/Makefile: patch does not apply\nerror: drivers/clk/qcom/camcc-x1p42100.c: already exists in working directory"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/clk/qcom/camcc-x1p42100.c:1\nerror: drivers/clk/qcom/camcc-x1p42100.c: patch does not apply\nerror: patch failed: drivers/clk/qcom/Kconfig:200\nerror: drivers/clk/qcom/Kconfig: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0003-phy-qcom-mipi-csi2-Add-a-CSI2-MIPI-DPHY-driver.patch",
+      "sha256": "c78daf049a221b5aceca9e0cfac26241e4a243a0cd35f379c502b7ccbf4d7e07",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: drivers/phy/qualcomm/phy-qcom-mipi-csi2.h: No such file or directory\nerror: drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c: No such file or directory\nerror: drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c: No such file or directory\nerror: patch failed: drivers/phy/qualcomm/Makefile:6\nerror: drivers/phy/qualcomm/Makefile: patch does not apply\nerror: patch failed: drivers/phy/qualcomm/Kconfig:28\nerror: drivers/phy/qualcomm/Kconfig: patch does not apply\nerror: patch failed: MAINTAINERS:22296\nerror: MAINTAINERS: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0004-media-qcom-camss-Add-support-to-populate-sub-devices.patch",
+      "sha256": "0678e766120f31c66f5cdaeea67622135f17547697921929c46f0e3541f6cc2b",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.c:16\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0005-media-qcom-camss-Add-legacy_phy-flag-to-Soc-definition-structures.patch",
+      "sha256": "f78c0d890fe3b71236d1f2d5d2940f04b4669479d0b94bb8e0fc33aa8c120e44",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.c:5324\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss.h:106\nerror: drivers/media/platform/qcom/camss/camss.h: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.h:106\nerror: drivers/media/platform/qcom/camss/camss.h: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss.c:5265\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0007-media-qcom-camss-Add-support-for-PHY-API-devices.patch",
+      "sha256": "f525f3579b77bff27f473b70289ae5458adf8d348e9c890efca645a3c273b209",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.c:4794\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss-csiphy.h:12\nerror: drivers/media/platform/qcom/camss/camss-csiphy.h: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss-csiphy.c:7\nerror: drivers/media/platform/qcom/camss/camss-csiphy.c: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/Kconfig:7\nerror: drivers/media/platform/qcom/camss/Kconfig: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0008-media-qcom-camss-Add-support-for-x1p42100.patch",
+      "sha256": "c2093d474c02f7299249288f6fafc281545ed9c8cb8917457c3765ff9602dfd4",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.h:96\nerror: drivers/media/platform/qcom/camss/camss.h: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss.c:4254\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss-vfe.c:353\nerror: drivers/media/platform/qcom/camss/camss-vfe.c: patch does not apply\nerror: patch failed: drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c:1020\nerror: drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0009-media-qcom-camss-Drop-legacy-PHY-descriptions-from-x.patch",
+      "sha256": "30e4da806371cae06a28d86955a9729ee28857fc2c5310d2b705884d0789301d",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.c:5527\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/platform/qcom/camss/camss.c:3944\nerror: drivers/media/platform/qcom/camss/camss.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0010-7.3-arm64-dts-qcom-hamoa-Add-CAMCC-block-definition.patch",
+      "sha256": "680c5c29b0b2112f8cace49165e47762d3737c9bafac79c3d3e609b37871fd42",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:6\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:5551\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0011-7.3-arm64-dts-qcom-purwa-Add-CAMCC-block-definition.patch",
+      "sha256": "15479750dcb3cf0d2331d8a82651a01cd4c285a2e2869d6644de081417b9e98e",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/purwa.dtsi:25\nerror: arch/arm64/boot/dts/qcom/purwa.dtsi: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/purwa.dtsi:25\nerror: arch/arm64/boot/dts/qcom/purwa.dtsi: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0012-arm64-dts-qcom-hamoa-Add-CCI-definitions.patch",
+      "sha256": "fbf41ad732b007272d9015eacaee417cced4a447f2482b104009b12a22fb4b5f",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:5551\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:5551\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0014-arm64-dts-qcom-hamoa-Add-CAMSS-block-defintion.patch",
+      "sha256": "2c9ed94bdc6ce90b9c7131696d941cf0fe9b329425ca1eec726e37ef5af5e585",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:5629\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/hamoa.dtsi:16\nerror: arch/arm64/boot/dts/qcom/hamoa.dtsi: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0015-arm64-dts-qcom-purwa-Add-CAMSS-block-defintion.patch",
+      "sha256": "4d66f5ab32724f4679fff97522b03b9dc4ddc6e2671a40767ad2f748cb990be9",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/purwa.dtsi:19\nerror: arch/arm64/boot/dts/qcom/purwa.dtsi: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/purwa.dtsi:19\nerror: arch/arm64/boot/dts/qcom/purwa.dtsi: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0017-surfacego2-camera.patch",
+      "sha256": "273881ae9f249dd9480c8a0bb80664c3b9e903a63ae04e2ce585c5b9401f382c",
+      "status": "excluded-unrelated-intel-surface-go"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0018-media-i2c-ov13858-reorder-methods.patch",
+      "sha256": "17657f0649c7c986b22afd24628a8b63464fa12fe7e1ba00ccfe0a4a9f0808d5",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1734\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1146\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0019-media-i2c-ov13858-port-to-regmap_cci-api.patch",
+      "sha256": "8c54f5da5ab6d71dd51077428ea90e704ace43f2546fe7f214c7a0b0ff00cc12",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1052\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:6\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0020-media-i2c-ov13858-replace-open_set-stream-with-v4l2.patch",
+      "sha256": "5c2c9299cfe6ab986ba63a883bed824c21134969b87bcadfca307408042c0e32",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1226\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1025\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0021-media-i2c-ov13858-add-rotate-control-support.patch",
+      "sha256": "d74eb313e3477bcbfe0b6787916012d17bc4ab6912b3ff142ee19c9753ed594b",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:65\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:65\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0022-media-i2c-ov13858-fix-setting-format.patch",
+      "sha256": "c0cfcf4c32d38f21be18b23c746e6068d1f65dd025fd934fa357b2eaa88f590d",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1407\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1407\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0023-media-i2c-ov13858-add-get_selection.patch",
+      "sha256": "5e8d06796954ce6c2b71c4d828fe88e424b83d173c2f66d1bce7fd2bda022582",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1480\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:1480\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0024-media-i2c-ov13858-support-of.patch",
+      "sha256": "94777625282de7af57e7c78205032c104930b68316ce1f5183a474146033759c",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:3\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov13858.c:3\nerror: drivers/media/i2c/ov13858.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0025-media-i2c-ov02c10-improve-default-exposure-setting.patch",
+      "sha256": "d63c3549d6276d7678404e5b802e5dab96912e1ded9d7ada86eabd8fd00425ab",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov02c10.c:34\nerror: drivers/media/i2c/ov02c10.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/camera/0026-media-i2c-ov02c10-add-get_selection.patch",
+      "sha256": "3282efc2616e9bb30a030d4e972c2137cca0565aff206d482548fa5e123e08c8",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/media/i2c/ov02c10.c:757\nerror: drivers/media/i2c/ov02c10.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0001-7.3-firmware-qcom-scm-Allow-QSEECOM-on-Surface-Pro-12in.patch",
+      "sha256": "4370d9133fc65cc7989090981b829d5c6f754c757540f25916b1e4cae0569e5d",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/firmware/qcom/qcom_scm.c:2306\nerror: drivers/firmware/qcom/qcom_scm.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "status": "reverse-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0002-7.3-plaform-surface-SAM-add-support-for-Surface-Pro-12in.patch",
+      "sha256": "63927ea8badb4b33e56a6a0d3904338c19abada8d3263f716544e7080f59aa89",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/platform/surface/surface_aggregator_registry.c:498\nerror: drivers/platform/surface/surface_aggregator_registry.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "status": "reverse-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0003-drm-panel_edp-Add-second-panel-for-Surface-Pro-12in.patch",
+      "sha256": "1de11d2a8c25f92967b74e2148efe281f650f6bdf7c15ff8e7508da09e0caff6",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/gpu/drm/panel/panel-edp.c:2069\nerror: drivers/gpu/drm/panel/panel-edp.c: patch does not apply"
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/gpu/drm/panel/panel-edp.c:2069\nerror: drivers/gpu/drm/panel/panel-edp.c: patch does not apply"
+      },
+      "status": "neither"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0004-rtc-add-sam-driver.patch",
+      "sha256": "26056c7bd98ac45b5faed9dc1cdb1252bb941caef36bd54197491933b34b5d4d",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: drivers/rtc/rtc-surface.c: No such file or directory\nerror: patch failed: drivers/rtc/Makefile:183\nerror: drivers/rtc/Makefile: patch does not apply\nerror: patch failed: drivers/rtc/Kconfig:1399\nerror: drivers/rtc/Kconfig: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0005-platform-surface-SAM-add-rtc-for-Surface-Pro-12in.patch",
+      "sha256": "68382863e11dfa8b6f364725d5c63f1e19002d16ef1f4585d357a0b312ab99f1",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/platform/surface/surface_aggregator_registry.c:51\nerror: drivers/platform/surface/surface_aggregator_registry.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0006-sam-aggregator-add-suspend-workaround.patch",
+      "sha256": "ea19a32ccb0b0651cd9be7818d55f2b07d425e2b88a445d562c81fbe1945b5c8",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: drivers/platform/surface/aggregator/controller.c:1155\nerror: drivers/platform/surface/aggregator/controller.c: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0007-7.3-arm64-dts-qcom-purwa-Add-Microsoft-Surface-Pro-12in.patch",
+      "sha256": "756cffabb4cefb7be15e21d996756e21b43ebd37ea051c8184729fa0462d237b",
+      "forward": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/Makefile:463\nerror: arch/arm64/boot/dts/qcom/Makefile: patch does not apply\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: already exists in working directory"
+      },
+      "reverse": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "status": "reverse-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0008-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-gpios-vol.patch",
+      "sha256": "f55b28fddb3ba849d13984f1742e3894ea12440c7519cd6b92ae52aabaebff77",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:53\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0009-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-regulators-display.patch",
+      "sha256": "d599103502f44f83b5f77670f4b9d08fa077b07fe3d37f198a5f71534d37bc26",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:33\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0010-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-displayport-audio.patch",
+      "sha256": "4f0f995982af689c51e49c8c677ac500e6b2ad4cd2b0802dc8cab89240a6bd86",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:265\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0011-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-charge-limit-nvmem.patch",
+      "sha256": "bdbf1db73128888efd80904a6b1cd8180df84392d9e28dd8bad8e2d22559ce87",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:82\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0012-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-camera-support.patch",
+      "sha256": "564d4f19040404f78c09a405e98ccde8e9c5ab6d51ff94cd2d32339f9689323e",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:11\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0013-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-disable-rfkill.patch",
+      "sha256": "345cc26843b0697e3c456764994ebe064f95c8d40c974585b428137a5c1ec093",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:1189\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0014-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-iris-node.patch",
+      "sha256": "4e47396e5e31995ffb052c890a7c4f2a8b7c17564e0786640d8bb02b18f13428",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 1,
+        "diagnostic": "error: patch failed: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts:1099\nerror: arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts: patch does not apply"
+      },
+      "status": "forward-only"
+    },
+    {
+      "patch": "kernel/patches/vendor/mias/surface/0015-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-remove-reserved-memory.patch",
+      "sha256": "8d3c3eba1277c86044c0824e868269eae345f725fc96b60f2d1f6b9b6d23efa0",
+      "forward": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "reverse": {
+        "exit_code": 0,
+        "diagnostic": ""
+      },
+      "status": "ambiguous-both-pass"
+    }
+  ],
+  "reference_reconstruction": {
+    "base_tag": "v7.2-rc7",
+    "base_commit": "db2ddb87143519e20a95aa36c60b36107b736a58",
+    "method": "git archive of the 20 existing paths touched by the aggregate, followed by git apply of the unchanged aggregate in a disposable git directory; compared resulting 25 files to pristine v7.3. Not a complete kernel build.",
+    "aggregate_apply_exit_code": 0,
+    "files": [
+      {
+        "path": "MAINTAINERS",
+        "reference_postimage_sha256": "0b746e1148d0d94a4404a0b6a96045786ac85e7853697bdfa0514f784d9f310f",
+        "upstream_present": true,
+        "upstream_sha256": "6151790c22698b0f16eac8fa2f6d7a85e5398b794d78d998dc1c37bb0d587625",
+        "identical": false
+      },
+      {
+        "path": "arch/arm64/boot/dts/qcom/Makefile",
+        "reference_postimage_sha256": "459a537699007ad5c034150e50f3b56070bc98eafdd5972e4c06d223f14fc56d",
+        "upstream_present": true,
+        "upstream_sha256": "b78adb4942092b1e0cd4ea4cf115b08becbc99d659d41ee97090fbb3d0030119",
+        "identical": false
+      },
+      {
+        "path": "arch/arm64/boot/dts/qcom/hamoa.dtsi",
+        "reference_postimage_sha256": "40799e6dafedd9534e1b2332b5b21cfe17af5da742e89d43ba0e83682cf1c3d8",
+        "upstream_present": true,
+        "upstream_sha256": "d963d36f0a1c8998bf0dda383bd7036734e32e1159804b2260619db521df4a38",
+        "identical": false
+      },
+      {
+        "path": "arch/arm64/boot/dts/qcom/purwa.dtsi",
+        "reference_postimage_sha256": "7f9e16deb1ee46df6c50cdc40dff5ed4159ac2561dfa8efde73af03d39043b8f",
+        "upstream_present": true,
+        "upstream_sha256": "e8d217f33d2ff364fbb313a767662ade0180bb28ba4ee4f435189520fae4cdd6",
+        "identical": false
+      },
+      {
+        "path": "drivers/gpu/drm/panel/panel-edp.c",
+        "reference_postimage_sha256": "300b2bb216d810da89250474e877d1097c12def7a1aef4f07adce7d0d388f22d",
+        "upstream_present": true,
+        "upstream_sha256": "31e40265c509d4d2e055021cf585bd98de24a594fed4368e794dbe0ce7078cb3",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/i2c/ov02c10.c",
+        "reference_postimage_sha256": "cd6940321aace95c2bb097609b6abb426204cd237fc73562f66cd096cecc524e",
+        "upstream_present": true,
+        "upstream_sha256": "dad178adde33b0c5f5e179830187e2a42bddb7fa40686ce1a7b906caf14346d3",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/i2c/ov13858.c",
+        "reference_postimage_sha256": "949e79130efe96848df01305e5af7a09ec676ea7b97aefbae3114e6f0ee1a47d",
+        "upstream_present": true,
+        "upstream_sha256": "e14529a1bc15e661998f3ea84f085982d405c3e9511615413bd3700da0c4d16b",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/Kconfig",
+        "reference_postimage_sha256": "925fc97695e9b78b77f68c9ac59903312271f3d681f5e6b4ed1bc33645a255e5",
+        "upstream_present": true,
+        "upstream_sha256": "791a5ba476d8f423bcba4e9bfb3dcb3d41c13a04dd734cd9435b28694921d9d6",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c",
+        "reference_postimage_sha256": "18e4c9aa3401c313a432d75e4d1022eff62eade7c69d1a3fddaa9d061174a422",
+        "upstream_present": true,
+        "upstream_sha256": "7b1fc8f45d02bd861455ab90ca509e3a688e1714290121e6f7319c8a10091d71",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss-csiphy.c",
+        "reference_postimage_sha256": "01653723f17f29b340c4e6dbf3302c1f7940a461d900d789928e0a34a3e45329",
+        "upstream_present": true,
+        "upstream_sha256": "9694bc604c745f17ebe7962752af510b3657030560b3597aabdde2c970da6eab",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss-csiphy.h",
+        "reference_postimage_sha256": "62395f1bf43ecb50d6bd9c474fd0c87dc022aea3daac404bde19b405333882df",
+        "upstream_present": true,
+        "upstream_sha256": "b07b8ac6e5911c4d8a7f35e5a4937e4735d1845aca22622898cbab910cdbe51a",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss-vfe.c",
+        "reference_postimage_sha256": "820ab0f9309d3c2b66cd842761b69ab7a455c2f0c86eaed39fa24f77d46cb85e",
+        "upstream_present": true,
+        "upstream_sha256": "b524f19641f85c255fcd80349172f1581df1b9a478d3ae78eb5ca0d44cd166af",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss.c",
+        "reference_postimage_sha256": "5e069f06127b5501664646baa48eff24e451873d4a316c4275284c6365cbc372",
+        "upstream_present": true,
+        "upstream_sha256": "287ebdd3f21862358be76150915339ac3598fbeb7552d7d1731b9127e5720b34",
+        "identical": false
+      },
+      {
+        "path": "drivers/media/platform/qcom/camss/camss.h",
+        "reference_postimage_sha256": "16dd5f17010daba2efef6fa5abe5fa24624a37c1ae55c447c107e488c714799c",
+        "upstream_present": true,
+        "upstream_sha256": "a3e22475629b64692697f99fa243c5dea3e3635d833f561b168c16d63c1dae40",
+        "identical": false
+      },
+      {
+        "path": "drivers/phy/qualcomm/Kconfig",
+        "reference_postimage_sha256": "b5af18abcd9cdd1869fa71db37c36e77459fee1b56911cb499fc744d91d1e901",
+        "upstream_present": true,
+        "upstream_sha256": "178afd6f2a550a89585217c2ec236a44ea566b35dcd04d05e8c5a1f0c8213f5b",
+        "identical": false
+      },
+      {
+        "path": "drivers/phy/qualcomm/Makefile",
+        "reference_postimage_sha256": "1295f98d87cb0624d2f943177a8dc50bb9c8f5101aa35d75bf13fb4882c297f6",
+        "upstream_present": true,
+        "upstream_sha256": "9bc9c909f2dab396c898cbf44e0011ec2e9b2d8fb7b771f3ec15fdfe9662405d",
+        "identical": false
+      },
+      {
+        "path": "drivers/platform/surface/aggregator/controller.c",
+        "reference_postimage_sha256": "54d0c2ffbb0c093ed788224d03575a9f2a0dcf1389f8bccf1c69d6416e8614a0",
+        "upstream_present": true,
+        "upstream_sha256": "0a3fc02a886fe1813027ef5e7db1424983efc0ccdb092700447852706a5377b7",
+        "identical": false
+      },
+      {
+        "path": "drivers/platform/surface/surface_aggregator_registry.c",
+        "reference_postimage_sha256": "cd495aaf30dc1e7dc9033e89cd9d59c8772dbc08a6e91f4b2a2872d6da730254",
+        "upstream_present": true,
+        "upstream_sha256": "4c022cc1481ecc49bd4749c7974376774e9258e195ba95c11af7293d1b7b54a4",
+        "identical": false
+      },
+      {
+        "path": "drivers/rtc/Kconfig",
+        "reference_postimage_sha256": "1cade00be81906fa252811609eecb20e698132f0c5fb0ad24f1e2bfbe60fd7a0",
+        "upstream_present": true,
+        "upstream_sha256": "7600a842173b1a4146a2ececb3bf99d254f8f87d1b33e946e59ad9fd88a1b31e",
+        "identical": false
+      },
+      {
+        "path": "drivers/rtc/Makefile",
+        "reference_postimage_sha256": "275514e59491f1322a51a7751d884d7ed6f6b0224e9938eaee12faa79c9b3940",
+        "upstream_present": true,
+        "upstream_sha256": "5f5fd1d571d29cb50d2af3c5a2f59e074a3a19449f7aea42296d8846ed127707",
+        "identical": false
+      },
+      {
+        "path": "arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts",
+        "reference_postimage_sha256": "327cbdc0b44f93b8d8e50b091fcafc8fc44230d14de042d210622892c10f2192",
+        "upstream_present": true,
+        "upstream_sha256": "52f78a27a3db5fc5aae33a4ffdc030f276bf5856a83fcf81f4a3d8ab1363f4b7",
+        "identical": false
+      },
+      {
+        "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c",
+        "reference_postimage_sha256": "978a76811569ff34534788c58bbbf1ae19fbeccd23cde78e59a08e929d7fa095",
+        "upstream_present": false
+      },
+      {
+        "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c",
+        "reference_postimage_sha256": "294f31fb260fbf7564c4075b9ae4742e409a8fc71a218123c4119760ec433780",
+        "upstream_present": false
+      },
+      {
+        "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2.h",
+        "reference_postimage_sha256": "75b9855d7eec8935ff34c4a4214083ae2e1c1b0c46c4d0fb50f12b50dbd7b8a2",
+        "upstream_present": false
+      },
+      {
+        "path": "drivers/rtc/rtc-surface.c",
+        "reference_postimage_sha256": "fcf2ca2a66f2ebd3710bdb1debc5513904018e0472c07fe115d69bbf0739c079",
+        "upstream_present": false
+      }
+    ]
+  }
+}

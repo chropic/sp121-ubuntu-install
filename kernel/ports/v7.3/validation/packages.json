@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "kernel_release": "7.3.0-sp12-v7.3-platform",
+  "packages": [
+    {
+      "file": "linux-image-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1_arm64.deb",
+      "sha256": "20d4cdcff128a7d3264db36b395dcd8b347ff2053ddf2c3e6001df0ea10b969b",
+      "size_bytes": 138141100,
+      "metadata": {
+        "Package": "linux-image-7.3.0-sp12-v7.3-platform",
+        "Version": "7.3-1~sp12candidate1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 8490,
+      "module_machine_counts": {
+        "183": 8490
+      },
+      "foreign_header_tools": [],
+      "native_header_tool_count": 0,
+      "config_matches": true,
+      "arm64_image_magic": true,
+      "boot_image_format": "arm64-pe-coff",
+      "image_matches": true,
+      "dtb": {
+        "path": "usr/lib/linux-image-7.3.0-sp12-v7.3-platform/qcom/x1p42100-microsoft-sp12in.dtb",
+        "matches": true
+      },
+      "status": "passed-static-package-inspection"
+    },
+    {
+      "file": "linux-headers-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1+native1_arm64.deb",
+      "sha256": "20d06e73a0baf3414d4eca624f96d26dd19fc0dd372ce1bec97a24230cb0fc27",
+      "size_bytes": 10969792,
+      "metadata": {
+        "Package": "linux-headers-7.3.0-sp12-v7.3-platform",
+        "Version": "7.3-1~sp12candidate1+native1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 0,
+      "module_machine_counts": {},
+      "foreign_header_tools": [],
+      "native_header_tool_count": 12,
+      "header_symbols_match": true,
+      "header_release_matches": true,
+      "status": "passed-static-package-inspection"
+    },
+    {
+      "file": "linux-libc-dev_7.3-1~sp12candidate1_arm64.deb",
+      "sha256": "bc608f64ab417375aeeea84ecbff2ec11027b2bad3e6564ccc96b90d028f5fcb",
+      "size_bytes": 1541346,
+      "metadata": {
+        "Package": "linux-libc-dev",
+        "Version": "7.3-1~sp12candidate1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 0,
+      "module_machine_counts": {},
+      "foreign_header_tools": [],
+      "native_header_tool_count": 0,
+      "status": "passed-static-package-inspection"
+    }
+  ],
+  "target_installation": "not-run",
+  "target_initramfs": "not-generated-or-inspected",
+  "hardware": "not-run",
+  "installer": "unchanged"
+}

@@ -1,0 +1,682 @@
+Subject: [PATCH] dt-bindings: document the candidate X1 camera resources
+
+Extend CAMSS and add PHY/sensor schemas scoped to the reconciled camera driver and reference board
+resources. Existing upstream CCI binding already covers the X1E compatible.
+Schema maintainer entries name the existing upstream subsystem/driver owners;
+no new patch author identity or DCO sign-off is asserted.
+See ../camera-bindings-review.md for architectural and validation limits.
+
+diff --git a/Documentation/devicetree/bindings/media/qcom,x1e80100-camss.yaml b/Documentation/devicetree/bindings/media/qcom,x1e80100-camss.yaml
+--- a/Documentation/devicetree/bindings/media/qcom,x1e80100-camss.yaml
++++ b/Documentation/devicetree/bindings/media/qcom,x1e80100-camss.yaml
+@@ -4,7 +4,7 @@
+ $id: http://devicetree.org/schemas/media/qcom,x1e80100-camss.yaml#
+ $schema: http://devicetree.org/meta-schemas/core.yaml#
+ 
+-title: Qualcomm X1E80100 Camera Subsystem (CAMSS)
++title: Qualcomm X1E80100 and X1P42100 Camera Subsystem (CAMSS)
+ 
+ maintainers:
+   - Bryan O'Donoghue <bryan.odonoghue@linaro.org>
+@@ -14,84 +14,33 @@
+ 
+ properties:
+   compatible:
+-    const: qcom,x1e80100-camss
++    enum:
++      - qcom,x1e80100-camss
++      - qcom,x1p42100-camss
+ 
+   reg:
++    minItems: 14
+     maxItems: 17
+ 
+   reg-names:
+-    items:
+-      - const: csid0
+-      - const: csid1
+-      - const: csid2
+-      - const: csid_lite0
+-      - const: csid_lite1
+-      - const: csid_wrapper
+-      - const: csiphy0
+-      - const: csiphy1
+-      - const: csiphy2
+-      - const: csiphy4
+-      - const: csitpg0
+-      - const: csitpg1
+-      - const: csitpg2
+-      - const: vfe0
+-      - const: vfe1
+-      - const: vfe_lite0
+-      - const: vfe_lite1
++    minItems: 14
++    maxItems: 17
+ 
+   clocks:
++    minItems: 22
+     maxItems: 29
+ 
+   clock-names:
+-    items:
+-      - const: camnoc_nrt_axi
+-      - const: camnoc_rt_axi
+-      - const: core_ahb
+-      - const: cpas_ahb
+-      - const: cpas_fast_ahb
+-      - const: cpas_vfe0
+-      - const: cpas_vfe1
+-      - const: cpas_vfe_lite
+-      - const: cphy_rx_clk_src
+-      - const: csid
+-      - const: csid_csiphy_rx
+-      - const: csiphy0
+-      - const: csiphy0_timer
+-      - const: csiphy1
+-      - const: csiphy1_timer
+-      - const: csiphy2
+-      - const: csiphy2_timer
+-      - const: csiphy4
+-      - const: csiphy4_timer
+-      - const: gcc_axi_hf
+-      - const: gcc_axi_sf
+-      - const: vfe0
+-      - const: vfe0_fast_ahb
+-      - const: vfe1
+-      - const: vfe1_fast_ahb
+-      - const: vfe_lite
+-      - const: vfe_lite_ahb
+-      - const: vfe_lite_cphy_rx
+-      - const: vfe_lite_csid
++    minItems: 22
++    maxItems: 29
+ 
+   interrupts:
++    minItems: 10
+     maxItems: 13
+ 
+   interrupt-names:
+-    items:
+-      - const: csid0
+-      - const: csid1
+-      - const: csid2
+-      - const: csid_lite0
+-      - const: csid_lite1
+-      - const: csiphy0
+-      - const: csiphy1
+-      - const: csiphy2
+-      - const: csiphy4
+-      - const: vfe0
+-      - const: vfe1
+-      - const: vfe_lite0
+-      - const: vfe_lite1
++    minItems: 10
++    maxItems: 13
+ 
+   interconnects:
+     maxItems: 4
+@@ -104,19 +53,16 @@
+       - const: sf_icp_mnoc
+ 
+   iommus:
++    minItems: 5
+     maxItems: 8
+ 
+   power-domains:
+-    items:
+-      - description: IFE0 GDSC - Image Front End, Global Distributed Switch Controller.
+-      - description: IFE1 GDSC - Image Front End, Global Distributed Switch Controller.
+-      - description: Titan Top GDSC - Titan ISP Block, Global Distributed Switch Controller.
++    minItems: 2
++    maxItems: 3
+ 
+   power-domain-names:
+-    items:
+-      - const: ife0
+-      - const: ife1
+-      - const: top
++    minItems: 2
++    maxItems: 3
+ 
+   vdd-csiphy-0p8-supply:
+     description:
+@@ -125,6 +71,22 @@
+   vdd-csiphy-1p2-supply:
+     description:
+       1.2V supply to a PHY.
++
++  phys:
++    minItems: 2
++    maxItems: 4
++
++  phy-names:
++    minItems: 2
++    maxItems: 4
++
++  "#address-cells":
++    const: 2
++
++  "#size-cells":
++    const: 2
++
++  ranges: true
+ 
+   ports:
+     $ref: /schemas/graph.yaml#/properties/ports
+@@ -140,6 +102,25 @@
+         description:
+           Input port for receiving CSI data from a CSIPHY.
+ 
++        patternProperties:
++          "^endpoint@[0-9a-f]+$":
++            $ref: video-interfaces.yaml#
++            unevaluatedProperties: false
++            properties:
++              data-lanes:
++                minItems: 1
++                maxItems: 4
++                items:
++                  minimum: 0
++                  maximum: 3
++            allOf:
++              - if:
++                  required:
++                    - remote-endpoint
++                then:
++                  required:
++                    - data-lanes
++
+         properties:
+           endpoint:
+             $ref: video-interfaces.yaml#
+@@ -157,6 +138,13 @@
+ 
+             required:
+               - data-lanes
++
++patternProperties:
++  "^phy@[0-9a-f]+$":
++    $ref: /schemas/phy/qcom,x1e80100-csi2-phy.yaml#
++
++  "^opp-table-(mxc|mxa)$":
++    $ref: /schemas/opp/opp-v2.yaml#
+ 
+ required:
+   - compatible
+@@ -171,9 +159,209 @@
+   - iommus
+   - power-domains
+   - power-domain-names
+-  - vdd-csiphy-0p8-supply
+-  - vdd-csiphy-1p2-supply
+   - ports
++
++allOf:
++  - if:
++      properties:
++        compatible:
++          const: qcom,x1p42100-camss
++    then:
++      required:
++        - phys
++      properties:
++        reg:
++          minItems: 14
++          maxItems: 14
++        reg-names:
++          items:
++            - const: csid0
++            - const: csid1
++            - const: csid2
++            - const: csid_lite0
++            - const: csid_lite1
++            - const: csid_wrapper
++            - const: csiphy0
++            - const: csiphy4
++            - const: csitpg0
++            - const: csitpg1
++            - const: csitpg2
++            - const: vfe0
++            - const: vfe_lite0
++            - const: vfe_lite1
++        clocks:
++          minItems: 22
++          maxItems: 22
++        clock-names:
++          items:
++            - const: camnoc_nrt_axi
++            - const: camnoc_rt_axi
++            - const: core_ahb
++            - const: cpas_ahb
++            - const: cpas_fast_ahb
++            - const: cpas_vfe0
++            - const: cpas_vfe_lite
++            - const: cphy_rx_clk_src
++            - const: csid
++            - const: csid_csiphy_rx
++            - const: csiphy0
++            - const: csiphy0_timer
++            - const: csiphy4
++            - const: csiphy4_timer
++            - const: gcc_axi_hf
++            - const: gcc_axi_sf
++            - const: vfe0
++            - const: vfe0_fast_ahb
++            - const: vfe_lite
++            - const: vfe_lite_ahb
++            - const: vfe_lite_cphy_rx
++            - const: vfe_lite_csid
++        interrupts:
++          minItems: 10
++          maxItems: 10
++        interrupt-names:
++          items:
++            - const: csid0
++            - const: csid1
++            - const: csid2
++            - const: csid_lite0
++            - const: csid_lite1
++            - const: csiphy0
++            - const: csiphy4
++            - const: vfe0
++            - const: vfe_lite0
++            - const: vfe_lite1
++        power-domains:
++          minItems: 2
++          maxItems: 2
++        power-domain-names:
++          items:
++            - const: ife0
++            - const: top
++        phys:
++          minItems: 2
++          maxItems: 2
++        phy-names:
++          items:
++            - const: csiphy0
++            - const: csiphy4
++        ports:
++          properties:
++            port@2: false
++            port@3: false
++    else:
++      properties:
++        reg:
++          maxItems: 17
++        reg-names:
++          items:
++            - const: csid0
++            - const: csid1
++            - const: csid2
++            - const: csid_lite0
++            - const: csid_lite1
++            - const: csid_wrapper
++            - const: csiphy0
++            - const: csiphy1
++            - const: csiphy2
++            - const: csiphy4
++            - const: csitpg0
++            - const: csitpg1
++            - const: csitpg2
++            - const: vfe0
++            - const: vfe1
++            - const: vfe_lite0
++            - const: vfe_lite1
++        clocks:
++          maxItems: 29
++        clock-names:
++          items:
++            - const: camnoc_nrt_axi
++            - const: camnoc_rt_axi
++            - const: core_ahb
++            - const: cpas_ahb
++            - const: cpas_fast_ahb
++            - const: cpas_vfe0
++            - const: cpas_vfe1
++            - const: cpas_vfe_lite
++            - const: cphy_rx_clk_src
++            - const: csid
++            - const: csid_csiphy_rx
++            - const: csiphy0
++            - const: csiphy0_timer
++            - const: csiphy1
++            - const: csiphy1_timer
++            - const: csiphy2
++            - const: csiphy2_timer
++            - const: csiphy4
++            - const: csiphy4_timer
++            - const: gcc_axi_hf
++            - const: gcc_axi_sf
++            - const: vfe0
++            - const: vfe0_fast_ahb
++            - const: vfe1
++            - const: vfe1_fast_ahb
++            - const: vfe_lite
++            - const: vfe_lite_ahb
++            - const: vfe_lite_cphy_rx
++            - const: vfe_lite_csid
++        interrupts:
++          maxItems: 13
++        interrupt-names:
++          items:
++            - const: csid0
++            - const: csid1
++            - const: csid2
++            - const: csid_lite0
++            - const: csid_lite1
++            - const: csiphy0
++            - const: csiphy1
++            - const: csiphy2
++            - const: csiphy4
++            - const: vfe0
++            - const: vfe1
++            - const: vfe_lite0
++            - const: vfe_lite1
++        power-domains:
++          items:
++            - description: IFE0 GDSC - Image Front End, Global Distributed Switch Controller.
++            - description: IFE1 GDSC - Image Front End, Global Distributed Switch Controller.
++            - description: Titan Top GDSC - Titan ISP Block, Global Distributed Switch Controller.
++        power-domain-names:
++          items:
++            - const: ife0
++            - const: ife1
++            - const: top
++        phys:
++          minItems: 4
++          maxItems: 4
++        phy-names:
++          items:
++            - const: csiphy0
++            - const: csiphy1
++            - const: csiphy2
++            - const: csiphy4
++
++  - if:
++      required:
++        - phys
++    then:
++      required:
++        - phy-names
++        - "#address-cells"
++        - "#size-cells"
++        - ranges
++      properties:
++        iommus:
++          minItems: 5
++          maxItems: 5
++    else:
++      required:
++        - vdd-csiphy-0p8-supply
++        - vdd-csiphy-1p2-supply
++      properties:
++        iommus:
++          minItems: 8
+ 
+ additionalProperties: false
+ 
+diff --git a/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+new file mode 100644
+--- /dev/null
++++ b/Documentation/devicetree/bindings/phy/qcom,x1e80100-csi2-phy.yaml
+@@ -0,0 +1,103 @@
++# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/phy/qcom,x1e80100-csi2-phy.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: Qualcomm X1E80100 CSI2 D-PHY
++
++maintainers:
++  - Bryan O'Donoghue <bod@kernel.org>
++
++description: |
++  CSI2 D-PHY instances used by the X1E80100 and X1P42100 camera subsystems.
++  The PHY receives sensor data on input ports 0 and optionally 1, and sends
++  the combined stream to CAMSS on port 2. PHY specifier argument zero must
++  be PHY_TYPE_DPHY as defined in dt-bindings/phy/phy.h.
++
++$defs:
++  input-port:
++    $ref: /schemas/graph.yaml#/$defs/port-base
++    unevaluatedProperties: false
++    patternProperties:
++      "^endpoint(@[0-9a-f]+)?$":
++        $ref: /schemas/media/video-interfaces.yaml#
++        unevaluatedProperties: false
++        properties:
++          data-lanes:
++            minItems: 1
++            maxItems: 4
++            items:
++              minimum: 0
++              maximum: 3
++        required:
++          - data-lanes
++
++properties:
++  compatible:
++    const: qcom,x1e80100-csi2-phy
++
++  reg:
++    maxItems: 1
++
++  clocks:
++    maxItems: 3
++
++  clock-names:
++    items:
++      - const: core
++      - const: timer
++      - const: ahb
++
++  interrupts:
++    maxItems: 1
++
++  power-domains:
++    maxItems: 3
++
++  power-domain-names:
++    items:
++      - const: top
++      - const: mmcx
++      - const: mx
++
++  operating-points-v2: true
++
++  "#phy-cells":
++    const: 1
++
++  vdda-0p9-supply:
++    description: Analog PHY supply, nominally 0.9 V.
++
++  vdda-1p2-supply:
++    description: Analog PHY supply, nominally 1.2 V.
++
++  ports:
++    $ref: /schemas/graph.yaml#/properties/ports
++    unevaluatedProperties: false
++    properties:
++      port@0:
++        $ref: "#/$defs/input-port"
++      port@1:
++        $ref: "#/$defs/input-port"
++      port@2:
++        $ref: /schemas/graph.yaml#/$defs/port-base
++        unevaluatedProperties: false
++    required:
++      - port@0
++      - port@2
++
++required:
++  - compatible
++  - reg
++  - clocks
++  - clock-names
++  - interrupts
++  - power-domains
++  - power-domain-names
++  - operating-points-v2
++  - "#phy-cells"
++  - vdda-0p9-supply
++  - vdda-1p2-supply
++
++additionalProperties: false
+diff --git a/Documentation/devicetree/bindings/media/i2c/ovti,ov13858.yaml b/Documentation/devicetree/bindings/media/i2c/ovti,ov13858.yaml
+new file mode 100644
+--- /dev/null
++++ b/Documentation/devicetree/bindings/media/i2c/ovti,ov13858.yaml
+@@ -0,0 +1,87 @@
++# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/media/i2c/ovti,ov13858.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: OmniVision OV13858 image sensor
++
++maintainers:
++  - Sakari Ailus <sakari.ailus@linux.intel.com>
++
++description: |
++  The sensor is controlled over I2C and outputs image data over MIPI CSI2.
++
++allOf:
++  - $ref: /schemas/media/video-interface-devices.yaml#
++
++properties:
++  compatible:
++    const: ovti,ov13858
++
++  reg:
++    maxItems: 1
++
++  clocks:
++    maxItems: 1
++    description: External sensor clock, running at 19.2 MHz.
++
++  assigned-clocks:
++    maxItems: 1
++
++  assigned-clock-rates:
++    items:
++      - const: 19200000
++
++  reset-gpios:
++    maxItems: 1
++    description: Active-low sensor reset.
++
++  afvdd-supply:
++    description: Autofocus power supply.
++
++  dovdd-supply:
++    description: Digital I/O power supply.
++
++  avdd-supply:
++    description: Analog power supply.
++
++  dvdd-supply:
++    description: Digital core power supply.
++
++  port:
++    $ref: /schemas/graph.yaml#/$defs/port-base
++    unevaluatedProperties: false
++    properties:
++      endpoint:
++        $ref: /schemas/media/video-interfaces.yaml#
++        unevaluatedProperties: false
++        properties:
++          data-lanes:
++            items:
++              - const: 1
++              - const: 2
++              - const: 3
++              - const: 4
++          link-frequencies:
++            minItems: 1
++            maxItems: 2
++            items:
++              enum: [540000000, 270000000]
++        required:
++          - data-lanes
++          - link-frequencies
++    required:
++      - endpoint
++
++required:
++  - compatible
++  - reg
++  - clocks
++  - port
++  - afvdd-supply
++  - dovdd-supply
++  - avdd-supply
++  - dvdd-supply
++
++unevaluatedProperties: false
+diff --git a/Documentation/devicetree/bindings/media/i2c/ovti,ov02e10.yaml b/Documentation/devicetree/bindings/media/i2c/ovti,ov02e10.yaml
+--- a/Documentation/devicetree/bindings/media/i2c/ovti,ov02e10.yaml
++++ b/Documentation/devicetree/bindings/media/i2c/ovti,ov02e10.yaml
+@@ -33,6 +33,40 @@
+ allOf:
+   - $ref: /schemas/media/video-interface-devices.yaml#
+ 
++  - if:
++      properties:
++        compatible:
++          const: ovti,ov02c10
++    then:
++      required:
++        - avdd-supply
++        - dovdd-supply
++        - dvdd-supply
++      properties:
++        clocks:
++          description: External sensor clock, running at 19.2 MHz.
++        assigned-clocks:
++          maxItems: 1
++        assigned-clock-rates:
++          items:
++            - const: 19200000
++        port:
++          properties:
++            endpoint:
++              properties:
++                link-frequencies:
++                  maxItems: 1
++                  items:
++                    const: 400000000
++    else:
++      properties:
++        port:
++          properties:
++            endpoint:
++              properties:
++                data-lanes:
++                  minItems: 2
++
+ properties:
+   compatible:
+     enum:
+@@ -44,6 +78,12 @@
+ 
+   clocks:
+     maxItems: 1
++
++  assigned-clocks: true
++
++  assigned-clock-parents: true
++
++  assigned-clock-rates: true
+ 
+   avdd-supply:
+     description: Analogue circuit voltage supply.
+@@ -68,6 +108,7 @@
+ 
+         properties:
+           data-lanes:
++            minItems: 1
+             items:
+               - const: 1
+               - const: 2

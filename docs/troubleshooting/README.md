@@ -32,7 +32,7 @@ copy may be usable, but do not assume it is complete merely because `/target`
 exists.
 
 Keep the installer open, open a live-session terminal, and return to
-[Install Linux and prepare boot](../../GUIDE.md#4-install-linux-and-prepare-boot).
+[Install Linux and prepare boot](../install.md#4-install-linux-and-prepare-boot).
 Both `/target` and `/target/boot/efi` must still be mounted. Select the exact
 installed kernel from `/target/boot`, then run the repository's structural check:
 
@@ -62,16 +62,37 @@ system.
 The installer may leave an active `/etc/apt/sources.list.d/cdrom.sources` while
 the installer medium is unavailable. Do not delete source files or substitute
 unverified mirrors. Follow the guide's guarded procedure to
-[inspect, preserve, and enable the Ubuntu package repositories](../../GUIDE.md#enable-the-ubuntu-package-repositories).
+[inspect, preserve, and enable the Ubuntu package repositories](../first-boot.md#enable-the-ubuntu-package-repositories).
 It disables the CD-ROM entry reversibly and uses
 `ubuntu.sources.curtin.orig` only after its release suites and official Ubuntu
 URIs have been reviewed. Keep a tested wired connection attached and stop if
 the template is absent, names the wrong release, contains an unexpected URI, or
 `apt update` fails.
 
+## EFI System Partition is full
+
+An error writing `/boot/efi/sp12/` concerns the ESP, even if the Linux root has
+plenty of free space. Stop repeated sync attempts and inspect it:
+
+```bash
+findmnt /boot/efi
+df -h /boot /boot/efi
+scripts/sp12-esp-space
+```
+
+Follow the [ESP maintenance procedure](../maintenance.md#check-esp-space-before-updates)
+to review usage and, if present, remove only validated stale `.new` staging files.
+The updated sync helper reports space requirements before writing and skips
+unchanged payloads. A space failure leaves the selected boot payload intact.
+
+Do not delete the active kernel/initramfs/DTB, Windows files or the recovery set,
+and do not resize the mounted ESP. If the partition remains too small for safe
+staging, keep the working boot set while planning a backed-up partition change.
+This addresses the failure discussed in [issue #6](https://github.com/chropic/sp121-ubuntu-install/issues/6).
+
 ## Device will not boot
 
-Use [Recovery](../../GUIDE.md#9-recover). Restore a matching kernel, initramfs, and DTB
+Use [Recovery](../recovery.md). Restore a matching kernel, initramfs, and DTB
 as a set. Do not start by rebuilding the kernel.
 
 ## Internal storage is missing

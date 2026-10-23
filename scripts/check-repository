@@ -3,14 +3,19 @@
 set -eu
 
 required_files='README.md
-GUIDE.md
-CREDITS.md
-SOURCES.md
-SUPPORT.md
+docs/README.md
+docs/install.md
+docs/first-boot.md
+docs/hardware-tests.md
+docs/maintenance.md
+docs/recovery.md
+docs/reference/credits.md
+docs/reference/sources.md
+docs/support.md
 SECURITY.md
 LICENSE.md
 docs/troubleshooting/README.md
-docs/DEVELOPMENT.md
+docs/development.md
 docs/reference/original-tested-guide.md
 kernel/patches.yaml
 release/reference/BUILDINFO.json
@@ -52,11 +57,11 @@ if find . \( -path ./.git -o -path ./build -o -path ./dist -o -path ./.cache \) 
 fi
 
 grep -q 'active: false' kernel/patches.yaml
-grep -q 'touchscreen GPIOs 51/52' SOURCES.md
-grep -q 'known incorrect' SOURCES.md
+grep -q 'touchscreen GPIOs 51/52' docs/reference/sources.md
+grep -q 'known incorrect' docs/reference/sources.md
 grep -Fq "tool_root=\$target/opt/sp12-linux" scripts/install-fallback-target
-grep -q 'test -x /target/opt/sp12-linux/scripts/sp12-verify' GUIDE.md
-if sed -n '/^## 5\./,$p' GUIDE.md | grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/'; then
+grep -q 'test -x /target/opt/sp12-linux/scripts/sp12-verify' docs/install.md
+if grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/' docs/first-boot.md; then
     printf 'First-boot guide still uses a live-session-relative scripts path\n' >&2
     exit 1
 fi
@@ -80,6 +85,10 @@ printf '%s  %s\n' \
     kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch | sha256sum -c - >/dev/null
 
 if command -v python3 >/dev/null 2>&1; then
+    python3 -m py_compile kernel/*.py
+    python3 kernel/tests/test_candidate.py
+    python3 -m json.tool kernel/ports/v7.3/manifest.json >/dev/null
+    python3 -m json.tool kernel/ports/v7.3/aggregate-audit.json >/dev/null
     find release -type f -name '*.json' -print | while IFS= read -r json_file; do
         python3 -m json.tool "$json_file" >/dev/null
     done
@@ -87,5 +96,6 @@ fi
 
 tests/build-installer
 tests/install-fallback-target
+tests/boot-space
 
 printf 'Repository checks passed.\n'

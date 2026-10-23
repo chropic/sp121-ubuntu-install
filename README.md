@@ -1,51 +1,54 @@
-# Linux on the Surface Pro 12-inch (1st Edition)
+# Ubuntu on Surface Pro 12
 
-Community installation and recovery tooling for the ARM64 Microsoft Surface Pro
-12-inch, 1st Edition (`microsoft,surface-pro-12in`, Qualcomm `X1P42100`). Similar
-Intel models, Surface Pro 11, and later SP12 revisions are not supported.
+Installation, recovery and kernel tooling for the **Surface Pro 12-inch,
+1st Edition** — Snapdragon X Plus `X1P42100`, ARM64.
 
-> [!WARNING]
-> No installer ISO is distributed. The local builder starts with Canonical's
-> stock Ubuntu 26.04 ARM64 ISO, and the repository workflow is not yet marked
-> **installation-tested**. Follow [the complete guide](GUIDE.md) and every stop
-> condition.
+Intel Surface models, Surface Pro 11 and later SP12 revisions are outside this
+project's scope.
 
-## Start here
+> [!IMPORTANT]
+> **Linux 7.3 boots on the test SP12.** Both kernel profiles build, but hardware
+> regression, rollback and camera capture tests remain incomplete. The installer
+> still uses its 7.2 reference inputs and has not passed a fresh end-to-end
+> installation test. No installer ISO is distributed.
 
-- **Install, configure, update, or recover:** [GUIDE.md](GUIDE.md)
-- **Diagnose a problem:** [Troubleshooting](docs/troubleshooting/README.md)
-- **Check a feature:** [Support matrix](SUPPORT.md)
-- **Understand implementation details:** [Development notes](docs/DEVELOPMENT.md)
-- **Audit firmware, sources, or attribution:** [Firmware policy](firmware/README.md),
-  [source ledger](SOURCES.md), and [credits](CREDITS.md)
-- **Reproduce the kernel:** [Kernel notes](kernel/README.md)
-- **Audit the original machine-tested notes:** [Reference snapshot](docs/reference/)
+## Choose your task
 
-## Tested reference
+| I want to… | Start here |
+|---|---|
+| Install Ubuntu | [Installation guide](docs/install.md) |
+| Configure Wi-Fi, sound and sensors | [First boot](docs/first-boot.md) |
+| Check what works | [Support matrix](docs/support.md) · [Hardware tests](docs/hardware-tests.md) |
+| Update or manage ESP space | [Maintenance](docs/maintenance.md) |
+| Fix a problem or restore boot | [Troubleshooting](docs/troubleshooting/README.md) · [Recovery](docs/recovery.md) |
+| Build or review Linux 7.3 | [Kernel port](kernel/ports/v7.3/README.md) |
+| Contribute or audit sources | [Contributing](CONTRIBUTING.md) · [Documentation index](docs/README.md) |
 
-Last validated 2026-08-13: Ubuntu 26.04 ARM64, kernel
-`7.2.0-rc7-sp12-extra-camera` (`linux-image` package `7.2.0~rc7-6`), Sharp
-`LQ120P1JX51` panel, Secure Boot disabled.
-
-Internal storage, display, GPU, Wi-Fi, Bluetooth, Type Cover, touchscreen, pen,
-audio, sensors, battery reporting, SCMI CPU-frequency scaling, and IRIS decoding
-worked. Cameras, RTC, suspend, volume buttons, DisplayPort audio, and charge-limit
-changes still need feature-level runtime validation. Hibernate is unsupported.
-
-## Safety invariants
+## Before changing boot files
 
 1. Run `scripts/sp12-preflight`; stop if it fails.
-2. Keep Secure Boot disabled until the separate signed-boot design is proven.
-3. Keep a bootable USB and known-good recovery kernel.
-4. Treat each kernel, initramfs, and DTB as one versioned set.
-5. Never copy generic `/boot/vmlinuz` or `/boot/initrd.img` symlinks to the ESP.
-6. Never purge the running or recovery kernel.
-7. Never guess a charge-threshold interface or range.
+2. Keep Secure Boot disabled for the current unsigned boot path.
+3. Keep a bootable recovery USB and the known-good kernel.
+4. Update the **kernel, initramfs and DTB together**, using exact versioned files.
+5. Keep the running and recovery kernels. Inspect ESP usage before copying updates.
 
-The project is in its documentation and reproducibility phase. Planned release
-artifacts are versioned kernel packages, a matching DTB, checksums, and build
-provenance; redistributable binaries belong in GitHub Releases, not Git history.
-The verbatim 2026-08-13 guide remains under `docs/reference/` for provenance.
+See the [support matrix](docs/support.md) for the historical working reference and
+current 7.3 evidence. Camera nodes in the 7.3 camera profile remain disabled;
+compilation does not establish capture support.
 
-This independent community project is not affiliated with or endorsed by
-Microsoft, Qualcomm, Canonical, or the Linux kernel project.
+## Repository map
+
+| Directory | Contents |
+|---|---|
+| [`docs/`](docs/README.md) | Installation, maintenance, recovery and reference material |
+| [`scripts/`](scripts/) | Guarded installers, diagnostics and checks |
+| [`kernel/`](kernel/README.md) | Configurations, patches, build tools and port validation |
+| [`system/`](system/README.md) | Reviewed installed-system templates |
+| [`firmware/`](firmware/README.md) | Source pins and policy; no firmware blobs |
+| [`release/`](release/README.md) | Build provenance and release gates; no binaries in Git |
+
+[Credits](docs/reference/credits.md) · [Source ledger](docs/reference/sources.md) ·
+[Security policy](SECURITY.md) · [License](LICENSE.md)
+
+Independent community project; not affiliated with Microsoft, Qualcomm,
+Canonical or the Linux kernel project.

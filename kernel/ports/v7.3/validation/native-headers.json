@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "status": "native-package-and-external-module-compile-passed",
+  "kernel_release": "7.3.0-sp12-v7.3-platform",
+  "package": "linux-headers-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1+native1_arm64.deb",
+  "package_sha256": "20d06e73a0baf3414d4eca624f96d26dd19fc0dd372ce1bec97a24230cb0fc27",
+  "Module.symvers_sha256": "a77369ebbf4ccc733f793d123355aaf5e8b26830cf9fa87fae9efe20172ebfbd",
+  "source_tree": "ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f",
+  "architecture": "arm64",
+  "external_module_elf_machine": 183,
+  "external_module_vermagic": "7.3.0-sp12-v7.3-platform SMP preempt mod_unload modversions aarch64",
+  "external_module_loaded": false,
+  "btf_scope": "External module BTF skipped because header package has no vmlinux; kernel/module BTF remains enabled in the kernel build",
+  "config_difference_scope": "Native compiler name and unused Rust capability/version metadata only; CONFIG_RUST remains disabled",
+  "installation": "not-installed",
+  "full_kernel_symbols_final_recheck": "passed; identical to the completed packaged platform build"
+}

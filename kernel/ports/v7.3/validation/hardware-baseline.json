@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "recorded_date": "2026-10-22",
+  "scope": "Read-only inspection of the existing 7.2 system; no 7.3 boot test performed",
+  "model": "Surface Pro 12in 1st Edition",
+  "compatible": [
+    "microsoft,surface-pro-12in",
+    "qcom,x1p42100"
+  ],
+  "architecture": "aarch64",
+  "os": "Ubuntu 26.04.1 LTS",
+  "running_kernel": "7.2.0-sp12-extra-camera",
+  "secure_boot": "disabled; Setup Mode",
+  "current_config_sha256": "5ee5749e66ebfdacdc4cddd3dfed7f0a7ebb6996fd92f7242e074fea18463ba1",
+  "config_options_equal_historical_seed": true,
+  "panel": [
+    {
+      "manufacturer": "SHP",
+      "product_id": "15a7",
+      "name": "LQ120P1JX51"
+    }
+  ],
+  "firmware": [
+    {
+      "Name": "System Firmware",
+      "Version": "151037675",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "16777216",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "234907531",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "33555339",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "67633944",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "16843008",
+      "VersionFormat": "number"
+    },
+    {
+      "Name": "UEFI Device Firmware",
+      "Version": "2684354591",
+      "VersionFormat": "number"
+    }
+  ],
+  "power": {
+    "usb_power_online": true,
+    "main_battery_present": true,
+    "energy_now": 28729000,
+    "energy_full": 37310000,
+    "estimated_percent_from_energy": 77,
+    "zero_capacity_hid_entry": "Disconnected HID battery (present=0); not the main system battery"
+  },
+  "recovery": {
+    "physical_access_confirmed_by_user": true,
+    "bootable_usb_ready_confirmed_by_user": true,
+    "private_non_overwriting_backup_created": true,
+    "backup_hashes_verified": true,
+    "rollback_boot_test": "not-run",
+    "payload_sha256": {
+      "vmlinuz": "3c1ac17dcdd2452575c3e198fd3513c8e7b95d95c0394fe8eb05199ed6ece6ca",
+      "initrd.img": "6246bd6d92c2173f0cb9978e90da92c4d74207a5edecdf8fb57298662463e480",
+      "dtb": "b82bb69552f22d007601c6cefd4a6187cf908c9032d566d430d430cd9031b472",
+      "BOOTAA64.EFI": "8575b891a807b311bbb266a47bfff4f4605b8a15102898a1214c9fe2d5425637",
+      "sp12-sync-boot": "56665776ff137bc6c4f30c535a79f25f7f6faf7567bd85e5e1dec08ba20ddfa8"
+    }
+  },
+  "boot_policy": {
+    "sync_script": "Pins the 7.2.0 kernel/initramfs/DTB; existing script unchanged",
+    "fallback_loader": "Contains search for /sp12/SP12BOOT; loader unchanged",
+    "administration": "Noninteractive sudo unavailable; no root installation or boot activation performed"
+  },
+  "camera_baseline": {
+    "ov13858_bound": true,
+    "ov13858_dt_requested_clock_hz": 19200000,
+    "ov02c10_bound": true,
+    "ov02c10_dt_requested_clock_hz": 12000000,
+    "matching_source_ov02c10_required_clock_hz": 19200000,
+    "clock_readback": "User supplied privileged clk_summary output on the existing 7.2 system; clock source is 19.2 MHz with enable/prepare/protect counts zero",
+    "cam_cc_mclk4_clk_src_readback_hz": 19200000,
+    "clock_readback_scope": "Idle source rate only; no active sensor clock or capture measurement",
+    "media_graph_present": true,
+    "capture": "not-tested"
+  },
+  "private_target_staging": "Source archive, reviewed platform inputs, native header tools, inspected platform image/native-header packages and device-specific installation/recovery scripts transferred with SHA-256 verification; installation and boot activation await local sudo execution",
+  "subsequent_candidate_status": "Historical 7.2 baseline retained; subsequent installation and 7.3 boot verified in target-installation.json and boot-smoke.json"
+}

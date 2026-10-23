@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "kernel_release": "7.3.0-sp12-v7.3-camera",
+  "packages": [
+    {
+      "file": "linux-image-7.3.0-sp12-v7.3-camera_7.3-1~sp12candidate1_arm64.deb",
+      "sha256": "317056e59318334a98e38c942177acffe2b6a474ba8d8871608ba8dce8ef89c0",
+      "size_bytes": 138239770,
+      "metadata": {
+        "Package": "linux-image-7.3.0-sp12-v7.3-camera",
+        "Version": "7.3-1~sp12candidate1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 8492,
+      "module_machine_counts": {
+        "183": 8492
+      },
+      "foreign_header_tools": [],
+      "native_header_tool_count": 0,
+      "config_matches": true,
+      "arm64_image_magic": true,
+      "boot_image_format": "arm64-pe-coff",
+      "image_matches": true,
+      "dtb": {
+        "path": "usr/lib/linux-image-7.3.0-sp12-v7.3-camera/qcom/x1p42100-microsoft-sp12in.dtb",
+        "matches": true
+      },
+      "status": "passed-static-package-inspection"
+    },
+    {
+      "file": "linux-libc-dev_7.3-1~sp12candidate1_arm64.deb",
+      "sha256": "796f3a9b4cf0c442db900838ae4007adf399b71a0d6e0831ec6ac151270a6e74",
+      "size_bytes": 1541308,
+      "metadata": {
+        "Package": "linux-libc-dev",
+        "Version": "7.3-1~sp12candidate1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 0,
+      "module_machine_counts": {},
+      "foreign_header_tools": [],
+      "native_header_tool_count": 0,
+      "status": "passed-static-package-inspection"
+    },
+    {
+      "file": "linux-headers-7.3.0-sp12-v7.3-camera_7.3-1~sp12candidate1+native1_arm64.deb",
+      "sha256": "8ee028274150f7da6bbd461a55de180eff3708dd91852938819491515ad69af0",
+      "size_bytes": 10963884,
+      "metadata": {
+        "Package": "linux-headers-7.3.0-sp12-v7.3-camera",
+        "Version": "7.3-1~sp12candidate1+native1",
+        "Architecture": "arm64",
+        "Depends": ""
+      },
+      "issues": [],
+      "module_count": 0,
+      "module_machine_counts": {},
+      "foreign_header_tools": [],
+      "native_header_tool_count": 12,
+      "header_symbols_match": true,
+      "header_release_matches": true,
+      "status": "passed-static-package-inspection"
+    }
+  ],
+  "target_installation": "not-run",
+  "target_initramfs": "not-generated-or-inspected",
+  "hardware": "not-run",
+  "installer": "unchanged"
+}

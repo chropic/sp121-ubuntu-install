@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "status": "both-profiles-built-platform-boot-and-read-only-smoke-verified",
+  "base_tag": "v7.3",
+  "base_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "platform": {
+    "source_tree": "ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f",
+    "kernel_release": "7.3.0-sp12-v7.3-platform",
+    "Image": "passed",
+    "EFI_zboot_image": "passed",
+    "all_modules": "passed",
+    "module_count": 8490,
+    "SP12_dtb_compile": "passed",
+    "SP12_dtb_full_schema_validation": "passed",
+    "image_and_native_headers_package_inspection": "passed",
+    "native_external_module_compile": "passed; not loaded"
+  },
+  "camera": {
+    "source_tree": "cfc0b9162f51621447d4cab829cf46405e709215",
+    "reviewed_driver_object_compile": "passed",
+    "SP12_dtb_compile": "passed",
+    "four_binding_document_lint_style_and_examples": "passed",
+    "SP12_dtb_full_schema_validation": "passed",
+    "full_Image_modules_and_packages": "passed",
+    "runtime_camera_nodes": "disabled",
+    "capture_and_privacy": "not-tested",
+    "Image": "passed",
+    "EFI_zboot_image": "passed",
+    "all_modules": "passed",
+    "module_count": 8492,
+    "image_package_inspection": "passed",
+    "native_headers": "built and extracted on target; 12 AArch64 tools; exact final kernel symbol table",
+    "native_external_module_compile": "passed; expected camera release; not loaded",
+    "native_header_package_retrieved_to_build_host": true,
+    "SP12_dtb_matches_previously_schema_validated_bytes": true,
+    "platform_source_restored_after_build": "verified ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f"
+  },
+  "repository": {
+    "candidate_safety_tests": 11,
+    "installer_tests": "passed",
+    "fallback_tests": "passed",
+    "repository_check": "passed",
+    "ShellCheck": "passed",
+    "ESP_space_fault_tests": 12
+  },
+  "boot_set_helper_fault_tests": {
+    "interrupted_switch_restores_old_set": "passed in temporary files",
+    "insufficient_ESP_space_refuses_mutation": "passed in temporary files",
+    "physical_rollback_boot": "not-run"
+  },
+  "warnings": "18 unique stack-frame warnings reproduced exactly on pristine upstream v7.3 with the same config/compiler; see upstream-warnings.json",
+  "build_history": "Initial tmpfs space failure was resolved by moving task outputs to disk; preliminary builds were interrupted to correct release/build metadata; final verified helper completed before recording this result",
+  "target": {
+    "installation": "completed; independent post-boot verification passed",
+    "candidate_initramfs": "generated on SP12; 31 required module dependencies and release strings checked by root script",
+    "candidate_boot": "passed: exact running release and active ESP hashes verified over SSH",
+    "hardware_regressions": "limited read-only smoke and headless EGL checks; physical feature tests pending",
+    "evidence": "boot-smoke.json and target-installation.json",
+    "maintenance": "Legacy target sync helper still pins 7.2; migrate before package/initramfs updates"
+  },
+  "installer": "unchanged; candidate is not promoted to the installer or default kernel",
+  "publication": "not-promoted; original provenance gaps remain recorded in manifest.json"
+}

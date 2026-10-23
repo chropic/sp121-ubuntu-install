@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "candidate_warning_sources_unmodified_from_v7_3": [
+    "drivers/block/ublk_drv.c",
+    "drivers/infiniband/core/nldev.c",
+    "drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c",
+    "drivers/net/ethernet/mellanox/mlx5/core/en_fs.c",
+    "drivers/net/ethernet/mellanox/mlx5/core/en_rep.c",
+    "drivers/net/ethernet/mellanox/mlx5/core/en_tc.c",
+    "drivers/net/ethernet/mellanox/mlx5/core/lag/port_sel.c",
+    "drivers/net/wireguard/allowedips.c",
+    "fs/binfmt_elf.c"
+  ],
+  "method": "Compile each warning-producing object from pristine v7.3 with the migrated baseline config and same ARM64 GCC15 toolchain; exact warning-text comparison",
+  "candidate_unique_warning_count": 18,
+  "not_reproduced_in_pristine_baseline": []
+}

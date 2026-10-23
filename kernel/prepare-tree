@@ -3,25 +3,45 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: prepare-tree --source DIR [--apply]'
+    printf '%s\n' 'Usage: prepare-tree --source DIR [--kernel v7.2-rc7|v7.3] [--profile platform|camera] [--output DIR] [--apply]'
 }
 
 source_dir=
 apply=0
+kernel=v7.2-rc7
+profile=platform
+output=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; source_dir=$2; shift 2 ;;
         --apply) apply=1; shift ;;
+        --kernel) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel=$2; shift 2 ;;
+        --profile) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; profile=$2; shift 2 ;;
+        --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
 done
 
 [ -n "$source_dir" ] || { printf 'Missing --source\n' >&2; exit 2; }
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
+case "$kernel" in
+    v7.3)
+        set -- --source "$source_dir" --profile "$profile"
+        [ -z "$output" ] || set -- "$@" --output "$output"
+        [ "$apply" -ne 1 ] || set -- "$@" --apply
+        exec python3 "$repo_root/kernel/prepare-candidate.py" "$@"
+        ;;
+    v7.2-rc7) ;;
+    *) printf 'Unsupported kernel: %s\n' "$kernel" >&2; exit 2 ;;
+esac
+[ "$profile" = platform ] && [ -z "$output" ] || {
+    printf 'Profile and output selection require --kernel v7.3\n' >&2
+    exit 2
+}
 source_dir=$(readlink -f "$source_dir")
 [ -d "$source_dir/.git" ] || { printf 'Not a Git kernel checkout: %s\n' "$source_dir" >&2; exit 1; }
 
-repo_root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 snapshot=$repo_root/kernel/patches/release/0001-v7.2-rc7-sp12-extra-camera-working-tree.patch
 config=$repo_root/kernel/config/config-7.2.0-rc7-sp12-extra-camera
 expected_base=db2ddb87143519e20a95aa36c60b36107b736a58

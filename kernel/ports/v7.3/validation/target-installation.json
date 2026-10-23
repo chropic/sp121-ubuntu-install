@@ -1,0 +1,55 @@
+{
+  "kernel_release": "7.3.0-sp12-v7.3-platform",
+  "status": "installed-activated-and-booted",
+  "evidence_origin": "User root preparation report plus independent authenticated post-boot SSH inspection and active ESP hash comparison",
+  "payload": {
+    "vmlinuz": {
+      "path": "/boot/vmlinuz-7.3.0-sp12-v7.3-platform",
+      "sha256": "3492d2fda4f53179a54e9e1f1b43e5e5a541054355919a287d56c926cf002716"
+    },
+    "initrd.img": {
+      "path": "/boot/initrd.img-7.3.0-sp12-v7.3-platform",
+      "sha256": "4277ca4dbdc85455e0c478fb60fd2cc4c17ba7cb66b25f6649e9fd1734350c80"
+    },
+    "dtb": {
+      "path": "/boot/dtb-7.3.0-sp12-v7.3-platform",
+      "sha256": "5690bc3a88b4ecd5d844cb8e32b4b7192f7e8665a22b6053c938b941468ccabc"
+    }
+  },
+  "boot_module_dependencies_present": [
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/clk/qcom/dispcc-x1e80100.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/clk/qcom/gcc-x1e80100.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/bridge/aux-bridge.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/display/drm_display_helper.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/display/drm_dp_aux_bus.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/drm_exec.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/drm_gpuvm.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/msm/msm.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/panel/panel-edp.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/gpu/drm/scheduler/gpu-sched.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/interconnect/qcom/qnoc-x1e80100.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/media/cec/core/cec.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/media/rc/rc-core.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/misc/rpmb-core.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/phy/qualcomm/phy-qcom-edp.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/phy/qualcomm/phy-qcom-qmp-combo.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/phy/qualcomm/phy-qcom-qmp-ufs.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/pinctrl/qcom/pinctrl-x1e80100.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/regulator/qcom-rpmh-regulator.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/llcc-qcom.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/mdt_loader.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/ocmem.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/qcom_aoss.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/qcom_ice.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/qcom_smem.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/soc/qcom/ubwc_config.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/thunderbolt/thunderbolt.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/ufs/core/ufshcd-core.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/ufs/host/ufs-qcom.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/ufs/host/ufshcd-pltfrm.ko",
+    "lib/modules/7.3.0-sp12-v7.3-platform/kernel/drivers/usb/typec/typec.ko"
+  ],
+  "hardware_boot": "passed: running candidate release verified over SSH",
+  "package_payload_hash_cross_check": "passed: installed kernel and DTB match the inspected build artifacts",
+  "boot_report": "boot-smoke.json"
+}

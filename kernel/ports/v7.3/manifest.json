@@ -1,0 +1,482 @@
+{
+  "schema": 1,
+  "status": "development-candidate-not-hardware-tested",
+  "base_tag": "v7.3",
+  "base_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "base_tag_object": "091b06388b117fefdcb63336ac09956a4914b961",
+  "tag_signature_verified": true,
+  "tag_verification": "VALIDSIG ABAF11C65A2970B130ABE3C479BE3E4300411886; key obtained over Kernel.org WKD; fingerprint matches https://www.kernel.org/signature.html; no personal Web-of-Trust certification asserted",
+  "reference_project_commit": "6f0de3d84223e7395eb6fe47648b979ffa7aadd7",
+  "config_seed": {
+    "path": "kernel/config/config-7.2.0-rc7-sp12-extra-camera",
+    "sha256": "f1cf894800c08e5d7c920c6a125f7296304bc7ef71858ccc94b0326ee2f0b87a",
+    "status": "Migration source; reviewed platform/camera configs and diff reports recorded separately"
+  },
+  "series": [
+    {
+      "path": "kernel/patches/vendor/mias/surface/0008-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-gpios-vol.patch",
+      "sha256": "f55b28fddb3ba849d13984f1742e3894ea12440c7519cd6b92ae52aabaebff77",
+      "id": "volume-gpio-correction",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "provenance_note": "Original file has no author, commit message, or DCO trailers; retained byte-for-byte. Attribution must be resolved before publication.",
+      "dependencies": [],
+      "purpose": "Match reference volume-up GPIO6 and volume-down GPIO8, including pinctrl.",
+      "hardware_test": "Not tested on 7.3",
+      "publication_ready": false
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0002-rtc-surface-port-reference-driver.patch",
+      "sha256": "2e8c5b1bfe1bd305d395b5a6309e9ae99727e0f06f311dfe16fd0cbc71468348",
+      "id": "surface-rtc-driver",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0004-rtc-add-sam-driver.patch"
+      ],
+      "purpose": "Port byte-identical reference SSAM RTC source; complete Kconfig help.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0003-surface-register-sp12-rtc.patch",
+      "sha256": "e4fe9aa0e60dd410afb67eca5d6296d8abb1b6c1a2e8e97ce82ded9331ed0af2",
+      "id": "sp12-rtc-registration",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0005-platform-surface-SAM-add-rtc-for-Surface-Pro-12in.patch"
+      ],
+      "purpose": "Register RTC software node for SP12 only.",
+      "dependencies": [
+        "surface-rtc-driver"
+      ],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0004-surface-scope-sp12-suspend-workaround.patch",
+      "sha256": "47ba490df51449fc08376257cab855e63be3c0fe6ddd1b5bfdd1c00bafeac214",
+      "id": "sp12-suspend-quirk",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0006-sam-aggregator-add-suspend-workaround.patch"
+      ],
+      "purpose": "Scope the reference D3-handle workaround to the SP12 root compatible.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0010-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-displayport-audio.patch",
+      "sha256": "4f0f995982af689c51e49c8c677ac500e6b2ad4cd2b0802dc8cab89240a6bd86",
+      "id": "displayport-audio",
+      "purpose": "Restore reference DisplayPort audio DAI links; runtime unproven.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0011-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-charge-limit-nvmem.patch",
+      "sha256": "bdbf1db73128888efd80904a6b1cd8180df84392d9e28dd8bad8e2d22559ce87",
+      "id": "charge-limit-nvmem",
+      "purpose": "Restore reference PMIC GLINK NVMEM cells; interfaces not written during validation.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    }
+  ],
+  "research_inputs": [
+    {
+      "path": "kernel/ports/v7.3/research/linux-7.3-patch-audit.json",
+      "sha256": "c3dda43e6a5e7c666072b4b5c713cd78d94d0acaabeb7a01f1a563a412ae0c3d"
+    },
+    {
+      "path": "kernel/ports/v7.3/research/linux-7.3-rebase.md",
+      "sha256": "8cb88e1827cb759594200bc59f5ac1ffe13d41780f519e696932f2a5ae5f5073"
+    }
+  ],
+  "validation": {
+    "compile": "platform Image/modules build in progress; RTC/SAM/camera object compilation passed",
+    "dtbs_check": "pristine baseline and experimental camera SP12 DTB passed full-schema checks; platform full-build/DT check in progress",
+    "config_migration": "passed: ARM64 listnewconfig/olddefconfig plus saved full config diffs; HW_RANDOM_QCOM rename preserved",
+    "hardware": "not-run",
+    "installer": "unchanged",
+    "aggregate_reconstruction": "25 files verified against supplied postimage and upstream hashes",
+    "native_git_preflight": "passed on pinned v7.3",
+    "native_git_application": "passed: one board file, four substitutions",
+    "repository_checks": "passed in Ubuntu WSL, including installer-builder and fallback-target tests",
+    "python_tests": "11 passed; source/config/profile/build-integrity coverage",
+    "shell_syntax": "passed",
+    "shellcheck": "passed for repository scripts/tests and both kernel shell entrypoints",
+    "build_tools": "installed: GCC15.2 ARM64 cross-toolchain, binutils2.46, make, pahole, dtschema2026.9, ShellCheck0.11",
+    "tag_signature": "passed: WKD keys matched Kernel.org-published fingerprints; VALIDSIG for tag and tarball",
+    "source_verification": "both actual candidate source/config pairs verified against complete ordered manifests",
+    "environment_failure": "Initial builds exhausted /tmp tmpfs; all task build directories moved to disk-backed /var/tmp/sp12-port and builds resumed",
+    "dt_binding_check": "passed all four affected schemas, examples, YAML lint/style; no diagnostics after standard assigned-clock-parents declaration",
+    "camera_compile": "passed ARM64 RTC/SAM, CAMSS pipeline, OV13858, OV02C10, new CSI2 PHY objects and SP12 DTB; camera runtime nodes disabled"
+  },
+  "vendor_dispositions": [
+    {
+      "path": "kernel/patches/vendor/mias/camera/0002-7.2-clk-qcom-camcc-x1p42100-add-support-for-camera-clock-controller.patch",
+      "sha256": "9c4ebd849cf0a1fe949690c1f9dc8885e9e0d8b8a6f2029a26d994f1fd6808bb",
+      "previous_independent_result": "neither",
+      "disposition": "use-upstream-reviewed",
+      "reason": "CAMCC was already present in exact reference base; v7.3 driver delta is three const qualifiers. Keep upstream implementation and identical upstream DT CAMCC nodes."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0003-phy-qcom-mipi-csi2-Add-a-CSI2-MIPI-DPHY-driver.patch",
+      "sha256": "c78daf049a221b5aceca9e0cfac26241e4a243a0cd35f379c502b7ccbf4d7e07",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0004-media-qcom-camss-Add-support-to-populate-sub-devices.patch",
+      "sha256": "0678e766120f31c66f5cdaeea67622135f17547697921929c46f0e3541f6cc2b",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0005-media-qcom-camss-Add-legacy_phy-flag-to-Soc-definition-structures.patch",
+      "sha256": "f78c0d890fe3b71236d1f2d5d2940f04b4669479d0b94bb8e0fc33aa8c120e44",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0007-media-qcom-camss-Add-support-for-PHY-API-devices.patch",
+      "sha256": "f525f3579b77bff27f473b70289ae5458adf8d348e9c890efca645a3c273b209",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0008-media-qcom-camss-Add-support-for-x1p42100.patch",
+      "sha256": "c2093d474c02f7299249288f6fafc281545ed9c8cb8917457c3765ff9602dfd4",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0009-media-qcom-camss-Drop-legacy-PHY-descriptions-from-x.patch",
+      "sha256": "30e4da806371cae06a28d86955a9729ee28857fc2c5310d2b705884d0789301d",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0010-7.3-arm64-dts-qcom-hamoa-Add-CAMCC-block-definition.patch",
+      "sha256": "680c5c29b0b2112f8cace49165e47762d3737c9bafac79c3d3e609b37871fd42",
+      "previous_independent_result": "neither",
+      "disposition": "use-upstream-reviewed",
+      "reason": "CAMCC was already present in exact reference base; v7.3 driver delta is three const qualifiers. Keep upstream implementation and identical upstream DT CAMCC nodes."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0011-7.3-arm64-dts-qcom-purwa-Add-CAMCC-block-definition.patch",
+      "sha256": "15479750dcb3cf0d2331d8a82651a01cd4c285a2e2869d6644de081417b9e98e",
+      "previous_independent_result": "neither",
+      "disposition": "use-upstream-reviewed",
+      "reason": "CAMCC was already present in exact reference base; v7.3 driver delta is three const qualifiers. Keep upstream implementation and identical upstream DT CAMCC nodes."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0012-arm64-dts-qcom-hamoa-Add-CCI-definitions.patch",
+      "sha256": "fbf41ad732b007272d9015eacaee417cced4a447f2482b104009b12a22fb4b5f",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0014-arm64-dts-qcom-hamoa-Add-CAMSS-block-defintion.patch",
+      "sha256": "2c9ed94bdc6ce90b9c7131696d941cf0fe9b329425ca1eec726e37ef5af5e585",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0015-arm64-dts-qcom-purwa-Add-CAMSS-block-defintion.patch",
+      "sha256": "4d66f5ab32724f4679fff97522b03b9dc4ddc6e2671a40767ad2f748cb990be9",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0017-surfacego2-camera.patch",
+      "sha256": "273881ae9f249dd9480c8a0bb80664c3b9e903a63ae04e2ce585c5b9401f382c",
+      "previous_independent_result": "excluded-unrelated-intel-surface-go",
+      "disposition": "exclude-unrelated",
+      "reason": "Intel Surface Go 2 is outside this ARM64 SP12 port."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0018-media-i2c-ov13858-reorder-methods.patch",
+      "sha256": "17657f0649c7c986b22afd24628a8b63464fa12fe7e1ba00ccfe0a4a9f0808d5",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0019-media-i2c-ov13858-port-to-regmap_cci-api.patch",
+      "sha256": "8c54f5da5ab6d71dd51077428ea90e704ace43f2546fe7f214c7a0b0ff00cc12",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0020-media-i2c-ov13858-replace-open_set-stream-with-v4l2.patch",
+      "sha256": "5c2c9299cfe6ab986ba63a883bed824c21134969b87bcadfca307408042c0e32",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0021-media-i2c-ov13858-add-rotate-control-support.patch",
+      "sha256": "d74eb313e3477bcbfe0b6787916012d17bc4ab6912b3ff142ee19c9753ed594b",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0022-media-i2c-ov13858-fix-setting-format.patch",
+      "sha256": "c0cfcf4c32d38f21be18b23c746e6068d1f65dd025fd934fa357b2eaa88f590d",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0023-media-i2c-ov13858-add-get_selection.patch",
+      "sha256": "5e8d06796954ce6c2b71c4d828fe88e424b83d173c2f66d1bce7fd2bda022582",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0024-media-i2c-ov13858-support-of.patch",
+      "sha256": "94777625282de7af57e7c78205032c104930b68316ce1f5183a474146033759c",
+      "previous_independent_result": "neither",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0025-media-i2c-ov02c10-improve-default-exposure-setting.patch",
+      "sha256": "d63c3549d6276d7678404e5b802e5dab96912e1ded9d7ada86eabd8fd00425ab",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/camera/0026-media-i2c-ov02c10-add-get_selection.patch",
+      "sha256": "3282efc2616e9bb30a030d4e972c2137cca0565aff206d482548fa5e123e08c8",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0001-7.3-firmware-qcom-scm-Allow-QSEECOM-on-Surface-Pro-12in.patch",
+      "sha256": "4370d9133fc65cc7989090981b829d5c6f754c757540f25916b1e4cae0569e5d",
+      "previous_independent_result": "reverse-only",
+      "disposition": "use-upstream",
+      "reason": "Upstream implementation present; keep upstream files and do not replay the duplicate."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0002-7.3-plaform-surface-SAM-add-support-for-Surface-Pro-12in.patch",
+      "sha256": "63927ea8badb4b33e56a6a0d3904338c19abada8d3263f716544e7080f59aa89",
+      "previous_independent_result": "reverse-only",
+      "disposition": "use-upstream",
+      "reason": "Upstream implementation present; keep upstream files and do not replay the duplicate."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0003-drm-panel_edp-Add-second-panel-for-Surface-Pro-12in.patch",
+      "sha256": "1de11d2a8c25f92967b74e2148efe281f650f6bdf7c15ff8e7508da09e0caff6",
+      "previous_independent_result": "neither",
+      "disposition": "use-upstream",
+      "reason": "Upstream implementation present; keep upstream files and do not replay the duplicate."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0004-rtc-add-sam-driver.patch",
+      "sha256": "26056c7bd98ac45b5faed9dc1cdb1252bb941caef36bd54197491933b34b5d4d",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-platform-development",
+      "reason": "Reference intent reviewed and ported; suspend scoped to SP12; hardware validation outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0005-platform-surface-SAM-add-rtc-for-Surface-Pro-12in.patch",
+      "sha256": "68382863e11dfa8b6f364725d5c63f1e19002d16ef1f4585d357a0b312ab99f1",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-platform-development",
+      "reason": "Reference intent reviewed and ported; suspend scoped to SP12; hardware validation outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0006-sam-aggregator-add-suspend-workaround.patch",
+      "sha256": "ea19a32ccb0b0651cd9be7818d55f2b07d425e2b88a445d562c81fbe1945b5c8",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-platform-development",
+      "reason": "Reference intent reviewed and ported; suspend scoped to SP12; hardware validation outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0007-7.3-arm64-dts-qcom-purwa-Add-Microsoft-Surface-Pro-12in.patch",
+      "sha256": "756cffabb4cefb7be15e21d996756e21b43ebd37ea051c8184729fa0462d237b",
+      "previous_independent_result": "reverse-only",
+      "disposition": "use-upstream",
+      "reason": "Upstream implementation present; keep upstream files and do not replay the duplicate."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0008-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-gpios-vol.patch",
+      "sha256": "f55b28fddb3ba849d13984f1742e3894ea12440c7519cd6b92ae52aabaebff77",
+      "previous_independent_result": "forward-only",
+      "disposition": "selected-development",
+      "reason": "Preserves reference button and pinctrl mapping; physical validation and attribution outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0009-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-regulators-display.patch",
+      "sha256": "d599103502f44f83b5f77670f4b9d08fa077b07fe3d37f198a5f71534d37bc26",
+      "previous_independent_result": "forward-only",
+      "disposition": "exclude-snapshot-discrepancy",
+      "reason": "Not in reconstructed tested board snapshot; retain upstream display, RF-kill, IRIS and reserved-memory behavior."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0010-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-displayport-audio.patch",
+      "sha256": "4f0f995982af689c51e49c8c677ac500e6b2ad4cd2b0802dc8cab89240a6bd86",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-platform-development",
+      "reason": "Reference intent reviewed and ported; suspend scoped to SP12; hardware validation outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0011-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-charge-limit-nvmem.patch",
+      "sha256": "bdbf1db73128888efd80904a6b1cd8180df84392d9e28dd8bad8e2d22559ce87",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-platform-development",
+      "reason": "Reference intent reviewed and ported; suspend scoped to SP12; hardware validation outstanding."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0012-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-camera-support.patch",
+      "sha256": "564d4f19040404f78c09a405e98ccde8e9c5ab6d51ff94cd2d32339f9689323e",
+      "previous_independent_result": "forward-only",
+      "disposition": "ported-camera-profile-development",
+      "reason": "Port actual reconciled aggregate intent rather than replay individual corpus patch; camera nodes remain disabled."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0013-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-disable-rfkill.patch",
+      "sha256": "345cc26843b0697e3c456764994ebe064f95c8d40c974585b428137a5c1ec093",
+      "previous_independent_result": "forward-only",
+      "disposition": "exclude-snapshot-discrepancy",
+      "reason": "Not in reconstructed tested board snapshot; retain upstream display, RF-kill, IRIS and reserved-memory behavior."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0014-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-iris-node.patch",
+      "sha256": "4e47396e5e31995ffb052c890a7c4f2a8b7c17564e0786640d8bb02b18f13428",
+      "previous_independent_result": "forward-only",
+      "disposition": "exclude-snapshot-discrepancy",
+      "reason": "Not in reconstructed tested board snapshot; retain upstream display, RF-kill, IRIS and reserved-memory behavior."
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0015-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-remove-reserved-memory.patch",
+      "sha256": "8d3c3eba1277c86044c0824e868269eae345f725fc96b60f2d1f6b9b6d23efa0",
+      "previous_independent_result": "ambiguous-both-pass",
+      "disposition": "exclude-snapshot-discrepancy",
+      "reason": "Not in reconstructed tested board snapshot; retain upstream display, RF-kill, IRIS and reserved-memory behavior."
+    }
+  ],
+  "profiles": {
+    "platform": {
+      "config": {
+        "path": "kernel/config/config-7.3-sp12-platform",
+        "sha256": "45e3ccb2dbfc4f9e34ab9089f3e1880651ee0b2effbf64efa8f8a250158df530"
+      },
+      "extra_series": [],
+      "runtime_status": "candidate; hardware tests required"
+    },
+    "camera": {
+      "config": {
+        "path": "kernel/config/config-7.3-sp12-camera",
+        "sha256": "23cd55b3ca3df517c027aac0b2198fff2026a347d7d34170ebbef6c6fcc7d057"
+      },
+      "extra_series": [
+        {
+          "path": "kernel/ports/v7.3/patches/0007-phy-qcom-port-reference-csi2.patch",
+          "sha256": "51af0f57d4e64dc10c567e905b265b6805006356614d15a81a0cd144e6086bbf",
+          "id": "camera-phy",
+          "dependencies": [],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0008-media-camss-port-reference-pipeline.patch",
+          "sha256": "7b86864b91cbafc4d8fd078a02fe1e3b7021c980bd12e518b2e41b5fa6ecc769",
+          "id": "camera-camss",
+          "dependencies": [],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0009-arm64-dts-port-reference-camera-soc-nodes.patch",
+          "sha256": "9ada08ab4fff3ef0713919fb836535582fe0a9d7c3c2942184342262f0171fd5",
+          "id": "camera-soc",
+          "dependencies": [],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0010-media-port-reconciled-reference-sensors.patch",
+          "sha256": "1864a60fe7782c720f8839679635da2f83274354f4e9350a7e117f76b6e10ce6",
+          "id": "camera-sensors",
+          "dependencies": [],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0011-arm64-dts-stage-sp12-camera-resources.patch",
+          "sha256": "832f981961ec015615f6ed641f7ff87f7e4a51312f574b1d1feaf81cc262eee5",
+          "id": "camera-board-staged",
+          "dependencies": [
+            "camera-phy",
+            "camera-camss",
+            "camera-soc",
+            "camera-sensors"
+          ],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0012-camera-bindings.patch",
+          "sha256": "68fd030be106f91ad9ca6e582e4d70a3ef7dd422437faa645f5266121a294b6f",
+          "id": "camera-bindings",
+          "dependencies": [],
+          "publication_ready": false,
+          "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+          "hardware_test": "not-run"
+        },
+        {
+          "path": "kernel/ports/v7.3/patches/0013-media-drop-unused-reference-locals.patch",
+          "id": "camera-compiler-cleanup",
+          "dependencies": [
+            "camera-camss",
+            "camera-sensors"
+          ],
+          "publication_ready": false,
+          "sha256": "bb00956c5d246d3736437aab6516e88eecdc7d4de9df9ff79fffdb1d764aa717"
+        }
+      ],
+      "runtime_status": "experimental; camera nodes disabled pending clock and capture hardware validation"
+    }
+  },
+  "base_tree": "30fd2ef82912c26cf3a58ad0ba6afc375fa851ac",
+  "source_archive": {
+    "url": "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.tar.xz",
+    "sha256": "87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953",
+    "signature_fingerprint": "647F28654894E3BD457199BE38DBBDC86092693E",
+    "signature_verified": true,
+    "extracted_git_tree": "30fd2ef82912c26cf3a58ad0ba6afc375fa851ac"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "source_archive_sha256": "87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953",
+  "source_tag": "v7.3",
+  "build_architecture": "aarch64",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "tool": "resolve_btfids",
+  "sha256": "425ea1861e64a7cff75d65804cd5ba840636dad287c727f40e8a625f01a18e95",
+  "elf_machine": 183,
+  "recipe": "make -C tools/bpf/resolve_btfids OUTPUT=private-output-directory/ -j4",
+  "installation": "not installed; built unprivileged in target home directory"
+}

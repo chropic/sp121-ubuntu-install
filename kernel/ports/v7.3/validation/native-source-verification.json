@@ -1,0 +1,6 @@
+{
+  "source_tree": "ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f",
+  "expected_tree": "ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f",
+  "status": "native full source matches cross-build candidate tree",
+  "method": "Import hash-verified expected index into an isolated bare Git directory; index all real source files and compare resulting Git tree; no commits or source checkout mutation"
+}

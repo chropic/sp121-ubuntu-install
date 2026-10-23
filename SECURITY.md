@@ -10,7 +10,8 @@ release explicitly marked supported.
 Do not open a public issue for a vulnerability that could enable arbitrary code
 execution, malicious release substitution, unsafe disk selection, or boot-chain
 compromise. Contact the repository owner privately through GitHub Security
-Advisories once the public repository is created.
+Advisories when private reporting is available. Do not include exploit details
+in an ordinary public issue.
 
 ## Trust model
 

@@ -9,3 +9,4 @@ SHA256SUMS
 build/
 dist/
 .cache/
+__pycache__/

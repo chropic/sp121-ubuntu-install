@@ -1,0 +1,39 @@
+Subject: [PATCH] media: drop unused locals from reconciled camera source
+
+ARM64 GCC15 compilation identified three stale locals in the reference delta.
+Remove them without changing runtime behavior. No new DCO sign-off is asserted.
+
+diff --git a/drivers/media/platform/qcom/camss/camss.c b/drivers/media/platform/qcom/camss/camss.c
+--- a/drivers/media/platform/qcom/camss/camss.c
++++ b/drivers/media/platform/qcom/camss/camss.c
+@@ -4856,7 +4856,6 @@
+ 
+ 	fwnode_graph_for_each_endpoint(fwnode, ep) {
+ 		struct camss_async_subdev *csd;
+-		struct fwnode_handle *remote;
+ 
+ 		if (!fwnode_device_is_available(ep))
+ 			continue;
+diff --git a/drivers/media/platform/qcom/camss/camss-csiphy.c b/drivers/media/platform/qcom/camss/camss-csiphy.c
+--- a/drivers/media/platform/qcom/camss/camss-csiphy.c
++++ b/drivers/media/platform/qcom/camss/camss-csiphy.c
+@@ -332,7 +332,6 @@
+ 	struct device *dev = csiphy->camss->dev;
+ 	u8 num_lanes = lncfg->num_data;
+ 	s64 link_freq;
+-	int i;
+ 	int ret;
+ 
+ 	dphy_cfg = &dphy_opts.mipi_dphy;
+diff --git a/drivers/media/i2c/ov13858.c b/drivers/media/i2c/ov13858.c
+--- a/drivers/media/i2c/ov13858.c
++++ b/drivers/media/i2c/ov13858.c
+@@ -1660,7 +1660,7 @@
+ {
+ 	struct ov13858 *ov13858;
+ 	unsigned long freq;
+-	int i, ret;
++	int ret;
+ 
+ 	ov13858 = devm_kzalloc(&client->dev, sizeof(*ov13858), GFP_KERNEL);
+ 	if (!ov13858)

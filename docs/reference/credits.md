@@ -1,8 +1,7 @@
 # Credits and acknowledgements
 
-This project exists because multiple people and communities did the difficult
-platform-enablement work first. Attribution belongs beside the work, not hidden
-at the bottom of a release archive.
+The following contributors and communities supplied the platform enablement,
+source material and reference testing used by this project.
 
 ## Primary Surface Pro 12 enablement
 

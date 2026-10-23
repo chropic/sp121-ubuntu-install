@@ -1,0 +1,63 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+esp=/boot/efi
+dest=$esp/sp12
+apply=0
+case "${1:-}" in
+    '') ;;
+    --apply-stale-only) apply=1; shift ;;
+    -h|--help)
+        printf '%s\n' 'Usage: sp12-esp-space [--apply-stale-only]'
+        printf '%s\n' 'Default: report usage. Explicit cleanup removes only sp12/{vmlinuz,initrd.img,dtb}.new.'
+        exit 0 ;;
+    *) printf 'Unknown argument: %s\n' "$1" >&2; exit 2 ;;
+esac
+[ "$#" -eq 0 ] || { printf 'Unexpected arguments\n' >&2; exit 2; }
+mountpoint -q "$esp" || { printf 'ESP must already be mounted at %s\n' "$esp" >&2; exit 1; }
+printf 'ESP capacity\n'
+df -h "$esp"
+printf '\nTop-level usage (some entries may need root to read)\n'
+du -h --max-depth=1 "$esp" 2>/dev/null || true
+printf '\nRecognized staging files\n'
+for name in vmlinuz initrd.img dtb; do
+    if [ -e "$dest/$name.new" ] || [ -L "$dest/$name.new" ]; then
+        ls -ldh "$dest/$name.new"
+    fi
+done
+if [ "$apply" -ne 1 ]; then
+    printf '\nRead-only report. Cleanup requires --apply-stale-only and root.\n'
+    exit 0
+fi
+[ "$(id -u)" -eq 0 ] || { printf 'Cleanup requires root\n' >&2; exit 1; }
+exec 9>/run/lock/sp12-boot.lock
+flock -n 9 || { printf 'Another boot operation is running\n' >&2; exit 1; }
+[ -d "$dest" ] && [ ! -L "$dest" ] && [ -f "$dest/SP12BOOT" ] || {
+    printf 'Refusing cleanup: active SP12 directory/marker is missing or symlinked\n' >&2; exit 1;
+}
+found=0
+for name in vmlinuz initrd.img dtb; do
+    [ -f "$dest/$name" ] && [ ! -L "$dest/$name" ] || {
+        printf 'Refusing cleanup: active payload is incomplete or symlinked\n' >&2; exit 1;
+    }
+    stage=$dest/$name.new
+    if [ -e "$stage" ] || [ -L "$stage" ]; then
+        [ -f "$stage" ] && [ ! -L "$stage" ] || {
+            printf 'Refusing cleanup: staging path is not a regular file: %s\n' "$stage" >&2; exit 1;
+        }
+        found=1
+    fi
+done
+[ "$found" -ne 0 ] || { printf 'No recognized staging files to remove.\n'; exit 0; }
+trap 'sync; mount -o remount,ro "$esp"' EXIT
+trap 'exit 1' HUP INT TERM
+mount -o remount,rw "$esp"
+for name in vmlinuz initrd.img dtb; do
+    stage=$dest/$name.new
+    if [ -f "$stage" ]; then
+        rm -- "$stage"
+        printf 'Removed staging file: %s\n' "$stage"
+    fi
+done
+printf 'Active, recovery and firmware files were preserved.\n'

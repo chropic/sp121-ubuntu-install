@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "kernel_release": "7.3.0-sp12-v7.3-camera",
+  "source_tree": "cfc0b9162f51621447d4cab829cf46405e709215",
+  "status": "native-package-and-external-module-compile-passed",
+  "package": "linux-headers-7.3.0-sp12-v7.3-camera_7.3-1~sp12candidate1+native1_arm64.deb",
+  "package_sha256": "8ee028274150f7da6bbd461a55de180eff3708dd91852938819491515ad69af0",
+  "Module.symvers_sha256": "a77369ebbf4ccc733f793d123355aaf5e8b26830cf9fa87fae9efe20172ebfbd",
+  "native_header_tool_count": 12,
+  "external_module_vermagic": "7.3.0-sp12-v7.3-camera SMP preempt mod_unload modversions aarch64",
+  "external_module_elf_machine": 183,
+  "external_module_loaded": false,
+  "native_config_diff": "-RUST n\n-RUSTC_HAS_FILE_AS_C_STR y\n-RUSTC_HAS_FILE_WITH_NUL y\n-RUSTC_HAS_SPAN_FILE y\n-RUSTC_HAS_UNNECESSARY_TRANSMUTES y\n-RUST_IS_AVAILABLE y\n CC_VERSION_TEXT \"aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0\" -> \"gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0\"\n RUSTC_LLVM_MAJOR_VERSION 21 -> 0\n RUSTC_LLVM_VERSION 210108 -> 0\n RUSTC_VERSION 109301 -> 0\n",
+  "installation": "not-installed",
+  "full_kernel_symbols_final_recheck": "passed; identical to completed packaged camera build",
+  "package_retrieved_to_build_host": true
+}

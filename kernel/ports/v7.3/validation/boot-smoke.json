@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "recorded_date": "2026-10-22",
+  "kernel_release": "7.3.0-sp12-v7.3-platform",
+  "model": "Surface Pro 12in 1st Edition",
+  "architecture": "aarch64",
+  "scope": "Authenticated SSH inspection after user-operated reboot; headless EGL capability probe; no further reboot, suspend, rollback, camera capture, audio playback or charge writes",
+  "system_state": "running",
+  "failed_systemd_units": [],
+  "kernel_tainted": 0,
+  "root_filesystem": "ext4, read-write; UFS driver vermagic matches running release",
+  "network": "Wi-Fi connected; authenticated SSH over Tailscale succeeds",
+  "display": "eDP connected; backlight reports nonzero brightness; visual inspection not independently performed",
+  "gpu": {
+    "probe": "eglinfo -B -p surfaceless",
+    "EGL": "1.5",
+    "vendor": "freedreno",
+    "renderer": "Adreno X1-45",
+    "OpenGL": "4.6",
+    "OpenGL_ES": "3.2",
+    "Mesa": "26.0.8-1ubuntu0.3",
+    "scope": "Context/capability initialization, not sustained rendering or graphical-session validation",
+    "firmware": "Early gen71500_sqe.fw error -2 messages recover with later successful SQE and GMU firmware loads; compressed files are present on the root filesystem; no firmware changes made"
+  },
+  "input": "Surface keyboard, touchpad, mouse, tablet-mode switch, touchscreen, stylus and gpio-keys enumerate; physical interactions not tested",
+  "bluetooth": "hci0 enumerates; pairing and traffic not tested",
+  "cpu_frequency": "SCMI schedutil policies report nonzero current frequencies; load and thermal testing pending",
+  "battery": "Main battery present with plausible energy values; USB power online; disconnected HID battery is not the main battery; discharge not tested",
+  "rtc": {
+    "rtc0": {
+      "name": "rtc-pm8xxx c42d000.spmi:pmic@0:rtc@6100",
+      "date": "2026-10-23",
+      "time": "02:28:33",
+      "hctosys": "1"
+    },
+    "rtc1": {
+      "name": "surface_rtc 01:01:01:00:00",
+      "date": "2026-10-23",
+      "time": "08:28:36",
+      "hctosys": "0"
+    }
+  },
+  "rtc_observation": "Surface rtc1 reads about six hours ahead of PMIC rtc0; rtc0 remains hctosys=1; no clock writes or alarm/persistence tests performed",
+  "active_ESP_payload_sha256": {
+    "vmlinuz": "3492d2fda4f53179a54e9e1f1b43e5e5a541054355919a287d56c926cf002716",
+    "initrd.img": "4277ca4dbdc85455e0c478fb60fd2cc4c17ba7cb66b25f6649e9fd1734350c80",
+    "dtb": "5690bc3a88b4ecd5d844cb8e32b4b7192f7e8665a22b6053c938b941468ccabc"
+  },
+  "active_ESP_hashes_match_inspected_candidate": true,
+  "ESP_free_KiB": 826780,
+  "remaining_kernel_warnings": [
+    "UFS RPMB device registration fails against unregistered ufs_rpmb bus; root storage works; RPMB functionality not established",
+    "qcom-apm command timeout and audio register-cache/control warnings; audio playback/capture not tested",
+    "PMIC temperature-alarm deferred probes and PMIC GLINK supplier-link warnings; peripherals require separate validation"
+  ],
+  "maintenance_gate": "Installed legacy sync helper still pins 7.2; no boot.conf exists. Migrate hook/configuration before package/initramfs updates can overwrite the trial ESP set. New repository helper is fault-tested but not deployed on this target.",
+  "not_tested": [
+    "cold boot",
+    "second warm reboot",
+    "physical rollback",
+    "suspend/resume",
+    "volume keys",
+    "DP audio",
+    "charge-limit writes",
+    "camera capture/privacy",
+    "fresh installation"
+  ],
+  "privacy": "Sanitized observations only; raw journals, host identity, network identifiers and filesystem UUIDs excluded"
+}

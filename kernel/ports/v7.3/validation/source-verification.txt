@@ -1,0 +1,27 @@
+Git tag v7.3 verification using Kernel.org WKD keyring
+[GNUPG:] NEWSIG torvalds@linux-foundation.org
+[GNUPG:] KEY_CONSIDERED ABAF11C65A2970B130ABE3C479BE3E4300411886 0
+[GNUPG:] SIG_ID wWAQgeul1h7YE6civ0Lsd3gB3cE 2026-10-18 1792365298
+[GNUPG:] GOODSIG 79BE3E4300411886 Linus Torvalds <torvalds@kernel.org>
+[GNUPG:] VALIDSIG ABAF11C65A2970B130ABE3C479BE3E4300411886 2026-10-18 1792365298 0 4 0 1 10 00 ABAF11C65A2970B130ABE3C479BE3E4300411886
+[GNUPG:] TRUST_UNDEFINED 0 pgp torvalds@linux-foundation.org
+
+Official tarball verification
+[GNUPG:] NEWSIG
+gpg: Signature made Sun Oct 18 23:45:26 2026 MDT
+gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
+[GNUPG:] KEY_CONSIDERED 647F28654894E3BD457199BE38DBBDC86092693E 0
+[GNUPG:] SIG_ID OQ0eSa9rPID0Ez/XqXu7aGX+3AM 2026-10-19 1792388726
+[GNUPG:] GOODSIG 38DBBDC86092693E Greg Kroah-Hartman <gregkh@kernel.org>
+gpg: Good signature from "Greg Kroah-Hartman <gregkh@kernel.org>" [unknown]
+[GNUPG:] VALIDSIG 647F28654894E3BD457199BE38DBBDC86092693E 2026-10-19 1792388726 0 4 0 1 10 00 647F28654894E3BD457199BE38DBBDC86092693E
+[GNUPG:] TRUST_UNDEFINED 0 pgp
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
+
+Pristine extracted source matched signed tree before patch application:
+30fd2ef82912c26cf3a58ad0ba6afc375fa851ac
+
+Fingerprints were compared against https://www.kernel.org/signature.html
+No personal Web-of-Trust certification is asserted.

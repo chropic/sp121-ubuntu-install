@@ -1,0 +1,351 @@
+{
+  "schema": 1,
+  "base_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "reference_base_commit": "db2ddb87143519e20a95aa36c60b36107b736a58",
+  "aggregate_sha256": "02450df6b1996572e1d76571b10cb279d4f8b7b2a0c5d777a6243623ecc3744d",
+  "method": "Reconstructed aggregate in temporary directory; verified all postimage and upstream hashes against supplied audit; classified every hunk by file. No semantic equivalence or build claim.",
+  "files": [
+    {
+      "path": "MAINTAINERS",
+      "reference_postimage_sha256": "0b746e1148d0d94a4404a0b6a96045786ac85e7853697bdfa0514f784d9f310f",
+      "upstream_sha256": "6151790c22698b0f16eac8fa2f6d7a85e5398b794d78d998dc1c37bb0d587625",
+      "disposition": "camera profile: reference PHY maintainer entry retained",
+      "hunks": [
+        "@@ -22298,6 +22298,16 @@ S:\tMaintained"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "arch/arm64/boot/dts/qcom/Makefile",
+      "reference_postimage_sha256": "459a537699007ad5c034150e50f3b56070bc98eafdd5972e4c06d223f14fc56d",
+      "upstream_sha256": "b78adb4942092b1e0cd4ea4cf115b08becbc99d659d41ee97090fbb3d0030119",
+      "disposition": "upstream platform support retained; duplicate aggregate intent excluded",
+      "hunks": [
+        "@@ -457,3 +457,5 @@ x1p42100-lenovo-thinkbook-16-el2-dtbs\t:= x1p42100-lenovo-thinkbook-16.dtb x1-el2"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "arch/arm64/boot/dts/qcom/hamoa.dtsi",
+      "reference_postimage_sha256": "40799e6dafedd9534e1b2332b5b21cfe17af5da742e89d43ba0e83682cf1c3d8",
+      "upstream_sha256": "d963d36f0a1c8998bf0dda383bd7036734e32e1159804b2260619db521df4a38",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -6,6 +6,7 @@",
+        "@@ -15,6 +16,7 @@",
+        "@@ -5550,6 +5552,462 @@ videocc: clock-controller@aaf0000 {",
+        "@@ -6131,6 +6589,78 @@ tlmm: pinctrl@f100000 {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "arch/arm64/boot/dts/qcom/purwa.dtsi",
+      "reference_postimage_sha256": "7f9e16deb1ee46df6c50cdc40dff5ed4159ac2561dfa8efde73af03d39043b8f",
+      "upstream_sha256": "e8d217f33d2ff364fbb313a767662ade0180bb28ba4ee4f435189520fae4cdd6",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -5,6 +5,7 @@",
+        "@@ -17,8 +18,11 @@",
+        "@@ -36,10 +40,174 @@",
+        "@@ -159,6 +327,55 @@ &gpucc {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/gpu/drm/panel/panel-edp.c",
+      "reference_postimage_sha256": "300b2bb216d810da89250474e877d1097c12def7a1aef4f07adce7d0d388f22d",
+      "upstream_sha256": "31e40265c509d4d2e055021cf585bd98de24a594fed4368e794dbe0ce7078cb3",
+      "disposition": "upstream platform support retained; duplicate aggregate intent excluded",
+      "hunks": [
+        "@@ -2144,6 +2144,7 @@ static const struct edp_panel_entry edp_panels[] = {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/i2c/ov02c10.c",
+      "reference_postimage_sha256": "cd6940321aace95c2bb097609b6abb426204cd237fc73562f66cd096cecc524e",
+      "upstream_sha256": "dad178adde33b0c5f5e179830187e2a42bddb7fa40686ce1a7b906caf14346d3",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -34,6 +34,7 @@",
+        "@@ -545,7 +546,8 @@ static int ov02c10_init_controls(struct ov02c10 *ov02c10)",
+        "@@ -755,6 +757,39 @@ static int ov02c10_enum_frame_size(struct v4l2_subdev *sd,",
+        "@@ -773,6 +808,7 @@ static const struct v4l2_subdev_pad_ops ov02c10_pad_ops = {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/i2c/ov13858.c",
+      "reference_postimage_sha256": "949e79130efe96848df01305e5af7a09ec676ea7b97aefbae3114e6f0ee1a47d",
+      "upstream_sha256": "e14529a1bc15e661998f3ea84f085982d405c3e9511615413bd3700da0c4d16b",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -3,23 +3,28 @@",
+        "@@ -41,11 +46,11 @@",
+        "@@ -55,51 +60,47 @@",
+        "@@ -116,11 +117,12 @@ struct ov13858_mode {",
+        "@@ -144,7 +146,7 @@ static const struct ov13858_reg mipi_data_rate_1080mbps[] = {",
+        "@@ -164,7 +166,7 @@ static const struct ov13858_reg mipi_data_rate_540mbps[] = {",
+        "@@ -243,8 +245,6 @@ static const struct ov13858_reg mode_4224x3136_regs[] = {",
+        "@@ -355,7 +355,7 @@ static const struct ov13858_reg mode_4224x3136_regs[] = {",
+        "@@ -434,8 +434,6 @@ static const struct ov13858_reg mode_2112x1568_regs[] = {",
+        "@@ -546,7 +544,7 @@ static const struct ov13858_reg mode_2112x1568_regs[] = {",
+        "@@ -625,8 +623,6 @@ static const struct ov13858_reg mode_2112x1188_regs[] = {",
+        "@@ -737,7 +733,7 @@ static const struct ov13858_reg mode_2112x1188_regs[] = {",
+        "@@ -816,8 +812,6 @@ static const struct ov13858_reg mode_1056x784_regs[] = {",
+        "@@ -966,17 +960,13 @@ static const struct ov13858_link_freq_config",
+        "@@ -987,10 +977,8 @@ static const struct ov13858_mode supported_modes[] = {",
+        "@@ -998,10 +986,8 @@ static const struct ov13858_mode supported_modes[] = {",
+        "@@ -1009,10 +995,8 @@ static const struct ov13858_mode supported_modes[] = {",
+        "@@ -1020,22 +1004,28 @@ static const struct ov13858_mode supported_modes[] = {",
+        "@@ -1043,146 +1033,29 @@ struct ov13858 {",
+        "@@ -1190,10 +1063,9 @@ static int ov13858_update_digital_gain(struct ov13858 *ov13858, u32 d_gain)",
+        "@@ -1204,8 +1076,7 @@ static int ov13858_enable_test_pattern(struct ov13858 *ov13858, u32 pattern)",
+        "@@ -1213,7 +1084,7 @@ static int ov13858_set_ctrl(struct v4l2_ctrl *ctrl)",
+        "@@ -1233,30 +1104,40 @@ static int ov13858_set_ctrl(struct v4l2_ctrl *ctrl)",
+        "@@ -1273,78 +1154,254 @@ static const struct v4l2_ctrl_ops ov13858_ctrl_ops = {",
+        "@@ -1357,8 +1414,6 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,",
+        "@@ -1367,7 +1422,7 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,",
+        "@@ -1395,119 +1450,89 @@ ov13858_set_pad_format(struct v4l2_subdev *sd,",
+        "@@ -1519,14 +1544,17 @@ static const struct v4l2_subdev_core_ops ov13858_core_ops = {",
+        "@@ -1545,121 +1573,94 @@ static const struct media_entity_operations ov13858_subdev_entity_ops = {",
+        "@@ -1667,13 +1668,13 @@ static int ov13858_probe(struct i2c_client *client)",
+        "@@ -1681,11 +1682,27 @@ static int ov13858_probe(struct i2c_client *client)",
+        "@@ -1693,7 +1710,7 @@ static int ov13858_probe(struct i2c_client *client)",
+        "@@ -1710,41 +1727,43 @@ static int ov13858_probe(struct i2c_client *client)",
+        "@@ -1753,6 +1772,13 @@ static const struct i2c_device_id ov13858_id_table[] = {",
+        "@@ -1765,7 +1791,9 @@ MODULE_DEVICE_TABLE(acpi, ov13858_acpi_ids);"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/Kconfig",
+      "reference_postimage_sha256": "925fc97695e9b78b77f68c9ac59903312271f3d681f5e6b4ed1bc33645a255e5",
+      "upstream_sha256": "791a5ba476d8f423bcba4e9bfb3dcb3d41c13a04dd734cd9435b28694921d9d6",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -7,3 +7,4 @@ config VIDEO_QCOM_CAMSS"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss-csiphy-3ph-1-0.c",
+      "reference_postimage_sha256": "18e4c9aa3401c313a432d75e4d1022eff62eade7c69d1a3fddaa9d061174a422",
+      "upstream_sha256": "7b1fc8f45d02bd861455ab90ca509e3a688e1714290121e6f7319c8a10091d71",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -1141,6 +1141,7 @@ static bool csiphy_is_gen2(u32 version)",
+        "@@ -1240,6 +1241,7 @@ static int csiphy_init(struct csiphy_device *csiphy)"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss-csiphy.c",
+      "reference_postimage_sha256": "01653723f17f29b340c4e6dbf3302c1f7940a461d900d789928e0a34a3e45329",
+      "upstream_sha256": "9694bc604c745f17ebe7962752af510b3657030560b3597aabdde2c970da6eab",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -7,12 +7,14 @@",
+        "@@ -131,10 +133,10 @@ static u8 csiphy_get_bpp(const struct csiphy_format_info *formats,",
+        "@@ -200,7 +202,7 @@ static int csiphy_set_clock_rates(struct csiphy_device *csiphy)",
+        "@@ -219,7 +221,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)",
+        "@@ -254,7 +256,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)",
+        "@@ -262,7 +264,7 @@ static int csiphy_set_power(struct v4l2_subdev *sd, int on)",
+        "@@ -306,11 +308,89 @@ static int csiphy_stream_on(struct csiphy_device *csiphy)",
+        "@@ -572,16 +652,16 @@ csiphy_match_clock_name(const char *clock_name, const char *format, ...)",
+        "@@ -709,6 +789,60 @@ int msm_csiphy_subdev_init(struct camss *camss,",
+        "@@ -743,8 +877,12 @@ static int csiphy_link_setup(struct media_entity *entity,",
+        "@@ -758,8 +896,13 @@ static const struct v4l2_subdev_pad_ops csiphy_pad_ops = {",
+        "@@ -788,7 +931,11 @@ int msm_csiphy_register_entity(struct csiphy_device *csiphy,",
+        "@@ -828,6 +975,8 @@ int msm_csiphy_register_entity(struct csiphy_device *csiphy,"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss-csiphy.h",
+      "reference_postimage_sha256": "62395f1bf43ecb50d6bd9c474fd0c87dc022aea3daac404bde19b405333882df",
+      "upstream_sha256": "b07b8ac6e5911c4d8a7f35e5a4937e4735d1845aca22622898cbab910cdbe51a",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -12,6 +12,7 @@",
+        "@@ -97,6 +98,7 @@ struct csiphy_device_regs {",
+        "@@ -104,6 +106,7 @@ struct csiphy_device {",
+        "@@ -118,6 +121,10 @@ struct csiphy_device {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss-vfe.c",
+      "reference_postimage_sha256": "820ab0f9309d3c2b66cd842761b69ab7a455c2f0c86eaed39fa24f77d46cb85e",
+      "upstream_sha256": "b524f19641f85c255fcd80349172f1581df1b9a478d3ae78eb5ca0d44cd166af",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -354,6 +354,7 @@ static u32 vfe_src_pad_code(struct vfe_line *line, u32 sink_code,",
+        "@@ -2014,6 +2015,7 @@ static int vfe_bpl_align_rdi(struct vfe_device *vfe)"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss.c",
+      "reference_postimage_sha256": "5e069f06127b5501664646baa48eff24e451873d4a316c4275284c6365cbc372",
+      "upstream_sha256": "287ebdd3f21862358be76150915339ac3598fbeb7552d7d1731b9127e5720b34",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -16,6 +16,7 @@",
+        "@@ -4190,15 +4191,6 @@ static const struct resources_icc icc_res_sa8775p[] = {",
+        "@@ -4207,15 +4199,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {",
+        "@@ -4224,15 +4207,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {",
+        "@@ -4241,15 +4215,6 @@ static const struct camss_subdev_resources csiphy_res_x1e80100[] = {",
+        "@@ -4536,6 +4501,98 @@ static const struct resources_wrapper csid_wrapper_res_x1e80100 = {",
+        "@@ -4793,14 +4850,51 @@ static int camss_parse_endpoint_node(struct device *dev,",
+        "@@ -4832,15 +4926,26 @@ static int camss_init_subdevices(struct camss *camss)",
+        "@@ -4930,6 +5035,9 @@ static int camss_link_entities(struct camss *camss)",
+        "@@ -5056,6 +5164,9 @@ static int camss_register_entities(struct camss *camss)",
+        "@@ -5131,8 +5242,10 @@ static int camss_register_entities(struct camss *camss)",
+        "@@ -5147,8 +5260,10 @@ static void camss_unregister_entities(struct camss *camss)",
+        "@@ -5362,6 +5477,8 @@ static int camss_probe(struct platform_device *pdev)",
+        "@@ -5509,6 +5626,7 @@ static void camss_remove(struct platform_device *pdev)",
+        "@@ -5520,6 +5638,7 @@ static const struct camss_resources msm8916_resources = {",
+        "@@ -5531,6 +5650,7 @@ static const struct camss_resources msm8939_resources = {",
+        "@@ -5544,6 +5664,7 @@ static const struct camss_resources msm8953_resources = {",
+        "@@ -5555,6 +5676,7 @@ static const struct camss_resources msm8996_resources = {",
+        "@@ -5568,6 +5690,7 @@ static const struct camss_resources qcm2290_resources = {",
+        "@@ -5584,6 +5707,7 @@ static const struct camss_resources qcs8300_resources = {",
+        "@@ -5599,6 +5723,7 @@ static const struct camss_resources sa8775p_resources = {",
+        "@@ -5610,6 +5735,7 @@ static const struct camss_resources sdm660_resources = {",
+        "@@ -5621,6 +5747,7 @@ static const struct camss_resources sdm670_resources = {",
+        "@@ -5632,6 +5759,7 @@ static const struct camss_resources sdm845_resources = {",
+        "@@ -5658,6 +5786,7 @@ static const struct camss_resources sm6350_resources = {",
+        "@@ -5671,6 +5800,7 @@ static const struct camss_resources sm8250_resources = {",
+        "@@ -5685,6 +5815,7 @@ static const struct camss_resources sc8280xp_resources = {",
+        "@@ -5698,6 +5829,7 @@ static const struct camss_resources sc7280_resources = {",
+        "@@ -5712,6 +5844,7 @@ static const struct camss_resources sm8550_resources = {",
+        "@@ -5739,6 +5872,20 @@ static const struct camss_resources x1e80100_resources = {",
+        "@@ -5758,6 +5905,7 @@ static const struct of_device_id camss_dt_match[] = {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/media/platform/qcom/camss/camss.h",
+      "reference_postimage_sha256": "16dd5f17010daba2efef6fa5abe5fa24624a37c1ae55c447c107e488c714799c",
+      "upstream_sha256": "a3e22475629b64692697f99fa243c5dea3e3635d833f561b168c16d63c1dae40",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -97,6 +97,7 @@ enum camss_version {",
+        "@@ -107,6 +108,7 @@ enum icc_count {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/phy/qualcomm/Kconfig",
+      "reference_postimage_sha256": "b5af18abcd9cdd1869fa71db37c36e77459fee1b56911cb499fc744d91d1e901",
+      "upstream_sha256": "178afd6f2a550a89585217c2ec236a44ea566b35dcd04d05e8c5a1f0c8213f5b",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -28,6 +28,20 @@ config PHY_QCOM_EDP"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/phy/qualcomm/Makefile",
+      "reference_postimage_sha256": "1295f98d87cb0624d2f943177a8dc50bb9c8f5101aa35d75bf13fb4882c297f6",
+      "upstream_sha256": "9bc9c909f2dab396c898cbf44e0011ec2e9b2d8fb7b771f3ec15fdfe9662405d",
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -6,6 +6,11 @@ obj-$(CONFIG_PHY_QCOM_IPQ4019_USB)\t+= phy-qcom-ipq4019-usb.o"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/platform/surface/aggregator/controller.c",
+      "reference_postimage_sha256": "54d0c2ffbb0c093ed788224d03575a9f2a0dcf1389f8bccf1c69d6416e8614a0",
+      "upstream_sha256": "0a3fc02a886fe1813027ef5e7db1424983efc0ccdb092700447852706a5377b7",
+      "disposition": "platform profile: reference suspend workaround narrowed to SP12 only",
+      "hunks": [
+        "@@ -1155,7 +1155,7 @@ static int ssam_controller_caps_load_from_of(struct device *dev, struct ssam_con"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/platform/surface/surface_aggregator_registry.c",
+      "reference_postimage_sha256": "cd495aaf30dc1e7dc9033e89cd9d59c8772dbc08a6e91f4b2a2872d6da730254",
+      "upstream_sha256": "4c022cc1481ecc49bd4749c7974376774e9258e195ba95c11af7293d1b7b54a4",
+      "disposition": "platform profile: reference RTC source and SP12 software-node registration; upstream SAM registration retained",
+      "hunks": [
+        "@@ -51,6 +51,12 @@ static const struct software_node ssam_node_hub_base = {",
+        "@@ -423,6 +429,7 @@ static const struct software_node *ssam_node_group_sp11[] = {"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/rtc/Kconfig",
+      "reference_postimage_sha256": "1cade00be81906fa252811609eecb20e698132f0c5fb0ad24f1e2bfbe60fd7a0",
+      "upstream_sha256": "7600a842173b1a4146a2ececb3bf99d254f8f87d1b33e946e59ad9fd88a1b31e",
+      "disposition": "platform profile: reference RTC source and SP12 software-node registration; upstream SAM registration retained",
+      "hunks": [
+        "@@ -1425,6 +1425,13 @@ config RTC_DRV_NTXEC"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/rtc/Makefile",
+      "reference_postimage_sha256": "275514e59491f1322a51a7751d884d7ed6f6b0224e9938eaee12faa79c9b3940",
+      "upstream_sha256": "5f5fd1d571d29cb50d2af3c5a2f59e074a3a19449f7aea42296d8846ed127707",
+      "disposition": "platform profile: reference RTC source and SP12 software-node registration; upstream SAM registration retained",
+      "hunks": [
+        "@@ -185,6 +185,7 @@ obj-$(CONFIG_RTC_DRV_SUN4V)\t+= rtc-sun4v.o"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dts",
+      "reference_postimage_sha256": "327cbdc0b44f93b8d8e50b091fcafc8fc44230d14de042d210622892c10f2192",
+      "upstream_sha256": "52f78a27a3db5fc5aae33a4ffdc030f276bf5856a83fcf81f4a3d8ab1363f4b7",
+      "disposition": "board: upstream baseline plus platform volume/DP-audio/charge changes; camera resources staged disabled in camera profile",
+      "hunks": [
+        "@@ -0,0 +1,1553 @@"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2-3ph-dphy.c",
+      "reference_postimage_sha256": "978a76811569ff34534788c58bbbf1ae19fbeccd23cde78e59a08e929d7fa095",
+      "upstream_sha256": null,
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -0,0 +1,386 @@"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2-core.c",
+      "reference_postimage_sha256": "294f31fb260fbf7564c4075b9ae4742e409a8fc71a218123c4119760ec433780",
+      "upstream_sha256": null,
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -0,0 +1,446 @@"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/phy/qualcomm/phy-qcom-mipi-csi2.h",
+      "reference_postimage_sha256": "75b9855d7eec8935ff34c4a4214083ae2e1c1b0c46c4d0fb50f12b50dbd7b8a2",
+      "upstream_sha256": null,
+      "disposition": "camera profile: three-way reconciled reference intent retaining upstream changes; CAMCC retained upstream; runtime camera nodes disabled",
+      "hunks": [
+        "@@ -0,0 +1,97 @@"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    },
+    {
+      "path": "drivers/rtc/rtc-surface.c",
+      "reference_postimage_sha256": "fcf2ca2a66f2ebd3710bdb1debc5513904018e0472c07fe115d69bbf0739c079",
+      "upstream_sha256": null,
+      "disposition": "platform profile: reference RTC source and SP12 software-node registration; upstream SAM registration retained",
+      "hunks": [
+        "@@ -0,0 +1,129 @@"
+      ],
+      "status": "source disposition reviewed; compile/DT results recorded separately; hardware validation pending"
+    }
+  ]
+}

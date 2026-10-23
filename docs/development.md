@@ -8,10 +8,14 @@ guide. They are audit references, not extra installation paths.
 `scripts/build-fallback-loader` builds an ARM64 `BOOTAA64.EFI` without mounting
 or changing an ESP. Its embedded GRUB configuration searches FAT filesystems for
 `/sp12/SP12BOOT`, then loads fixed payload names from that filesystem.
+This example derives the UUID of the currently running installed root; use the
+target workflow below when operating from a live USB.
 
 ```bash
+ROOT_UUID=$(findmnt -rn -o UUID --target /)
+test -n "$ROOT_UUID" || exit 1
 scripts/build-fallback-loader \
-  --root-uuid YOUR-LINUX-ROOT-UUID \
+  --root-uuid "$ROOT_UUID" \
   --output ./BOOTAA64.EFI
 ```
 
@@ -27,11 +31,17 @@ From the customized live installer, after Ubuntu mounts `/target` and
 `/target/boot/efi`, inspect and preview:
 
 ```bash
+set -- /target/boot/vmlinuz-*
+if test "$#" -ne 1 || ! test -f "$1"; then
+    printf '%s\n' 'STOP: exactly one installed target kernel is required.' >&2
+    exit 1
+fi
+KVER=${1##*/vmlinuz-}
 scripts/inspect-install-target \
   --target /target \
-  --kernel-release YOUR_EXACT_KERNEL_RELEASE
+  --kernel-release "$KVER"
 scripts/install-fallback-target \
-  --kernel-release YOUR_EXACT_KERNEL_RELEASE \
+  --kernel-release "$KVER" \
   --dtb-source /cdrom/casper/x1p42100-microsoft-sp12in.dtb
 ```
 
@@ -57,9 +67,17 @@ KVER=7.2.0-rc7-sp12-extra-camera
 DTB=/boot/dtb-7.2.0-rc7-sp12-extra-camera
 ```
 
-It derives exact kernel/initramfs paths from `KVER`, validates sources, remounts
-the ESP read-write, stages `.new` files, compares them, atomically renames them,
-and restores read-only mode through a trap. Preview installation:
+It derives exact kernel/initramfs paths from `KVER` and validates sources.
+Identical payloads are skipped. Before remounting read-write, it rejects existing
+`.new` files and checks FAT-rounded space for changed files plus a 1 MiB margin.
+It stages only changed files, compares them, renames them into place and restores
+read-only mode through a trap. It keeps temporary rollback copies on the Linux
+filesystem and restores promoted files on handled failures, retaining those
+copies if restoration fails. Failed attempts remove only their own staging
+files. A shared lock excludes concurrent sync, cleanup, recovery and fallback
+installation. The three-file switch is not atomic across power loss; retain an
+independent recovery set. See [ESP maintenance](maintenance.md#check-esp-space-before-updates) for
+reporting and narrowly scoped stale-file cleanup. Preview installation:
 
 ```bash
 scripts/install-boot-sync \

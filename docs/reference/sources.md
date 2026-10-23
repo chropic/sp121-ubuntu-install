@@ -16,7 +16,7 @@ Release manifests will pin exact commits, hashes, and package versions.
 
 Machine-readable support-source pins, tested output hashes, installation
 allowlists, and the no-redistribution policy are in
-[`firmware/sources.yaml`](firmware/sources.yaml).
+[`firmware/sources.yaml`](../../firmware/sources.yaml).
 
 ## Patch policy
 

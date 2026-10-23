@@ -1,4 +1,18 @@
-# SP12 kernel
+# Kernel builds
+
+Choose a base explicitly; the default remains the historical 7.2 reference.
+Build tools prepare and package sources but never install the resulting kernel.
+
+| Kernel | Entry point | Status |
+|---|---|---|
+| Linux 7.3 | [Port guide](ports/v7.3/README.md) | Platform boot verified; both profiles build; regression and rollback testing pending |
+| Linux 7.2-rc7 | Recipe below | Historical machine-tested reference and default reproduction input |
+
+The 7.3 `platform` profile carries the reviewed board/RTC/power additions. The
+separate `camera` profile also compiles the reconciled media stack with camera
+runtime nodes disabled. See the port guide for exact evidence and build commands.
+
+## Reproduce the 7.2 reference
 
 The tested release is based on Linux `v7.2-rc7`, commit
 `db2ddb87143519e20a95aa36c60b36107b736a58`.
@@ -19,17 +33,20 @@ to the metadata in the vendor patches and their upstream submissions.
 
 ## Prepare and build
 
-Start with a clean checkout of the exact base, then preview:
+From the repository root, create a clean checkout of the exact base and preview:
 
 ```bash
-kernel/prepare-tree --source /path/to/linux-v7.2-rc7
+mkdir -p build
+git clone --depth 1 --branch v7.2-rc7 --single-branch \
+  https://github.com/torvalds/linux.git build/linux-v7.2-rc7
+kernel/prepare-tree --source build/linux-v7.2-rc7
 ```
 
 Apply only after reviewing the base commit and snapshot hash:
 
 ```bash
-kernel/prepare-tree --source /path/to/linux-v7.2-rc7 --apply
-kernel/build-packages --source /path/to/linux-v7.2-rc7
+kernel/prepare-tree --source build/linux-v7.2-rc7 --apply
+kernel/build-packages --source build/linux-v7.2-rc7
 ```
 
 Compilation is parallel; Debian packaging is deliberately serial to avoid the

@@ -19,6 +19,10 @@ sudo scripts/sp12-verify
 ```
 
 Keep a separately named recovery payload until all hardware checks pass.
+The helper skips identical files, checks available staging space before writes,
+and refuses preexisting `.new` files. Inspect the ESP with
+`/usr/local/sbin/sp12-esp-space`; see [ESP maintenance](../docs/maintenance.md#check-esp-space-before-updates)
+before using its explicit stale-staging cleanup.
 
 ## Power policy
 

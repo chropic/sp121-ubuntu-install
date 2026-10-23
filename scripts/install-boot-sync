@@ -62,6 +62,8 @@ install -d -m 0755 /etc/sp12-linux /usr/local/sbin \
     /etc/kernel/postinst.d /etc/initramfs/post-update.d
 install -m 0755 "$repo_root/system/usr-local-sbin/sp12-sync-boot" \
     /usr/local/sbin/sp12-sync-boot
+install -m 0755 "$repo_root/system/usr-local-sbin/sp12-esp-space" \
+    /usr/local/sbin/sp12-esp-space
 install -m 0755 "$repo_root/system/etc/kernel/postinst.d/zzzz-sp12-sync" \
     /etc/kernel/postinst.d/zzzz-sp12-sync
 install -m 0755 "$repo_root/system/etc/initramfs/post-update.d/zzzz-sp12-sync" \

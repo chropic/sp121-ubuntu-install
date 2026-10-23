@@ -22,7 +22,7 @@ sudo scripts/install-platform-files --source /opt/surface-pro-12-linux
 That command does not write without `--apply`. Read its output, confirm that the
 checkout came from a source you trust, and review any applicable third-party
 licence terms before using the apply option described in
-the [first-boot section of the user guide](../GUIDE.md#5-configure-the-first-boot).
+the [first-boot section of the user guide](../docs/first-boot.md).
 
 Wi-Fi board extraction, AudioReach topology generation, and the ALSA UCM routing
 fix are separate, checksum-verifying steps. This prevents a broad firmware copy

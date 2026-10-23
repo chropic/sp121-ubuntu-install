@@ -48,6 +48,8 @@ if [ "$apply" -ne 1 ]; then
     exit 0
 fi
 [ "$(id -u)" -eq 0 ] || { printf -- '--apply requires root\n' >&2; exit 1; }
+exec 9>/run/lock/sp12-boot.lock
+flock -n 9 || { printf 'Another boot operation is running\n' >&2; exit 1; }
 
 mountpoint -q "$esp" || mount "$esp"
 mount -o remount,rw "$esp"

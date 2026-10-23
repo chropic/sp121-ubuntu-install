@@ -1,0 +1,204 @@
+{
+  "schema": 1,
+  "status": "built-not-hardware-tested",
+  "profile": "camera",
+  "base_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "source_tree": "cfc0b9162f51621447d4cab829cf46405e709215",
+  "kernel_release": "7.3.0-sp12-v7.3-camera",
+  "build_timestamp": "2026-10-23 01:41:30 +0000",
+  "package_version": "7.3-1~sp12candidate1",
+  "manifest_sha256": "8ce932ee1e8a4efdc672d81826684f4e3821e3e86ac97314e989cad49b7d364a",
+  "inputs": [
+    {
+      "path": "kernel/patches/vendor/mias/surface/0008-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-gpios-vol.patch",
+      "sha256": "f55b28fddb3ba849d13984f1742e3894ea12440c7519cd6b92ae52aabaebff77",
+      "id": "volume-gpio-correction",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "provenance_note": "Original file has no author, commit message, or DCO trailers; retained byte-for-byte. Attribution must be resolved before publication.",
+      "dependencies": [],
+      "purpose": "Match reference volume-up GPIO6 and volume-down GPIO8, including pinctrl.",
+      "hardware_test": "Not tested on 7.3",
+      "publication_ready": false
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0002-rtc-surface-port-reference-driver.patch",
+      "sha256": "2e8c5b1bfe1bd305d395b5a6309e9ae99727e0f06f311dfe16fd0cbc71468348",
+      "id": "surface-rtc-driver",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0004-rtc-add-sam-driver.patch"
+      ],
+      "purpose": "Port byte-identical reference SSAM RTC source; complete Kconfig help.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0003-surface-register-sp12-rtc.patch",
+      "sha256": "e4fe9aa0e60dd410afb67eca5d6296d8abb1b6c1a2e8e97ce82ded9331ed0af2",
+      "id": "sp12-rtc-registration",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0005-platform-surface-SAM-add-rtc-for-Surface-Pro-12in.patch"
+      ],
+      "purpose": "Register RTC software node for SP12 only.",
+      "dependencies": [
+        "surface-rtc-driver"
+      ],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0004-surface-scope-sp12-suspend-workaround.patch",
+      "sha256": "47ba490df51449fc08376257cab855e63be3c0fe6ddd1b5bfdd1c00bafeac214",
+      "id": "sp12-suspend-quirk",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0006-sam-aggregator-add-suspend-workaround.patch"
+      ],
+      "purpose": "Scope the reference D3-handle workaround to the SP12 root compatible.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0010-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-displayport-audio.patch",
+      "sha256": "4f0f995982af689c51e49c8c677ac500e6b2ad4cd2b0802dc8cab89240a6bd86",
+      "id": "displayport-audio",
+      "purpose": "Restore reference DisplayPort audio DAI links; runtime unproven.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0011-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-charge-limit-nvmem.patch",
+      "sha256": "bdbf1db73128888efd80904a6b1cd8180df84392d9e28dd8bad8e2d22559ce87",
+      "id": "charge-limit-nvmem",
+      "purpose": "Restore reference PMIC GLINK NVMEM cells; interfaces not written during validation.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0007-phy-qcom-port-reference-csi2.patch",
+      "sha256": "51af0f57d4e64dc10c567e905b265b6805006356614d15a81a0cd144e6086bbf",
+      "id": "camera-phy",
+      "dependencies": [],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0008-media-camss-port-reference-pipeline.patch",
+      "sha256": "7b86864b91cbafc4d8fd078a02fe1e3b7021c980bd12e518b2e41b5fa6ecc769",
+      "id": "camera-camss",
+      "dependencies": [],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0009-arm64-dts-port-reference-camera-soc-nodes.patch",
+      "sha256": "9ada08ab4fff3ef0713919fb836535582fe0a9d7c3c2942184342262f0171fd5",
+      "id": "camera-soc",
+      "dependencies": [],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0010-media-port-reconciled-reference-sensors.patch",
+      "sha256": "1864a60fe7782c720f8839679635da2f83274354f4e9350a7e117f76b6e10ce6",
+      "id": "camera-sensors",
+      "dependencies": [],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0011-arm64-dts-stage-sp12-camera-resources.patch",
+      "sha256": "832f981961ec015615f6ed641f7ff87f7e4a51312f574b1d1feaf81cc262eee5",
+      "id": "camera-board-staged",
+      "dependencies": [
+        "camera-phy",
+        "camera-camss",
+        "camera-soc",
+        "camera-sensors"
+      ],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0012-camera-bindings.patch",
+      "sha256": "68fd030be106f91ad9ca6e582e4d70a3ef7dd422437faa645f5266121a294b6f",
+      "id": "camera-bindings",
+      "dependencies": [],
+      "publication_ready": false,
+      "origin": "Reconciled tested aggregate; original vendor corpus preserved",
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0013-media-drop-unused-reference-locals.patch",
+      "id": "camera-compiler-cleanup",
+      "dependencies": [
+        "camera-camss",
+        "camera-sensors"
+      ],
+      "publication_ready": false,
+      "sha256": "bb00956c5d246d3736437aab6516e88eecdc7d4de9df9ff79fffdb1d764aa717"
+    },
+    {
+      "path": "kernel/config/config-7.3-sp12-camera",
+      "sha256": "23cd55b3ca3df517c027aac0b2198fff2026a347d7d34170ebbef6c6fcc7d057"
+    }
+  ],
+  "compiler": "aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "linker": "GNU ld (GNU Binutils for Ubuntu) 2.46",
+  "outputs": [
+    {
+      "path": "Image",
+      "sha256": "b2d60ee6cee76970d1c85dc969abd82a5751f8d58984f0a966b2c840a45dd08e"
+    },
+    {
+      "path": "x1p42100-microsoft-sp12in.dtb",
+      "sha256": "73da400686e7769c7ae980e4dad0645942c62ee6a697b08d8a6cebbd94246d19"
+    },
+    {
+      "path": ".config",
+      "sha256": "23cd55b3ca3df517c027aac0b2198fff2026a347d7d34170ebbef6c6fcc7d057"
+    },
+    {
+      "path": "modules.order",
+      "sha256": "0c8b9563e83472c58060f65e7f2ec8089f3a3e4dba22001b31acbd301116912e"
+    },
+    {
+      "path": "Module.symvers",
+      "sha256": "a77369ebbf4ccc733f793d123355aaf5e8b26830cf9fa87fae9efe20172ebfbd"
+    },
+    {
+      "path": "System.map",
+      "sha256": "57b98d877116cdafbfa1966cca3532efaf22e2da435cf3d425359ffef8839cde"
+    },
+    {
+      "path": "vmlinuz.efi",
+      "sha256": "7752b28fdd03a60ec0bdfdc13e3191f1f87846b2c310c48887b296293df535fc"
+    }
+  ],
+  "remaining": [
+    "package content/target installation inspection",
+    "physical boot and rollback",
+    "hardware feature tests",
+    "installer integration",
+    "publication provenance"
+  ],
+  "cross_headers": "not packaged; build and test headers natively with the same Module.symvers"
+}

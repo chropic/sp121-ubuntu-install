@@ -21,9 +21,15 @@ jobs:
         run: scripts/check-repository
 
       - name: Lint shell scripts
-        run: shellcheck scripts/* tests/*
+        run: >-
+          shellcheck scripts/* tests/* kernel/prepare-tree kernel/build-packages
+          system/usr-local-sbin/* system/etc/kernel/postinst.d/*
+          system/etc/initramfs/post-update.d/*
 
       - name: Reject whitespace errors
+        # Preserve byte-pinned CRLF manifests and verbatim research/patch inputs.
         run: >-
-          git show --check --format= --
-          . ':(exclude)kernel/patches/**'
+          git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+          show --check --format= -- . ':(exclude)kernel/patches/**'
+          ':(exclude)kernel/ports/*/patches/**'
+          ':(exclude)kernel/ports/*/research/**'

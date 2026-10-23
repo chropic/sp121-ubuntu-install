@@ -1,0 +1,211 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
+python3 - "$repo_root" <<'PY'
+from pathlib import Path
+import fcntl
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+repo = Path(sys.argv[1])
+
+class BootSpaceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.esp = self.root/'esp'
+        self.dest = self.esp/'sp12'
+        self.dest.mkdir(parents=True)
+        self.boot = self.root/'boot'
+        self.boot.mkdir()
+        self.bin = self.root/'bin'
+        self.bin.mkdir()
+        self.log = self.root/'mount-log'
+        self.lock = self.root/'boot.lock'
+        self.sources = {'vmlinuz':self.boot/'vmlinuz-7.3-test',
+                        'initrd.img':self.boot/'initrd.img-7.3-test', 'dtb':self.boot/'dtb'}
+        for name, path in self.sources.items():
+            path.write_bytes(('new-'+name).encode())
+            (self.dest/name).write_bytes(('old-'+name).encode())
+        (self.dest/'SP12BOOT').touch()
+        self.before = self.snapshot()
+        config = self.root/'boot.conf'
+        config.write_text('KVER=7.3-test\nDTB='+str(self.sources['dtb'])+'\n')
+        self.programs = {}
+        for name in ['sp12-sync-boot','sp12-esp-space']:
+            text = (repo/'system/usr-local-sbin'/name).read_text()
+            text = text.replace('config=/etc/sp12-linux/boot.conf', 'config='+str(config))
+            text = text.replace('esp=/boot/efi', 'esp='+str(self.esp))
+            text = text.replace('kernel=/boot/vmlinuz-$kver', 'kernel='+str(self.sources['vmlinuz']))
+            text = text.replace('initrd=/boot/initrd.img-$kver', 'initrd='+str(self.sources['initrd.img']))
+            text = text.replace('    /boot/*) ;;', '    '+str(self.boot)+'/*) ;;')
+            text = text.replace('/run/lock/sp12-boot.lock', str(self.lock))
+            text = text.replace('/var/tmp/sp12-sync-boot.XXXXXX', str(self.root/'rollback.XXXXXX'))
+            self.programs[name] = self.root/name
+            self.programs[name].write_text(text)
+        self.command('id', "printf '0\\n'")
+        self.command('mountpoint', 'exit 0')
+        self.command('mount', 'printf \'%s\\n\' "$*" >> "$SP12_TEST_MOUNT_LOG"')
+        self.command('sync', 'exit 0')
+        self.command('df', 'printf \'Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999 1 %s 0%% /esp\\n\' "$SP12_TEST_FREE_KIB"')
+        self.command('cp', '''
+for argument do destination=$argument; done
+printf '%s\n' "$destination" >> "$SP12_TEST_COPY_LOG"
+if [ "${SP12_TEST_FAIL_RESTORE:-}" = "$destination" ]; then exit 1; fi
+if [ "${SP12_TEST_CORRUPT_COPY:-}" = "$(basename "$destination")" ]; then
+    printf corrupt > "$destination"
+    exit 0
+fi
+if [ "${SP12_TEST_FAIL_COPY:-}" = "$(basename "$destination")" ]; then
+    printf partial > "$destination"
+    exit 1
+fi
+exec /bin/cp "$@"
+''')
+        self.command('mv', '''
+for argument do destination=$argument; done
+if [ "${SP12_TEST_FAIL_MOVE:-}" = "$(basename "$destination")" ]; then exit 1; fi
+exec /bin/mv "$@"
+''')
+        self.env = dict(os.environ, PATH=str(self.bin)+':'+os.environ['PATH'],
+                        SP12_TEST_FREE_KIB='999999',SP12_TEST_MOUNT_LOG=str(self.log),
+                        SP12_TEST_COPY_LOG=str(self.root/'copy-log'))
+
+    def command(self, name, body):
+        path = self.bin/name
+        path.write_text('#!/bin/sh\nset -eu\n'+body+'\n')
+        path.chmod(0o755)
+
+    def snapshot(self):
+        return {name:(self.dest/name).read_bytes() for name in self.sources}
+
+    def run_tool(self, tool='sp12-sync-boot', *args):
+        return subprocess.run(['sh',str(self.programs[tool]),*args],env=self.env,
+                              capture_output=True,text=True)
+
+    def test_full_esp_refuses_before_remount_or_payload_writes(self):
+        self.env['SP12_TEST_FREE_KIB']='0'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertIn('insufficient ESP space',result.stderr)
+        self.assertEqual(self.before,self.snapshot())
+        self.assertFalse(self.log.exists())
+        self.assertFalse(list(self.dest.glob('*.new')))
+
+    def test_unchanged_full_esp_is_a_noop(self):
+        for name,path in self.sources.items(): (self.dest/name).write_bytes(path.read_bytes())
+        self.env['SP12_TEST_FREE_KIB']='0'
+        result=self.run_tool()
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertIn('already matches',result.stdout)
+        self.assertFalse(self.log.exists())
+
+    def test_only_changed_file_needs_staging_space(self):
+        for name in ['vmlinuz','dtb']: (self.dest/name).write_bytes(self.sources[name].read_bytes())
+        block=os.statvfs(self.esp).f_frsize
+        self.env['SP12_TEST_FREE_KIB']=str((1048576+block)//1024)
+        result=self.run_tool()
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual({name:path.read_bytes() for name,path in self.sources.items()},self.snapshot())
+        staged=[line for line in (self.root/'copy-log').read_text().splitlines() if line.endswith('.new')]
+        self.assertEqual([str(self.dest/'initrd.img.new')],staged)
+
+    def test_failed_copy_preserves_active_set_and_cleans_partial_staging(self):
+        self.env['SP12_TEST_FAIL_COPY']='initrd.img.new'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual(self.before,self.snapshot())
+        self.assertFalse(list(self.dest.glob('*.new')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+        self.assertFalse(list(self.root.glob('rollback.*')))
+
+    def test_failed_second_promotion_restores_first_file(self):
+        self.env['SP12_TEST_FAIL_MOVE']='initrd.img'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual(self.before,self.snapshot())
+        self.assertFalse(list(self.dest.glob('*.new')))
+        self.assertFalse(list(self.root.glob('rollback.*')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_preexisting_staging_is_not_overwritten(self):
+        stage=self.dest/'dtb.new'
+        stage.write_bytes(b'existing recovery candidate')
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertIn('existing staging file',result.stderr)
+        self.assertEqual(b'existing recovery candidate',stage.read_bytes())
+        self.assertFalse(self.log.exists())
+
+    def test_corrupt_copy_is_detected_before_promotion(self):
+        self.env['SP12_TEST_CORRUPT_COPY']='dtb.new'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual(self.before,self.snapshot())
+        self.assertFalse(list(self.dest.glob('*.new')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_failed_restoration_retains_linux_recovery_copies(self):
+        self.env['SP12_TEST_FAIL_MOVE']='initrd.img'
+        self.env['SP12_TEST_FAIL_RESTORE']=str(self.dest/'vmlinuz')
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertIn('restoration failed; retain recovery copies',result.stderr)
+        backups=list(self.root.glob('rollback.*'))
+        self.assertEqual(1,len(backups))
+        for name,content in self.before.items():
+            self.assertEqual(content,(backups[0]/name).read_bytes())
+        self.assertTrue((self.dest/'initrd.img.new').exists())
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_report_is_read_only_and_cleanup_is_narrow(self):
+        for name in self.sources: (self.dest/(name+'.new')).write_bytes(b'interrupted staging')
+        protected=[self.dest/'keep.new',self.esp/'EFI/Microsoft/boot.efi',self.esp/'sp12-recovery/vmlinuz']
+        for path in protected:
+            path.parent.mkdir(parents=True,exist_ok=True)
+            path.write_bytes(b'preserve')
+        result=self.run_tool('sp12-esp-space')
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual(4,len(list(self.dest.glob('*.new'))))
+        self.assertFalse(self.log.exists())
+        result=self.run_tool('sp12-esp-space','--apply-stale-only')
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual(self.before,self.snapshot())
+        for path in protected: self.assertEqual(b'preserve',path.read_bytes())
+        self.assertEqual([self.dest/'keep.new'],list(self.dest.glob('*.new')))
+
+    def test_cleanup_rejects_symlink_before_deleting_anything(self):
+        (self.dest/'vmlinuz.new').write_bytes(b'keep staging')
+        outside=self.root/'outside'
+        outside.write_bytes(b'keep outside')
+        (self.dest/'dtb.new').symlink_to(outside)
+        result=self.run_tool('sp12-esp-space','--apply-stale-only')
+        self.assertNotEqual(0,result.returncode)
+        self.assertTrue((self.dest/'vmlinuz.new').exists())
+        self.assertEqual(b'keep outside',outside.read_bytes())
+        self.assertFalse(self.log.exists())
+
+    def test_cleanup_refuses_incomplete_active_set(self):
+        (self.dest/'SP12BOOT').unlink()
+        (self.dest/'dtb.new').write_bytes(b'keep')
+        result=self.run_tool('sp12-esp-space','--apply-stale-only')
+        self.assertNotEqual(0,result.returncode)
+        self.assertTrue((self.dest/'dtb.new').exists())
+        self.assertFalse(self.log.exists())
+
+    def test_shared_lock_prevents_sync_and_cleanup(self):
+        with self.lock.open('w') as lock:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            for tool,args in [('sp12-sync-boot',()),('sp12-esp-space',('--apply-stale-only',))]:
+                result=self.run_tool(tool,*args)
+                self.assertNotEqual(0,result.returncode)
+                self.assertIn('operation is running',result.stderr)
+        self.assertFalse(self.log.exists())
+
+unittest.main(argv=['boot-space'])
+PY

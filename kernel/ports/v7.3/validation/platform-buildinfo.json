@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "status": "cross-built-not-hardware-tested",
+  "profile": "platform",
+  "base_commit": "c03c1a14507dfaf8b856c2608f9ac216021fc222",
+  "source_tree": "ae280a2cfb85d150e8e5b185a8e313c85ab5ec7f",
+  "kernel_release": "7.3.0-sp12-v7.3-platform",
+  "build_timestamp": "2026-10-22 22:05:33 +0000",
+  "package_version": "7.3-1~sp12candidate1",
+  "manifest_sha256": "8ce932ee1e8a4efdc672d81826684f4e3821e3e86ac97314e989cad49b7d364a",
+  "inputs": [
+    {
+      "path": "kernel/patches/vendor/mias/surface/0008-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-correct-gpios-vol.patch",
+      "sha256": "f55b28fddb3ba849d13984f1742e3894ea12440c7519cd6b92ae52aabaebff77",
+      "id": "volume-gpio-correction",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "provenance_note": "Original file has no author, commit message, or DCO trailers; retained byte-for-byte. Attribution must be resolved before publication.",
+      "dependencies": [],
+      "purpose": "Match reference volume-up GPIO6 and volume-down GPIO8, including pinctrl.",
+      "hardware_test": "Not tested on 7.3",
+      "publication_ready": false
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0002-rtc-surface-port-reference-driver.patch",
+      "sha256": "2e8c5b1bfe1bd305d395b5a6309e9ae99727e0f06f311dfe16fd0cbc71468348",
+      "id": "surface-rtc-driver",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0004-rtc-add-sam-driver.patch"
+      ],
+      "purpose": "Port byte-identical reference SSAM RTC source; complete Kconfig help.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0003-surface-register-sp12-rtc.patch",
+      "sha256": "e4fe9aa0e60dd410afb67eca5d6296d8abb1b6c1a2e8e97ce82ded9331ed0af2",
+      "id": "sp12-rtc-registration",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0005-platform-surface-SAM-add-rtc-for-Surface-Pro-12in.patch"
+      ],
+      "purpose": "Register RTC software node for SP12 only.",
+      "dependencies": [
+        "surface-rtc-driver"
+      ],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/ports/v7.3/patches/0004-surface-scope-sp12-suspend-workaround.patch",
+      "sha256": "47ba490df51449fc08376257cab855e63be3c0fe6ddd1b5bfdd1c00bafeac214",
+      "id": "sp12-suspend-quirk",
+      "origin_patches": [
+        "kernel/patches/vendor/mias/surface/0006-sam-aggregator-add-suspend-workaround.patch"
+      ],
+      "purpose": "Scope the reference D3-handle workaround to the SP12 root compatible.",
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0010-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-displayport-audio.patch",
+      "sha256": "4f0f995982af689c51e49c8c677ac500e6b2ad4cd2b0802dc8cab89240a6bd86",
+      "id": "displayport-audio",
+      "purpose": "Restore reference DisplayPort audio DAI links; runtime unproven.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/patches/vendor/mias/surface/0011-arm64-dts-qcom-purwa-Microsoft-Surface-Pro-12in-add-charge-limit-nvmem.patch",
+      "sha256": "bdbf1db73128888efd80904a6b1cd8180df84392d9e28dd8bad8e2d22559ce87",
+      "id": "charge-limit-nvmem",
+      "purpose": "Restore reference PMIC GLINK NVMEM cells; interfaces not written during validation.",
+      "origin": "https://github.com/miasvanklei/Gentoo-overlay",
+      "origin_commit": "877e0707f816b83ef8ce66a23277febdc2ff6448",
+      "original_author": null,
+      "dco": null,
+      "dependencies": [],
+      "publication_ready": false,
+      "hardware_test": "not-run"
+    },
+    {
+      "path": "kernel/config/config-7.3-sp12-platform",
+      "sha256": "45e3ccb2dbfc4f9e34ab9089f3e1880651ee0b2effbf64efa8f8a250158df530"
+    }
+  ],
+  "compiler": "aarch64-linux-gnu-gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "linker": "GNU ld (GNU Binutils for Ubuntu) 2.46",
+  "outputs": [
+    {
+      "path": "Image",
+      "sha256": "8a86ede6bad8bffb918f42e03bdb59ed28452fa34996e1ff65e1f247463ff531"
+    },
+    {
+      "path": "x1p42100-microsoft-sp12in.dtb",
+      "sha256": "5690bc3a88b4ecd5d844cb8e32b4b7192f7e8665a22b6053c938b941468ccabc"
+    },
+    {
+      "path": ".config",
+      "sha256": "45e3ccb2dbfc4f9e34ab9089f3e1880651ee0b2effbf64efa8f8a250158df530"
+    },
+    {
+      "path": "modules.order",
+      "sha256": "dd954c76742f51651623e8a8d9c9df1541c8ee9aa39eda212cf574b66e961488"
+    },
+    {
+      "path": "vmlinuz.efi",
+      "sha256": "3492d2fda4f53179a54e9e1f1b43e5e5a541054355919a287d56c926cf002716"
+    },
+    {
+      "path": "Module.symvers",
+      "sha256": "a77369ebbf4ccc733f793d123355aaf5e8b26830cf9fa87fae9efe20172ebfbd"
+    }
+  ],
+  "remaining": [
+    "package content/target installation inspection",
+    "physical boot and rollback",
+    "hardware feature tests",
+    "installer integration",
+    "publication provenance"
+  ],
+  "cross_headers": "not packaged; build and test headers natively with the same Module.symvers"
+}

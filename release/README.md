@@ -18,7 +18,11 @@ been published.
 a release artifact and must not be uploaded under the current builder-only
 distribution policy.
 
-## Launch checklist
+The [Linux 7.3 kernel port](../kernel/ports/v7.3/README.md) has separate build,
+package and physical-boot evidence. Its successful kernel boot does not validate
+the ISO or the installer workflow below.
+
+## Installer release checklist
 
 Completed: the external support checkout is pinned and inspected; Canonical's
 signed checksum metadata is verified; exact ISO and installer-DTB hashes are
@@ -34,8 +38,8 @@ Before an installation-tested release:
 - [ ] Complete installation on a recoverable test device.
 - [ ] Exercise fallback installation and recovery from a deliberately broken
       primary boot path.
-- [ ] Run `scripts/sp12-verify` and the full hardware checks in `../GUIDE.md`.
-- [ ] Record every `../SUPPORT.md` item as pass or fail.
+- [ ] Run `scripts/sp12-verify` and the full hardware checks in [hardware checks](../docs/hardware-tests.md).
+- [ ] Record every [support matrix](../docs/support.md) item as pass or fail.
 - [ ] Rebuild from the final tag and repeat the complete offline audit.
 - [ ] Produce signed release checksums and final build provenance.
 

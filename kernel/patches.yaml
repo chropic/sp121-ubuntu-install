@@ -2,6 +2,11 @@ schema: 1
 base_kernel: v7.2-rc7
 target_release: 7.2.0-rc7-sp12-extra-camera
 status: inventory-in-progress
+development_port:
+  base_kernel: v7.3
+  manifest: ports/v7.3/manifest.json
+  status: platform-software-validated-hardware-pending
+  default: false
 provenance:
   linux_base_commit: db2ddb87143519e20a95aa36c60b36107b736a58
   mias_overlay_commit: 877e0707f816b83ef8ce66a23277febdc2ff6448

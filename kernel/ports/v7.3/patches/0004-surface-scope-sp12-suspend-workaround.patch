@@ -1,0 +1,31 @@
+Subject: [PATCH] platform/surface: scope the SAM suspend workaround to SP12
+
+The reference surface/0006 disables D3 handle closing for every OF Surface
+device. Restrict that workaround to the Surface Pro 12in root compatible;
+retain the upstream default on all other machines and the ACPI path.
+This preserves the reference SP12 behavior pending hardware validation.
+Authorship and DCO provenance are unresolved in the vendor input.
+
+diff --git a/drivers/platform/surface/aggregator/controller.c b/drivers/platform/surface/aggregator/controller.c
+--- a/drivers/platform/surface/aggregator/controller.c
++++ b/drivers/platform/surface/aggregator/controller.c
+@@ -15,6 +15,7 @@
+ #include <linux/list.h>
+ #include <linux/lockdep.h>
+ #include <linux/mutex.h>
++#include <linux/of.h>
+ #include <linux/rculist.h>
+ #include <linux/rbtree.h>
+ #include <linux/rwsem.h>
+@@ -1156,6 +1157,11 @@
+ 	 * identical values, which makes them good defaults.
+ 	 */
+ 	caps->d3_closes_handle = true;
++
++	/* Keep the SAM handle open across suspend on Surface Pro 12in. */
++	if (of_machine_is_compatible("microsoft,surface-pro-12in"))
++		caps->d3_closes_handle = false;
++
+ 	caps->screen_on_sleep_idle_timeout = 5000;
+ 	caps->screen_off_sleep_idle_timeout = 30;
+ 	caps->ssh_buffer_size = 48;
