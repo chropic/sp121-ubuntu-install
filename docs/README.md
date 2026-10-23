@@ -11,7 +11,13 @@ source tracing.
 4. [Maintain the system](maintenance.md) — power policy, updates and ESP space.
 5. [Recover boot](recovery.md) — restore a matching kernel/initramfs/DTB set.
 
+[Release-upgrade assessment](release-upgrade.md) — Ubuntu release compatibility
+and readiness checks before upgrading the installed system.
+
 [Support matrix](support.md) · [Troubleshooting](troubleshooting/README.md)
+
+[23 October 2026 testing results](testing-2026-10-23.md) — verified boots and
+recovery, suspend findings, unresolved issues and remaining checks.
 
 ## Develop and audit
 

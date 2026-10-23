@@ -31,18 +31,16 @@ From the customized live installer, after Ubuntu mounts `/target` and
 `/target/boot/efi`, inspect and preview:
 
 ```bash
-set -- /target/boot/vmlinuz-*
-if test "$#" -ne 1 || ! test -f "$1"; then
-    printf '%s\n' 'STOP: exactly one installed target kernel is required.' >&2
-    exit 1
-fi
-KVER=${1##*/vmlinuz-}
+scripts/install-kernel-target
+# After reviewing the native target/package checks:
+sudo scripts/install-kernel-target --apply
+KVER=7.3.0-sp12-v7.3-platform
 scripts/inspect-install-target \
   --target /target \
   --kernel-release "$KVER"
 scripts/install-fallback-target \
   --kernel-release "$KVER" \
-  --dtb-source /cdrom/casper/x1p42100-microsoft-sp12in.dtb
+  --dtb-source /target/boot/dtb-$KVER
 ```
 
 The installer rejects non-separate mountpoints, non-FAT ESPs, non-Ubuntu 26.04
@@ -63,8 +61,8 @@ The installed helper reads:
 
 ```text
 /etc/sp12-linux/boot.conf
-KVER=7.2.0-rc7-sp12-extra-camera
-DTB=/boot/dtb-7.2.0-rc7-sp12-extra-camera
+KVER=7.3.0-sp12-v7.3-platform
+DTB=/boot/dtb-7.3.0-sp12-v7.3-platform
 ```
 
 It derives exact kernel/initramfs paths from `KVER` and validates sources.
@@ -81,8 +79,8 @@ reporting and narrowly scoped stale-file cleanup. Preview installation:
 
 ```bash
 scripts/install-boot-sync \
-  --kernel-release 7.2.0-rc7-sp12-extra-camera \
-  --dtb /boot/dtb-7.2.0-rc7-sp12-extra-camera
+  --kernel-release 7.3.0-sp12-v7.3-platform \
+  --dtb /boot/dtb-7.3.0-sp12-v7.3-platform
 ```
 
 Add `sudo` and `--apply` only after checking paths and hashes. Installation also

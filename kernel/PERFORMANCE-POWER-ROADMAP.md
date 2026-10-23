@@ -1,5 +1,10 @@
 # SP12 battery and performance implementation plan
 
+Current direction (2026-10-23): 7.3 platform is the sole maintained/default build
+and installed-system target. The operator canceled the proposed 7.2 rollback
+test. The original planning-state/default-preservation notes below are historical;
+see the [current handoff](../HANDOFF.md) and [testing report](../docs/testing-2026-10-23.md).
+
 ## Summary
 
 Implement the supplied roadmap in gated milestones, starting with recovery verification and measurement tooling, then isolated power-management experiments.

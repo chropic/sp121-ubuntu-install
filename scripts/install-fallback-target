@@ -3,11 +3,12 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: install-fallback-target --kernel-release RELEASE --dtb-source FILE [--apply]'
+    printf '%s\n' 'Usage: install-fallback-target [--kernel-release RELEASE] [--dtb-source FILE] [--apply]'
+    printf '%s\n' 'Defaults: 7.3 platform and its versioned DTB under /target/boot.'
     printf '%s\n' 'This command operates only on a separately mounted /target and /target/boot/efi.'
 }
 
-kver=
+kver=7.3.0-sp12-v7.3-platform
 dtb_source=
 apply=0
 while [ "$#" -gt 0 ]; do
@@ -24,6 +25,7 @@ done
 case "$kver" in
     *[!A-Za-z0-9._+~-]*) printf 'Invalid kernel release: %s\n' "$kver" >&2; exit 2 ;;
 esac
+[ -n "$dtb_source" ] || dtb_source=/target/boot/dtb-$kver
 [ -f "$dtb_source" ] || { printf 'DTB source not found: %s\n' "$dtb_source" >&2; exit 1; }
 dtb_source=$(readlink -f "$dtb_source")
 
@@ -35,6 +37,15 @@ tool_root=$target/opt/sp12-linux
 target_dtb=$target/boot/dtb-$kver
 kernel=$target/boot/vmlinuz-$kver
 initrd=$target/boot/initrd.img-$kver
+
+if [ "$kver" = 7.3.0-sp12-v7.3-platform ]; then
+    packaged_dtb=$target/usr/lib/linux-image-$kver/qcom/x1p42100-microsoft-sp12in.dtb
+    if [ ! -f "$packaged_dtb" ] || ! cmp -s "$dtb_source" "$packaged_dtb"; then
+        printf '7.3 target DTB must match its packaged DTB; run install-kernel-target first.\n' >&2
+        printf 'The stock live-bootstrap DTB is not the installed 7.3 target DTB.\n' >&2
+        exit 1
+    fi
+fi
 
 "$repo_root/scripts/inspect-install-target" --target "$target" --kernel-release "$kver"
 root_uuid=$(findmnt -n -o UUID --mountpoint "$target")

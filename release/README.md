@@ -14,9 +14,16 @@ Binary files do not belong in Git history. A future GitHub Release will contain:
 was written. It is evidence, not a promise that equivalent binaries have already
 been published.
 
-`CANDIDATE.json` records the current local image-pipeline audit. The image is not
+`CANDIDATE.json` preserves the earlier stock-live/bootstrap image-pipeline audit.
+It does not describe the new 7.3 target bundle. That historical image is not
 a release artifact and must not be uploaded under the current builder-only
 distribution policy.
+
+Linux 7.3 platform is now the sole maintained/default build and installed-system
+target. The builder requires its inspected image package and matching build
+information and embeds them under `/sp12-kernel/`. Ubuntu's stock live kernel and
+frozen bootstrap DTB are retained separately; the installed target uses the DTB
+from its 7.3 package. A complete fresh installation with this bundle is untested.
 
 The [Linux 7.3 kernel port](../kernel/ports/v7.3/README.md) has separate build,
 package and physical-boot evidence. Its successful kernel boot does not validate

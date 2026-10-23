@@ -8,7 +8,7 @@ usage() {
 
 source_dir=
 apply=0
-kernel=v7.2-rc7
+kernel=v7.3
 profile=platform
 output=
 manifest=
@@ -78,4 +78,4 @@ cp "$config" "$source_dir/.config"
 make -C "$source_dir" olddefconfig
 
 printf 'Prepared patched source tree: %s\n' "$source_dir"
-printf 'Next: kernel/build-packages --source %s\n' "$source_dir"
+printf 'Next (archived reproduction): kernel/build-packages --kernel v7.2-rc7 --source %s\n' "$source_dir"

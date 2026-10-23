@@ -8,9 +8,10 @@ project's scope.
 
 > [!IMPORTANT]
 > **Linux 7.3 boots on the test SP12.** Both kernel profiles build, but hardware
-> regression, rollback and camera capture tests remain incomplete. The installer
-> still uses its 7.2 reference inputs and has not passed a fresh end-to-end
-> installation test. No installer ISO is distributed.
+> regression and camera capture tests remain incomplete. **7.3 platform is the
+> sole maintained default**, including the installed-system target. The installer
+> bundles its verified package while retaining Ubuntu's stock live bootstrap;
+> a fresh end-to-end installation test remains pending. No ISO is distributed.
 
 ## Choose your task
 

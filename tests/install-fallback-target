@@ -30,6 +30,15 @@ tar -C "$source_tree" \
 [ ! -e "$tool_root/dist" ]
 [ ! -e "$tool_root/.cache" ]
 [ ! -e "$tool_root/pkg/cache.pyc" ]
+
+# A stock-live DTB must never silently become the default 7.3 target DTB.
+printf 'stock bootstrap DTB fixture\n' > "$test_root/bootstrap.dtb"
+if "$repo_root/scripts/install-fallback-target" --dtb-source "$test_root/bootstrap.dtb" \
+    >"$test_root/mismatch.log" 2>&1; then
+    printf 'Fallback setup accepted an unrelated DTB for the default target\n' >&2
+    exit 1
+fi
+grep -q '7.3 target DTB must match its packaged DTB' "$test_root/mismatch.log"
 grep -Fq "chown -R 0:0 \"\$tool_root\"" "$repo_root/scripts/install-fallback-target"
 grep -Fq "chmod -R u-s,g-s,go-w \"\$tool_root\"" \
     "$repo_root/scripts/install-fallback-target"

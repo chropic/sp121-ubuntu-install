@@ -88,6 +88,7 @@ if command -v python3 >/dev/null 2>&1; then
     python3 -m py_compile kernel/*.py
     python3 kernel/tests/test_candidate.py
     python3 kernel/tests/test_power_measure.py
+    python3 kernel/tests/test_installer_kernel.py
     python3 -m json.tool kernel/ports/v7.3/manifest.json >/dev/null
     python3 -m json.tool kernel/ports/v7.3/aggregate-audit.json >/dev/null
     find release -type f -name '*.json' -print | while IFS= read -r json_file; do

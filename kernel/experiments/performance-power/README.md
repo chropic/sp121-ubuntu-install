@@ -2,29 +2,37 @@
 
 The [roadmap](../../PERFORMANCE-POWER-ROADMAP.md) defines acceptance and scope.
 Use the 7.3 **platform** profile for future experiments. The historical 7.2
-inputs and the v7.3 port evidence remain immutable. Installation defaults are
-unchanged. No experimental service starts automatically.
+inputs and the v7.3 port evidence remain immutable. The user selected 7.3 platform
+as the sole maintained/default build and installed-system target. This does not
+establish hardware or energy acceptance. No experimental service starts automatically.
 
 ## Current gates
 
-See [status.json](status.json) for separately recorded software, hardware and
-energy status. The operator requested that hardware gates remain pending on
-2026-10-23. Do not deploy candidates until the complete recovery set, cold boot,
-warm reboot and restoration tests pass. Existing evidence of a prior 7.3 boot
-is historical; this session observed the running 7.2 kernel.
+The earlier repository-tooling status is in [status.json](status.json). The user
+subsequently authorized on-device testing; current results are in the
+[23 October testing report](../../../docs/testing-2026-10-23.md) and
+[sanitized on-device evidence](on-device-2026-10-23.json). These later records
+supersede the earlier observed 7.2/legacy-helper state without changing historical
+port evidence.
 
-Before package updates, use the maintained `scripts/install-boot-sync` with an
-explicit kernel release and DTB. Its dry run succeeded for the running 7.2
-selection, but the initramfs was unreadable to this user. The installed helper
-matches the legacy hash and no boot.conf is present. This issue is unresolved.
-Have the operator verify matching kernel, module tree, initramfs contents, DTB,
-active ESP and loader before applying the installer. Record hashes and exact
-release, not assumptions from symlinks. Follow [recovery](../../../docs/recovery.md)
-and [maintenance](../../../docs/maintenance.md). Verify the backup of the
-complete loader/payload/hooks/configuration set, as well as bootable external
-recovery media. Restoring the ESP payload alone is not proof of complete
-configuration restoration. Record actual test results; leave unperformed tests
-pending. No reboot, root installation or recovery restoration is automated here.
+The target now runs `7.3.0-sp12-v7.3-platform`. Maintained boot sync is installed
+with an explicit release/DTB selection. A complete recovery archive and its
+independent copy were verified; original-state restoration and a subsequent 7.2
+reboot passed. Both 7.2 and 7.3 boot/cold-boot checks passed. Recovery USB
+availability is operator-confirmed, but USB boot/restoration remains untested.
+
+Three short 7.3 deep suspend cycles resumed physically, but every cycle logged
+touchscreen and Wi-Fi PCIe errors. Completed Wi-Fi reconnects took about 16–22
+seconds. Repeated 7.3 warm reboots and remaining feature checks are pending.
+The user canceled the 7.2 rollback test and retired that maintenance line.
+No policy experiment or energy acceptance occurred. Resolve the
+remaining gates and freeze workloads before deploying performance/power candidates.
+
+Before maintenance, recheck matching kernel, module tree, initramfs contents,
+DTB, active ESP and loader; record exact releases and hashes. Follow
+[recovery](../../../docs/recovery.md) and [maintenance](../../../docs/maintenance.md).
+Keep complete loader/payload/hooks/configuration backups and external recovery
+media available. Record actual test results; leave unperformed tests pending.
 
 ## Collector
 
@@ -133,7 +141,8 @@ tables or unverified thermal limits. Keep thermal protections enabled.
 ## Alternate candidate manifests
 
 Both Python tools and shell wrappers accept an explicit optional `--manifest`.
-Shell wrappers require `--kernel v7.3`; historical defaults remain unchanged.
+Shell wrappers now default to `v7.3` and `platform`; an explicit `--kernel v7.3`
+remains valid. Archived 7.2 reproduction requires an explicit legacy selection.
 
 ```sh
 kernel/prepare-tree --kernel v7.3 --profile platform --source /path/to/linux \

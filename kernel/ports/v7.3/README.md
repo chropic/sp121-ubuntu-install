@@ -5,9 +5,15 @@
 pass. Both profiles build full images, modules and Debian packages; matching
 native ARM64 headers compile an external module, which was not loaded.
 
-This remains a development candidate. Rollback, broad hardware regression and
-camera capture tests are incomplete. The installer and default kernel
-reproduction path retain their 7.2 inputs.
+This is the sole maintained/default build and installed-system target. It remains
+a development target: broad hardware regression and camera capture tests are
+incomplete. The installer bundles the verified 7.3 platform package for its target;
+the stock Ubuntu live bootstrap is separate. A fresh installation test is pending.
+
+The [23 October on-device report](../../../docs/testing-2026-10-23.md) records
+subsequent cold boots, restoration, maintained boot-sync deployment and three
+short suspend cycles. Input/display resumed, but touchscreen and Wi-Fi PCIe
+errors remain unresolved. See that report for the current test-device state.
 
 ## Profiles and evidence
 
@@ -110,13 +116,15 @@ must not be mixed. Their config localversions are respectively
 
 ## Remaining gates
 
-The test device's legacy boot-sync helper remains pinned to 7.2. Migrate its
-configuration and helper before package/initramfs updates, which could otherwise
-restore the old ESP payload. The new repository helper has passed isolated fault
-tests; it has not been installed on that device. No further reboot or suspend
-test was performed while the operator was away.
+The original boot-smoke evidence records the earlier legacy-helper state.
+Subsequent operator-assisted testing installed the maintained helper with an
+explicit 7.3 release/DTB selection and verified original-state restoration.
+Recheck the actual helper/configuration before package or initramfs updates;
+other installations may still pin 7.2.
 
-1. Prove cold boot, warm reboot and rollback to the retained known-good payload.
+1. Complete repeated 7.3 warm reboots. Initial boot and cold boot have passed.
+   The operator canceled the proposed 7.2 rollback test; it is not a pass or a
+   remaining maintenance task for the retired line.
 2. Complete the [hardware tests](../../../docs/hardware-tests.md), including
    feature-specific RTC, volume, suspend, DP audio and charge-interface checks.
 3. Before enabling camera nodes, validate clock/power behavior, media topology,

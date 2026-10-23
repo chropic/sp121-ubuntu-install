@@ -66,7 +66,12 @@ fi
 
 case " $* " in
     *" -report_system_area plain "*)
-        printf '%s\n' 'ISO image size/512 : 8'
+        while [ "$#" -gt 0 ]; do
+            if [ "$1" = -indev ]; then image=$2; break; fi
+            shift
+        done
+        size=$(wc -c < "$image")
+        printf 'ISO image size/512 : %s\n' "$(((size + 511) / 512))"
         exit 0
         ;;
 esac
@@ -117,12 +122,18 @@ printf '%s\n' official-iso-fixture > "$base_iso"
 printf '%s\n' dtb-fixture > "$dtb"
 iso_sha256=$(sha256sum "$base_iso" | awk '{print $1}')
 dtb_sha256=$(sha256sum "$dtb" | awk '{print $1}')
+mkdir -p "$test_root/fixture"
+python3 "$repo_root/kernel/tests/test_installer_kernel.py" --fixture "$test_root/fixture"
+kernel_package=$test_root/fixture/image.deb
+kernel_build_info=$test_root/fixture/buildinfo.json
 
 PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
     --iso "$base_iso" \
     --iso-sha256 "$iso_sha256" \
     --dtb "$dtb" \
     --dtb-sha256 "$dtb_sha256" \
+    --kernel-package "$kernel_package" \
+    --kernel-build-info "$kernel_build_info" \
     --output "$output" >/dev/null
 
 [ -s "$output" ]
@@ -139,6 +150,9 @@ grep -q './sp12-buildinfo.txt' "$output"
 grep -q "base_iso_sha256=$iso_sha256" "$output.buildinfo"
 grep -q 'builder_revision=ea0f07e66beea95898d96fbeb6daa472f4735af3' "$output.buildinfo"
 grep -q 'project_archive_sha256=' "$output.buildinfo"
+grep -q 'target_kernel_release=7.3.0-sp12-v7.3-platform' "$output.buildinfo"
+grep -q './sp12-kernel/linux-image.deb' "$output"
+grep -q './sp12-kernel/inspection.json' "$output"
 (CDPATH='' cd -- "$test_root" && sha256sum -c sp12-installer.iso.sha256) >/dev/null
 
 bad_output=$test_root/bad.iso
@@ -147,11 +161,31 @@ if PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
     --iso-sha256 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
     --dtb "$dtb" \
     --dtb-sha256 "$dtb_sha256" \
+    --kernel-package "$kernel_package" \
+    --kernel-build-info "$kernel_build_info" \
     --output "$bad_output" >"$test_root/bad.log" 2>&1; then
     printf 'Builder accepted an incorrect base ISO checksum\n' >&2
     exit 1
 fi
 grep -q 'Base ISO checksum mismatch' "$test_root/bad.log"
+[ ! -e "$bad_output" ]
+
+python3 - "$kernel_build_info" <<'PY'
+import json,sys
+from pathlib import Path
+path=Path(sys.argv[1]); data=json.loads(path.read_text())
+data['kernel_release']='7.2.0-sp12-extra-camera'
+path.write_text(json.dumps(data))
+PY
+if PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+    --iso "$base_iso" --iso-sha256 "$iso_sha256" --dtb "$dtb" \
+    --dtb-sha256 "$dtb_sha256" --kernel-package "$kernel_package" \
+    --kernel-build-info "$kernel_build_info" --output "$bad_output" \
+    >"$test_root/old-kernel.log" 2>&1; then
+    printf 'Builder accepted a historical target kernel\n' >&2
+    exit 1
+fi
+grep -q 'maintained 7.3 platform' "$test_root/old-kernel.log"
 [ ! -e "$bad_output" ]
 
 printf 'Installer builder tests passed.\n'

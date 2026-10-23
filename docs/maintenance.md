@@ -78,9 +78,13 @@ media before planning partition changes; do not resize a mounted ESP. See
 
 ## Update safely
 
-For the 7.3 trial device, the legacy sync hook still pins 7.2. Migrate and verify
-the hook and its exact kernel/DTB configuration before running package or
-initramfs updates: the old hook could restore the 7.2 ESP payload.
+Verify the maintained sync hook and its exact kernel/DTB configuration before
+package or initramfs updates. Older installations may still have a legacy hook
+that pins 7.2. The [23 October testing](testing-2026-10-23.md) migrated the trial
+device and verified its explicit 7.3 selection; recheck other installations.
+
+Before changing Ubuntu releases, read the
+[release-upgrade compatibility and readiness assessment](release-upgrade.md).
 
 Ordinary package updates are permitted, but the ESP payload remains pinned:
 

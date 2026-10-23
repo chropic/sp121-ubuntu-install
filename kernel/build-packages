@@ -8,7 +8,7 @@ usage() {
 
 source_dir=
 jobs=$(nproc)
-kernel=v7.2-rc7
+kernel=v7.3
 profile=platform
 output=
 manifest=

@@ -83,7 +83,9 @@ def inspect(package, release, image_hash, config_hash, dtb_hash, symbols_hash=No
                     result["native_header_tool_count"] += 1
                 if machine is not None and machine != 183:
                     result["foreign_header_tools"].append({"path": name, "elf_machine": machine})
-    if process.wait() != 0:
+    returncode = process.wait()
+    process.stdout.close()
+    if returncode != 0:
         raise ValueError(f"Unable to read package: {package}")
     if metadata["Package"].startswith("linux-image-") and not metadata["Package"].endswith("-dbg"):
         for field in ["arm64_image_magic", "image_matches", "config_matches"]:

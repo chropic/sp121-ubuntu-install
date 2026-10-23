@@ -168,11 +168,13 @@ class PreparationTests(unittest.TestCase):
             self.prepare(apply=True)
         self.assertEqual("", self.run_git("status", "--porcelain"))
 
-    def test_wrappers_forward_manifest_and_preserve_historical_default(self):
+    def test_wrappers_default_to_7_3_and_keep_legacy_explicit(self):
         for wrapper in ["prepare-tree", "build-packages"]:
             script = candidate.ROOT / "kernel" / wrapper
             command = [str(script), "--source", str(self.source), "--manifest", "/nonexistent-sp12-manifest"]
-            old = subprocess.run(command, text=True, capture_output=True)
+            default = subprocess.run(command, text=True, capture_output=True)
+            self.assertIn("/nonexistent-sp12-manifest", default.stderr)
+            old = subprocess.run(command + ["--kernel", "v7.2-rc7"], text=True, capture_output=True)
             self.assertIn("requires --kernel v7.3", old.stderr)
             new = subprocess.run(command + ["--kernel", "v7.3"], text=True, capture_output=True)
             self.assertIn("/nonexistent-sp12-manifest", new.stderr)

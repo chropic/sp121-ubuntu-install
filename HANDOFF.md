@@ -1,25 +1,43 @@
 # Handoff: SP12 7.3 improvements
 
 Recorded 2026-10-23. Repository: `chropic/sp121-ubuntu-install`.
-Continue on branch `7.3-improvements`; implementation commit: `6afb21f`.
-The branch was created from `main` at `dab1a4b` and pushed to origin.
+Continue on `main`; the default-target migration was tested from base `babd4aa`.
+The tooling implementation was recorded at `6afb21f`; the branch began at
+`dab1a4b` on `main`.
+
+**Current testing:** the target runs `7.3.0-sp12-v7.3-platform`. Read the
+[human testing report](docs/testing-2026-10-23.md) and
+[sanitized evidence](kernel/experiments/performance-power/on-device-2026-10-23.json)
+for verified results, unresolved suspend errors and remaining work.
 
 ## User direction and scope
 
 The user supplied the [battery/performance implementation plan](kernel/PERFORMANCE-POWER-ROADMAP.md).
-They subsequently instructed: **“Keep hardware gates pending; finish repository tooling.”**
-They requested the work be pushed to `7.3-improvements`, then requested this
-handoff on the same branch. Do not interpret the handoff request as permission
-to resume deployment or hardware experiments.
+The earlier tooling phase followed **“Keep hardware gates pending; finish repository
+tooling.”** The user subsequently authorized on-device testing and operated the
+target through boot, restoration and suspend checks. That testing authorization
+supersedes the earlier pause; it does not establish hardware or energy acceptance.
 
 Repository tooling is implemented. The full hardware/energy roadmap is not
 complete. Use the 7.3 **platform** profile for future experiments. Preserve
 historical 7.2 reproduction inputs, existing v7.3 port evidence, recovery
-artifacts and installation defaults. No experimental policy starts automatically.
+artifacts. The user subsequently selected **7.3 platform as the sole maintained
+kernel and default build/installed-system target**, canceled the proposed 7.2
+rollback test, and retired new 7.2 work. Historical evidence/recovery copies
+remain. No experimental policy starts automatically.
 Camera enablement, hibernation, charge limits, compiler optimization and
-release/default-kernel promotion remain out of scope.
+binary publication remain out of scope. Default-target selection is authorized;
+it does not imply complete feature or fresh-installation acceptance.
 
 ## Implemented
+
+- Default wrappers and boot-config example now select 7.3 platform. The ISO
+  builder requires and inspects its image package/build record, embeds a target
+  bundle, and preserves the separate stock Ubuntu live bootstrap. New
+  `scripts/install-kernel-target` installs/checks that exact native ARM64 target
+  before fallback setup. Fallback defaults to 7.3 and rejects a bootstrap DTB
+  that differs from its packaged DTB. Fresh live installation is still untested;
+  defaults do not assert release-wide hardware acceptance.
 
 - `scripts/sp12-power-measure` is the shell entry point for
   `kernel/power-measure.py`: read-only `inventory`, timed `sample`, and `compare`,
@@ -35,7 +53,8 @@ release/default-kernel promotion remain out of scope.
 - Comparison emits JSON and Markdown; acceptance remains pending repeated trials,
   equivalent-work and latency review, and hardware tests.
 - Candidate preparation/build Python tools and their shell wrappers accept
-  `--manifest`. Wrappers require `--kernel v7.3`; existing defaults are preserved.
+  `--manifest`. Wrappers now default to `v7.3` and `platform`; archived 7.2
+  reproduction requires an explicit legacy selection.
   Alternate manifests require experiment identities, hash-pinned inputs and full
   config. A preparation receipt binds the canonical manifest/profile; build
   verification checks source/config identity and the actual kernel release.
@@ -48,7 +67,17 @@ release/default-kernel promotion remain out of scope.
 - [Status record](kernel/experiments/performance-power/status.json) separates
   documentation, software validation, hardware gates and energy acceptance.
 
-## Validation performed
+## Default-target migration validation (current)
+
+Repository checks and ShellCheck pass: 15 candidate tests, eight collector tests,
+seven installer-package safety tests, 12 ESP fault tests and installer/fallback
+integration fixtures. All 105 checked local documentation links resolve. The
+actual locally built 7.3 image package passed the new bundle verifier, including
+its 8,490 AArch64 modules. No new ISO or fresh native installation was performed;
+live bootstrap and complete installation/recovery validation remain pending.
+The migration builds on `babd4aa`; Git history records its implementation commit.
+
+## Repository tooling validation (earlier phase)
 
 `scripts/check-repository` passed after the final implementation changes:
 15 candidate tests, 8 collector tests, existing installer/fallback tests and
@@ -70,45 +99,58 @@ Private temporary captures were written outside Git:
 These paths may disappear; do not depend on their persistence or commit them
 without manual privacy review. Sanitized observations are in `status.json`.
 
-## Hardware state observed in this session
+## Current device state and completed gates
 
-Recheck live state before acting; these are observations, not promises about the
-next session. The local machine identified as Surface Pro 12in 1st Edition,
-ARM64, Ubuntu 26.04.1 LTS, running **7.2.0-sp12-extra-camera**. A matching module
-tree and installed 7.3 platform files were visible. Historical v7.3 evidence
-records a successful earlier boot, but it does not establish the current boot.
+The current target is Ubuntu 26.04.1 LTS on **7.3.0-sp12-v7.3-platform**.
+The maintained boot-sync helper/hooks are installed and configuration explicitly
+selects that release and its matching DTB; the ESP is read-only. The legacy
+helper/absent-configuration issue described in the earlier handoff was repaired.
 
-The installed `/usr/local/sbin/sp12-sync-boot` hash was
-`56665776ff137bc6c4f30c535a79f25f7f6faf7567bd85e5e1dec08ba20ddfa8`, matching
-the legacy helper. `/etc/sp12-linux/boot.conf` was absent. This issue remains
-unresolved. The maintained installer's **dry run** succeeded using:
+Completed during operator-assisted testing:
 
-```sh
-scripts/install-boot-sync --kernel-release 7.2.0-sp12-extra-camera \
-  --dtb /boot/dtb-7.2.0-sp12-extra-camera
-```
+- 7.2 warm reboot and cold boot, including display and input checks.
+- Complete original-state archive verification and independent backup transfer.
+- Original 7.2 loader/payload/hooks/configuration restoration rehearsal and reboot.
+- Fresh 7.3 initramfs/module audit, boot from 7.2 and cold boot, with matching
+  active payload hashes and confirmed display, keyboard, touchpad and touchscreen.
+- Built-in speaker playback, intelligible microphone recording/playback and
+  physical volume-button checks; original output volume restored.
+- Local accelerometer, light and compass event capture; all four orientations
+  and changing light/heading readings observed. Calibration and desktop policy
+  behavior were not independently checked.
+- Stylus motion, varying pressure, both tilt axes, proximity, tip contact and
+  one side-button event path; application inking/calibration remain unverified.
+- Bluetooth audio connection and short playback; connected A2DP/LDAC node
+  verified. Reconnection, sustained playback and post-suspend checks remain pending.
+- USB-C-to-HDMI video on the first tested port (`DP-2`) with the built-in panel
+  also active. No HDMI/DP audio playback route appeared despite monitor audio
+  capability; other-port video and monitor-speaker playback remain pending.
+- Three short deep suspend/resume cycles with working physical input/display,
+  but repeated touchscreen resume and Wi-Fi PCIe errors. Wi-Fi reconnection took
+  about 16–22 seconds in the two completed measured reconnects.
 
-No `--apply` was used. The kernel and DTB hashes matched the historical baseline;
-the initramfs was unreadable without root. Active ESP/loader, complete recovery
-set and restoration capability were not verified. Service-state queries failed
-in the execution environment; do not infer those services were inactive.
+USB recovery media is operator-confirmed available; USB boot/restoration was not
+exercised. The installed-system restoration rehearsal is a distinct result.
+The 7.3 initramfs differs from the historical snapshot but passed fresh checks
+and actual boots. Preserve historical port evidence unchanged.
 
-No root installation, reboot, recovery restoration, boot payload change, policy
-change, scheduler deployment or package update was performed.
+These checks do not establish a clean suspend pass, energy savings or feature-wide
+hardware acceptance. See the [testing report](docs/testing-2026-10-23.md) for the
+RTC discrepancy, remaining boot messages, tested boundaries and recovery checksum.
+Raw captures remain private; publish only reviewed, sanitized evidence.
 
 ## Next steps
 
-1. Inspect branch/status and read the roadmap, experiment guide and status record.
-   Repository-only reviews/fixes may continue while hardware gates stay pending.
-   Run `scripts/check-repository` after relevant changes.
-2. When the user explicitly resumes hardware work, coordinate with the operator
-   to verify external recovery media and the complete recovery set, including
-   loader, kernel/initramfs/DTB, hooks and configuration. Verify matching module
-   and initramfs contents and active ESP hashes before repairing boot sync or
-   updating packages. Follow [maintenance](docs/maintenance.md) and
-   [recovery](docs/recovery.md); do not select a release from symlinks alone.
-3. Record successful cold boot, warm reboot and complete restoration separately.
-   Keep deployment experiments blocked until these pass.
+1. Recheck branch and live target state. Finish repeated 7.3 warm reboots;
+   do not resume the canceled 7.2 rollback test. Follow
+   [maintenance](docs/maintenance.md) and [recovery](docs/recovery.md).
+2. Diagnose repeated suspend errors under matched conditions. Wait for complete
+   Wi-Fi reconnection between cycles. Existing 7.2 comparisons are insufficient
+   to confirm a 7.3 PCIe regression. Longer suspend/energy tests remain pending.
+3. Complete application inking, desktop auto-rotation/brightness behavior, Bluetooth
+   reconnection/sustained playback, missing HDMI/DP audio routing and load/thermal
+   checks. Video through both USB-C ports passed. Enumeration or
+   service activity is not a functional pass.
 4. Freeze actual workload inputs, versions, conditions and latency instrumentation;
    collect the installed policy as the baseline and establish one policy owner.
    Then diagnose and trial one observed issue at a time with snapshot/restore.
@@ -120,6 +162,9 @@ change, scheduler deployment or package update was performed.
    Accept only ≥10% energy improvement beyond noise, ≤10% extra completion time
    and ≤5% p95 latency regression, with no functional/storage/watchdog/resume
    regressions. Combine only independently accepted changes. Unperformed work
-   stays explicitly pending.
+   stays explicitly pending. Run `scripts/check-repository` after relevant
+   tooling changes.
 
-This handoff itself does not create another chat, launch an agent or schedule work.
+The user also requested a separate Ubuntu 26.10 upgrade assessment. It is not an
+instruction to run a release upgrade; keep that assessment separate from these
+hardware results.

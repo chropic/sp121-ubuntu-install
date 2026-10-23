@@ -3,34 +3,40 @@
 Support depends on the exact kernel, DTB, firmware and userspace setup. A boot
 result does not establish support for every peripheral.
 
-## Linux 7.3 candidate
+## Maintained default: Linux 7.3 platform
 
 The platform profile has booted on the supported SP12 and reports
 `7.3.0-sp12-v7.3-platform`. Both platform and camera profiles pass full
 image/module/package builds. Target installation and initramfs inspection pass;
-rollback and broader hardware regression testing remain pending.
+warm/cold boots and selected physical tests pass. Broader regression and
+installer validation remain incomplete. The user retired 7.2 maintenance and
+canceled the proposed 7.3-to-7.2 rollback test; that test is not recorded as a pass.
 
 The camera profile keeps sensor, CCI, PHY, CAMSS and privacy-LED nodes disabled.
-Capture has not been demonstrated. RTC, suspend, volume buttons, DP audio and
-charge-limit changes require their own runtime tests. Read the
-[port evidence](../kernel/ports/v7.3/README.md) for exact scope.
+Capture has not been demonstrated. Read the [current physical testing report](testing-2026-10-23.md)
+and [port evidence](../kernel/ports/v7.3/README.md) for exact scope.
 
 | 7.3 observation | Result and limit |
 |---|---|
 | Boot, root filesystem, Wi-Fi/SSH | Running on the platform candidate; no failed systemd units |
-| Internal display and GPU | eDP connected; headless EGL reports Freedreno Adreno X1-45, OpenGL 4.6 and ES 3.2; visual quality and sustained rendering untested |
-| Keyboard, touchpad, touch, pen | Input devices enumerate; physical interaction untested |
+| Internal display and GPU | Operator display checks and Freedreno EGL pass; sustained rendering/thermals remain untested |
+| Keyboard, touchpad and touchscreen | Operator checks pass across boots and short resumes; touchscreen resume error `-6` still logs |
+| Pen | Motion, pressure, tilt, tip/proximity and one side button report events; app inking/calibration unverified |
+| Speakers, microphones, volume buttons | Operator playback, intelligible recording/playback and physical-button checks pass |
+| Sensors | Four orientations, ambient light and compass changes captured; calibration and desktop automatic behavior unverified |
+| External display | HDMI video through both USB-C ports passes; no HDMI/DP audio route exposed |
+| Suspend | Three short deep resumes complete; touchscreen error and Wi-Fi PCIe L2 timeout repeat; completed Wi-Fi activation takes about 16–22 seconds |
 | Battery and CPU scaling | Main battery reports energy; SCMI policies expose frequencies; discharge and throttling untested |
-| Bluetooth | Controller enumerates; pairing and traffic untested |
-| RTC | Both clocks readable; Surface RTC is about six hours ahead of PMIC RTC; accuracy/persistence unresolved |
+| Bluetooth | Connection and short A2DP/LDAC playback pass; reconnection, headset microphone and post-suspend behavior untested |
+| RTC | Surface RTC/target UTC agree with independent clock check; PMIC reads about six hours behind; NTP synchronization/persistence unresolved |
 | Boot warnings | Early GPU firmware lookup failures recover later; UFS RPMB registration, audio and PMIC deferred-probe warnings need follow-up |
 
-See the [sanitized boot report](../kernel/ports/v7.3/validation/boot-smoke.json).
-The test device still has a legacy sync hook pinned to 7.2. Package/initramfs
-updates must wait until that pin and hook are deliberately migrated; they could
-otherwise replace the trial ESP set with 7.2.
+Maintained boot sync is installed on the test device and explicitly selects 7.3
+with its matching DTB. Older installations may still have legacy hooks; recheck
+before updates. The [original boot report](../kernel/ports/v7.3/validation/boot-smoke.json)
+is historical, not the current maintenance state.
 
-## Historical working reference
+## Archived 7.2 reference (not maintained)
 
 The following results belong to the **2026-08-13** Ubuntu 26.04 ARM64 setup:
 `7.2.0-rc7-sp12-extra-camera`, image package `7.2.0~rc7-6`, Sharp

@@ -1,16 +1,29 @@
 # Kernel builds
 
-Choose a base explicitly; the default remains the historical 7.2 reference.
+Linux **7.3 platform** is the sole maintained default for builds and installed
+targets. The 7.2 inputs are frozen historical/recovery material, not a maintained
+line. Select `--kernel v7.2-rc7` explicitly only to reproduce that archive.
 Build tools prepare and package sources but never install the resulting kernel.
 
 | Kernel | Entry point | Status |
 |---|---|---|
-| Linux 7.3 | [Port guide](ports/v7.3/README.md) | Platform boot verified; both profiles build; regression and rollback testing pending |
-| Linux 7.2-rc7 | Recipe below | Historical machine-tested reference and default reproduction input |
+| Linux 7.3 | [Port guide](ports/v7.3/README.md) | Default platform target; boot/cold boot and feature tests recorded; known suspend/Wi-Fi/DP-audio issues remain |
+| Linux 7.2-rc7 | Recipe below | Archived reproduction only; no new maintenance or rollback test planned |
 
 The 7.3 `platform` profile carries the reviewed board/RTC/power additions. The
 separate `camera` profile also compiles the reconciled media stack with camera
 runtime nodes disabled. See the port guide for exact evidence and build commands.
+
+## Build the default 7.3 target
+
+Follow the [7.3 preparation/build recipe](ports/v7.3/README.md#reproduce-preparation-and-builds),
+including its toolchain requirements. Both wrappers now select `v7.3` and
+`platform` when those options are omitted. Its documented output directory is
+`/var/tmp/sp12-port/reproduce-build-7.3-platform`; the Debian image package is
+created in its parent directory. Keep the generated `sp12-buildinfo.json` with
+that exact package. The [installer guide](../docs/install.md) uses both to verify
+and bundle the installed-system kernel. Native ARM64 headers remain a separate
+procedure; no package is installed by the build tools.
 
 ## Reproduce the 7.2 reference
 
@@ -39,14 +52,14 @@ From the repository root, create a clean checkout of the exact base and preview:
 mkdir -p build
 git clone --depth 1 --branch v7.2-rc7 --single-branch \
   https://github.com/torvalds/linux.git build/linux-v7.2-rc7
-kernel/prepare-tree --source build/linux-v7.2-rc7
+kernel/prepare-tree --kernel v7.2-rc7 --source build/linux-v7.2-rc7
 ```
 
 Apply only after reviewing the base commit and snapshot hash:
 
 ```bash
-kernel/prepare-tree --source build/linux-v7.2-rc7 --apply
-kernel/build-packages --source build/linux-v7.2-rc7
+kernel/prepare-tree --kernel v7.2-rc7 --source build/linux-v7.2-rc7 --apply
+kernel/build-packages --kernel v7.2-rc7 --source build/linux-v7.2-rc7
 ```
 
 Compilation is parallel; Debian packaging is deliberately serial to avoid the
@@ -86,4 +99,5 @@ final tree.
 The [gated roadmap](PERFORMANCE-POWER-ROADMAP.md) and
 [experiment protocol](experiments/performance-power/README.md) provide read-only
 baseline collection, comparisons and optional experiment manifests. Hardware and
-recovery gates remain pending; these tools do not promote installation defaults.
+feature and energy gates remain pending. Selecting 7.3 as the default does not
+establish a clean suspend pass or a physically validated installer release.

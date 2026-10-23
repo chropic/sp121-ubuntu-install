@@ -4,9 +4,11 @@ This is the installation guide for the Microsoft Surface Pro 12-inch, 1st
 Edition with Snapdragon X Plus (`X1P42100`). It does not support Intel Surface
 devices, Surface Pro 11, or a later Surface Pro 12 revision.
 
-The [Linux 7.3 port](../kernel/ports/v7.3/README.md) is a separate development
-candidate. This installation guide retains its tested reference inputs until
-the candidate passes rollback, hardware regression and installer validation.
+The installed-system target is **7.3.0-sp12-v7.3-platform**, the sole maintained
+kernel line. It remains a development target with [known testing limits](testing-2026-10-23.md).
+The live session uses Canonical's stock Ubuntu kernel and a frozen compatible
+bootstrap DTB. The installed target receives the separately verified 7.3 image,
+modules and matching packaged DTB; these two boot paths use different DTBs.
 
 > [!CAUTION]
 > This repository builds a local installer from Canonical's stock Ubuntu 26.04
@@ -24,7 +26,8 @@ operating system and its data.
 
 Before continuing, provide:
 
-- another Linux computer with internet access and at least 10 GB free;
+- another Linux computer with internet access and enough disk-backed space for
+  the [kernel build](../kernel/ports/v7.3/README.md) and installer inputs;
 - the Surface charger and a reliable USB installer drive;
 - a separate, verified backup/recovery drive that is detached while partitioning;
 - a USB keyboard if the Type Cover is unavailable in the live environment;
@@ -52,8 +55,9 @@ until their meaning and valid range are known.
 ## 2. Build the installer
 
 The builder leaves the downloaded ISO unchanged and never writes a USB drive.
-It adds only the machine-tested device tree and GRUB handoff, this repository's
-tracked source archive, updated media checks, and build provenance to a new ISO.
+It adds the frozen bootstrap device tree and GRUB handoff, a verified 7.3 target
+image package/build record, this repository's tracked source archive, updated
+media checks, and build provenance to a new ISO.
 The separately pinned Harrison support checkout is only needed for optional
 post-install files; its third-party binaries are never included.
 
@@ -63,6 +67,15 @@ official files:
 ```bash
 git clone https://github.com/chropic/sp121-ubuntu-install.git sp12-linux
 cd sp12-linux
+```
+
+First complete the [7.3 platform build recipe](../kernel/ports/v7.3/README.md#reproduce-preparation-and-builds).
+For that recipe's paths, verify these generated inputs exist:
+
+```bash
+KERNEL_PACKAGE=/var/tmp/sp12-port/linux-image-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1_arm64.deb
+KERNEL_BUILD_INFO=/var/tmp/sp12-port/reproduce-build-7.3-platform/sp12-buildinfo.json
+test -f "$KERNEL_PACKAGE" && test -f "$KERNEL_BUILD_INFO"
 mkdir -p build/installer-inputs build/output
 cd build/installer-inputs
 curl -fLO https://cdimage.ubuntu.com/releases/26.04/release/SHA256SUMS
@@ -95,8 +108,8 @@ test "${#ISO_SHA256}" -eq 64
 ```
 
 Download the machine-tested live-installer DTB from the pinned support commit.
-Do not substitute the later installed `7.2.0~rc7-6` DTB; its compatibility with
-Ubuntu's stock live kernel has not been established.
+Do not substitute the installed 7.3 DTB into this stock live boot path. The
+installed target will use the DTB contained in the matching 7.3 package.
 
 ```bash
 curl -fL \
@@ -111,7 +124,7 @@ Stop unless it reports `OK`. Install the local requirements on Ubuntu or Debian,
 return to the repository root, and build:
 
 ```bash
-sudo apt install curl git gzip xorriso
+sudo apt install curl git gzip xorriso python3 dpkg zstd
 cd ../..
 ISO=build/installer-inputs/$ISO
 DTB=build/installer-inputs/$DTB
@@ -120,6 +133,8 @@ scripts/build-installer \
   --iso-sha256 "$ISO_SHA256" \
   --dtb "$DTB" \
   --dtb-sha256 "$DTB_SHA256" \
+  --kernel-package "$KERNEL_PACKAGE" \
+  --kernel-build-info "$KERNEL_BUILD_INFO" \
   --output build/output/sp12-ubuntu-26.04-arm64.iso
 (cd build/output && sha256sum -c sp12-ubuntu-26.04-arm64.iso.sha256)
 ```
@@ -131,7 +146,11 @@ base ISO, inserts the DTB, adds the GRUB device-tree directive and
 padding so the backup GPT remains at the image's physical end.
 
 Keep the ISO with its `.sha256` and `.buildinfo` sidecars. The same provenance is
-embedded at `/sp12-buildinfo.txt`.
+embedded at `/sp12-buildinfo.txt`. The target bundle at `/sp12-kernel/` contains
+the exact image package, build information and inspection report. The builder
+checks the reviewed platform configuration, source manifest, ARM64 module
+architecture and image/DTB hashes; 7.2 and camera target packages are rejected.
+This does not replace a physical live-boot/installation test.
 
 ## 3. Write and boot the USB
 
@@ -198,31 +217,37 @@ findmnt /target
 findmnt /target/boot/efi
 test -f /target/etc/os-release && cat /target/etc/os-release
 ls -la /target/boot
-set -- /target/boot/vmlinuz-*
-if test "$#" -ne 1 || ! test -f "$1"; then
-    printf '%s\n' 'STOP: exactly one installed target kernel is required.' >&2
-    exit 1
-fi
-KVER=${1##*/vmlinuz-}
-printf 'Selected target kernel: %s\n' "$KVER"
-scripts/inspect-install-target \
-  --target /target \
-  --kernel-release "$KVER"
+scripts/inspect-install-target --target /target
+scripts/install-kernel-target
 ```
 
-The commands select the sole kernel under `/target/boot`; stop if there is
-more than one, and inspect the installed packages before choosing a release.
-Do not use `uname -r`, which describes the live environment. If either `findmnt`
+The kernel helper previews the verified 7.3 bundle and accepts only a separately
+mounted Ubuntu 26.04 `/target`. It never chooses a generic kernel from symlinks
+or a wildcard. `uname -r` describes the stock live environment. If either `findmnt`
 command or the inspection script fails,
 stop, save `/var/log/installer`, and do not run the fallback installer. See the
 [installer-error troubleshooting procedure](troubleshooting/README.md#system-program-problem-detected-during-installation).
+
+After reviewing the dry run, install the target kernel:
+
+```bash
+sudo scripts/install-kernel-target --apply
+KVER=7.3.0-sp12-v7.3-platform
+scripts/inspect-install-target --target /target --kernel-release "$KVER"
+```
+
+This runs package hooks inside the native ARM64 target, regenerates its initramfs,
+checks required storage/display module dependencies and exact payload hashes,
+then copies the package's matching DTB to `/target/boot/dtb-$KVER`. It does not
+select an ESP payload. Stop on any failure; target installation is not atomic,
+and a failed package/initramfs step needs inspection before fallback setup.
 
 Preview construction of the fallback path:
 
 ```bash
 scripts/install-fallback-target \
   --kernel-release "$KVER" \
-  --dtb-source /cdrom/casper/x1p42100-microsoft-sp12in.dtb
+  --dtb-source /target/boot/dtb-$KVER
 ```
 
 The command is dry-run-only unless `sudo` and `--apply` are deliberately added.
@@ -238,7 +263,7 @@ snapshot of this repository at the stable target location `/opt/sp12-linux`:
 ```bash
 sudo scripts/install-fallback-target \
   --kernel-release "$KVER" \
-  --dtb-source /cdrom/casper/x1p42100-microsoft-sp12in.dtb \
+  --dtb-source /target/boot/dtb-$KVER \
   --apply
 ```
 

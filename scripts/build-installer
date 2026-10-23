@@ -5,9 +5,10 @@ set -eu
 usage() {
     cat <<'EOF'
 Usage: build-installer --iso FILE --iso-sha256 HASH --dtb FILE \
-  --dtb-sha256 HASH --output FILE
+  --dtb-sha256 HASH --kernel-package FILE --kernel-build-info FILE --output FILE
 
 Builds a Surface Pro 12 installer ISO from locally supplied inputs.
+The installed target is Linux 7.3 platform. Stock Ubuntu live boot is preserved.
 The output contains this project's tracked files, but no third-party support checkout.
 EOF
 }
@@ -17,6 +18,8 @@ iso_sha256=
 dtb=
 dtb_sha256=
 output=
+kernel_package=
+kernel_build_info=
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -25,6 +28,8 @@ while [ "$#" -gt 0 ]; do
         --dtb) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb=$2; shift 2 ;;
         --dtb-sha256) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb_sha256=$2; shift 2 ;;
         --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
+        --kernel-package) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel_package=$2; shift 2 ;;
+        --kernel-build-info) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel_build_info=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
@@ -35,6 +40,8 @@ done
 [ -n "$dtb" ] || { printf 'Missing --dtb\n' >&2; exit 2; }
 [ -n "$dtb_sha256" ] || { printf 'Missing --dtb-sha256\n' >&2; exit 2; }
 [ -n "$output" ] || { printf 'Missing --output\n' >&2; exit 2; }
+[ -f "$kernel_package" ] || { printf 'Missing --kernel-package FILE (7.3 platform image)\n' >&2; exit 2; }
+[ -f "$kernel_build_info" ] || { printf 'Missing --kernel-build-info FILE\n' >&2; exit 2; }
 
 iso_sha256=$(printf '%s' "$iso_sha256" | tr 'A-F' 'a-f')
 printf '%s\n' "$iso_sha256" | grep -Eq '^[0-9a-f]{64}$' || {
@@ -65,6 +72,8 @@ command -v git >/dev/null 2>&1 || { printf 'git is required\n' >&2; exit 1; }
 command -v md5sum >/dev/null 2>&1 || { printf 'md5sum is required\n' >&2; exit 1; }
 command -v sha256sum >/dev/null 2>&1 || { printf 'sha256sum is required\n' >&2; exit 1; }
 command -v truncate >/dev/null 2>&1 || { printf 'truncate is required\n' >&2; exit 1; }
+command -v python3 >/dev/null 2>&1 || { printf 'python3 is required\n' >&2; exit 1; }
+command -v dpkg-deb >/dev/null 2>&1 || { printf 'dpkg-deb is required\n' >&2; exit 1; }
 xorriso_version=$(xorriso -version 2>&1 | sed -n '1p')
 
 actual_iso_sha256=$(sha256sum "$base_iso" | awk '{print $1}')
@@ -113,6 +122,9 @@ md5sums=$work/md5sum.txt
 project_archive=$work/sp12-linux.tar.gz
 project_tar=$work/sp12-linux.tar
 buildinfo=$work/sp12-buildinfo.txt
+kernel_bundle=$work/sp12-kernel
+python3 "$builder_root/kernel/installer-kernel.py" bundle \
+    --package "$kernel_package" --build-info "$kernel_build_info" --output "$kernel_bundle"
 
 printf 'Extracting GRUB configuration...\n'
 xorriso -osirrox on -indev "$base_iso" -extract /boot/grub/grub.cfg "$grub_cfg"
@@ -142,12 +154,18 @@ project_sha256=$(sha256sum "$project_archive" | awk '{print $1}')
     printf 'dtb_name=%s\n' "$(basename -- "$dtb")"
     printf 'dtb_sha256=%s\n' "$actual_dtb_sha256"
     printf 'project_archive_sha256=%s\n' "$project_sha256"
+    printf 'target_kernel_release=7.3.0-sp12-v7.3-platform\n'
+    printf 'target_kernel_package_sha256=%s\n' "$(sha256sum "$kernel_bundle/linux-image.deb" | awk '{print $1}')"
+    printf 'target_kernel_build_info_sha256=%s\n' "$(sha256sum "$kernel_bundle/buildinfo.json" | awk '{print $1}')"
+    printf 'target_kernel_inspection_sha256=%s\n' "$(sha256sum "$kernel_bundle/inspection.json" | awk '{print $1}')"
+    printf 'live_boot=stock-ubuntu-with-frozen-bootstrap-dtb\n'
 } > "$buildinfo"
 
 awk '$2 != "./boot/grub/grub.cfg" &&
      $2 != "./casper/x1p42100-microsoft-sp12in.dtb" &&
      $2 != "./sp12-linux.tar.gz" &&
-     $2 != "./sp12-buildinfo.txt" { print }' \
+     $2 != "./sp12-buildinfo.txt" &&
+     $2 !~ /^\.\/sp12-kernel\// { print }' \
     "$md5sums_original" > "$md5sums"
 append_md5() {
     printf '%s  %s\n' "$(md5sum "$1" | awk '{print $1}')" "$2" >> "$md5sums"
@@ -156,16 +174,23 @@ append_md5 "$grub_cfg" ./boot/grub/grub.cfg
 append_md5 "$dtb" ./casper/x1p42100-microsoft-sp12in.dtb
 append_md5 "$project_archive" ./sp12-linux.tar.gz
 append_md5 "$buildinfo" ./sp12-buildinfo.txt
+append_md5 "$kernel_bundle/linux-image.deb" ./sp12-kernel/linux-image.deb
+append_md5 "$kernel_bundle/buildinfo.json" ./sp12-kernel/buildinfo.json
+append_md5 "$kernel_bundle/inspection.json" ./sp12-kernel/inspection.json
 
 printf 'Building customized ISO...\n'
 xorriso -indev "$base_iso" \
     -outdev "$output" \
     -boot_image any replay \
+    -mkdir /sp12-kernel \
     -update "$grub_cfg" /boot/grub/grub.cfg \
     -update "$dtb" /casper/x1p42100-microsoft-sp12in.dtb \
     -update "$project_archive" /sp12-linux.tar.gz \
     -update "$buildinfo" /sp12-buildinfo.txt \
     -update "$md5sums" /md5sum.txt \
+    -update "$kernel_bundle/linux-image.deb" /sp12-kernel/linux-image.deb \
+    -update "$kernel_bundle/buildinfo.json" /sp12-kernel/buildinfo.json \
+    -update "$kernel_bundle/inspection.json" /sp12-kernel/inspection.json \
     -padding 0 \
     -commit
 
