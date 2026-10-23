@@ -19,18 +19,24 @@ spec.loader.exec_module(candidate)
 
 
 def verify(source, output, manifest, profile, root):
+    if manifest.get("experiment_schema") == 1:
+        receipt = json.loads((output / ".sp12-candidate.json").read_text())
+        if receipt != candidate.manifest_identity(manifest, profile):
+            raise ValueError("Prepared manifest/profile does not match selected manifest")
     if candidate.git(source, "rev-parse", "HEAD") != manifest["base_commit"]:
         raise ValueError("Wrong candidate base commit")
     entries, config_entry = candidate.selected_inputs(manifest, profile)
     patches = [candidate.checked_input(root, entry) for entry in entries]
     candidate.checked_input(root, config_entry)
+    candidate.verify_identity(manifest, profile, output / ".config")
     if hashlib.sha256((output / ".config").read_bytes()).hexdigest() != config_entry["sha256"]:
         raise ValueError("Build config differs from the reviewed candidate config")
     with tempfile.TemporaryDirectory(prefix="sp12-build-check-") as temporary:
         expected = candidate.series_tree(source, patches, Path(temporary) / "expected")
         env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "actual"))
         candidate.git(source, "read-tree", "HEAD", env=env)
-        candidate.git(source, "add", "--all", env=env)
+        excludes = ["--", ".", ":(exclude).sp12-candidate.json"] if manifest.get("experiment_schema") == 1 else []
+        candidate.git(source, "add", "--all", *excludes, env=env)
         actual = candidate.git(source, "write-tree", env=env)
     if actual != expected:
         raise ValueError(f"Source does not match selected series: expected {expected}, found {actual}")
@@ -46,13 +52,15 @@ def main():
     parser.add_argument("--cross-compile", default="")
     parser.add_argument("--build-only", action="store_true")
     parser.add_argument("--verify-only", action="store_true")
+    parser.add_argument("--manifest", type=Path, default=candidate.MANIFEST)
     args = parser.parse_args()
     try:
         if args.jobs < 1:
             raise ValueError("Job count must be positive")
         source = args.source.resolve(strict=True)
         output = args.output.resolve(strict=True) if args.output else source
-        manifest = json.loads(candidate.MANIFEST.read_text())
+        manifest = candidate.load_manifest(args.manifest)
+        manifest_hash = hashlib.sha256(args.manifest.read_bytes()).hexdigest()
         tree = verify(source, output, manifest, args.profile, candidate.ROOT)
         if args.verify_only:
             print(f"Verified {args.profile} source/config pair; source tree: {tree}")
@@ -62,7 +70,7 @@ def main():
                 raise ValueError(f"Missing build command: {command}")
         # The full source/config identity is verified above; an uncommitted
         # patch series must not append a Git-dependent '-dirty' release suffix.
-        package_version = "7.3-1~sp12candidate1"
+        package_version = manifest.get("profiles", {}).get(args.profile, {}).get("package_version", "7.3-1~sp12candidate1")
         # Debian's build-arch passes the package revision to Kbuild. Use the
         # same version and timestamp in the preceding parallel build, so the
         # serial packaging phase does not relink vmlinux and every module BTF.
@@ -77,6 +85,11 @@ def main():
                 f"CROSS_COMPILE={args.cross_compile}"]
         if output != source:
             make.append(f"O={output}")
+        expected_release = manifest.get("profiles", {}).get(args.profile, {}).get("kernel_release")
+        if expected_release:
+            actual_release = subprocess.check_output(make + ["-s", "kernelrelease"], text=True).strip()
+            if actual_release != expected_release:
+                raise ValueError("Kernel release differs from selected experiment manifest")
         targets = ["Image", "modules", "qcom/x1p42100-microsoft-sp12in.dtb"]
         if "CONFIG_EFI_ZBOOT=y" in (output / ".config").read_text().splitlines():
             targets.append("vmlinuz.efi")
@@ -101,6 +114,11 @@ def main():
                                    "KDEB_SOURCENAME=linux-sp12",
                                    f"KDEB_PKGVERSION={package_version}"], check=True, env=package_env)
         release = subprocess.check_output(make + ["-s", "kernelrelease"], text=True).strip()
+        verify(source, output, manifest, args.profile, candidate.ROOT)
+        if expected_release and release != expected_release:
+            raise ValueError("Completed kernel release differs from experiment manifest")
+        if hashlib.sha256(args.manifest.read_bytes()).hexdigest() != manifest_hash:
+            raise ValueError("Manifest changed during build")
         files = [output / "arch/arm64/boot/Image",
                  output / "arch/arm64/boot/dts/qcom/x1p42100-microsoft-sp12in.dtb",
                  output / ".config", output / "modules.order", output / "Module.symvers", output / "System.map"]
@@ -111,7 +129,7 @@ def main():
             "profile": args.profile, "base_commit": manifest["base_commit"],
             "source_tree": tree, "kernel_release": release,
             "build_timestamp": timestamp, "package_version": package_version,
-            "manifest_sha256": hashlib.sha256(candidate.MANIFEST.read_bytes()).hexdigest(),
+            "manifest_sha256": manifest_hash,
             "inputs": [*candidate.selected_inputs(manifest, args.profile)[0],
                        candidate.selected_inputs(manifest, args.profile)[1]],
             "compiler": subprocess.check_output([f"{args.cross_compile}gcc", "--version"], text=True).splitlines()[0],
@@ -127,7 +145,7 @@ def main():
             if args.cross_compile else "native header package generated")
         (output / "sp12-buildinfo.json").write_text(json.dumps(report, indent=2) + "\n")
         print(f"Candidate build recorded in {output / 'sp12-buildinfo.json'}")
-    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+    except (KeyError, ValueError, OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Candidate build failed: {error}\n")
 
 

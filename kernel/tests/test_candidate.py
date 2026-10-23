@@ -124,6 +124,7 @@ class PreparationTests(unittest.TestCase):
         before = self.run_git("write-tree")
         build_candidate.verify(self.source, output, self.manifest, "platform", self.root)
         self.assertEqual(before, self.run_git("write-tree"))
+
         (self.source / "board.dts").write_text("user source change\n")
         with self.assertRaisesRegex(ValueError, "Source does not match"):
             build_candidate.verify(self.source, output, self.manifest, "platform", self.root)
@@ -131,6 +132,51 @@ class PreparationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Build config differs"):
             build_candidate.verify(self.source, output, self.manifest, "platform", self.root)
         self.assertEqual(before, self.run_git("write-tree"))
+
+    def test_experiment_manifest_binds_preparation_and_identity(self):
+        self.seed.write_text('CONFIG_LOCALVERSION="-sp12-exp-fixture1"\n# CONFIG_LOCALVERSION_AUTO is not set\n')
+        self.manifest.update(experiment_schema=1, profiles={"platform": {
+            "config": self.input(self.seed), "kernel_release": "7.3.0-sp12-exp-fixture1",
+            "package_version": "7.3-1~sp12expfixture1"}})
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest))
+        manifest = candidate.load_manifest(path)
+        output = self.root / "output"
+        with redirect_stdout(io.StringIO()):
+            candidate.prepare(self.source, manifest, self.root, apply=True, output=output)
+        build_candidate.verify(self.source, output, manifest, "platform", self.root)
+        manifest["profiles"]["platform"]["package_version"] += "2"
+        with self.assertRaisesRegex(ValueError, "manifest/profile"):
+            build_candidate.verify(self.source, output, manifest, "platform", self.root)
+
+    def test_alternate_manifest_requires_experiment_identity(self):
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest))
+        with self.assertRaisesRegex(ValueError, "experiment_schema"):
+            candidate.load_manifest(path)
+        self.manifest.update(experiment_schema=1, profiles={"platform": {
+            "config": self.input(self.seed), "kernel_release": "7.3.0-sp12-v7.3-platform",
+            "package_version": "7.3-1~sp12candidate1"}})
+        path.write_text(json.dumps(self.manifest))
+        with self.assertRaisesRegex(ValueError, "unique"):
+            candidate.load_manifest(path)
+
+    def test_experiment_config_must_match_release(self):
+        self.manifest.update(experiment_schema=1, profiles={"platform": {
+            "config": self.input(self.seed), "kernel_release": "7.3.0-sp12-exp-fixture1"}})
+        with self.assertRaisesRegex(ValueError, "release suffix"):
+            self.prepare(apply=True)
+        self.assertEqual("", self.run_git("status", "--porcelain"))
+
+    def test_wrappers_forward_manifest_and_preserve_historical_default(self):
+        for wrapper in ["prepare-tree", "build-packages"]:
+            script = candidate.ROOT / "kernel" / wrapper
+            command = [str(script), "--source", str(self.source), "--manifest", "/nonexistent-sp12-manifest"]
+            old = subprocess.run(command, text=True, capture_output=True)
+            self.assertIn("requires --kernel v7.3", old.stderr)
+            new = subprocess.run(command + ["--kernel", "v7.3"], text=True, capture_output=True)
+            self.assertIn("/nonexistent-sp12-manifest", new.stderr)
+
 
 
 class ManifestTests(unittest.TestCase):

@@ -3,7 +3,7 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: prepare-tree --source DIR [--kernel v7.2-rc7|v7.3] [--profile platform|camera] [--output DIR] [--apply]'
+    printf '%s\n' 'Usage: prepare-tree --source DIR [--kernel v7.2-rc7|v7.3] [--profile platform|camera] [--output DIR] [--manifest FILE] [--apply]'
 }
 
 source_dir=
@@ -11,12 +11,14 @@ apply=0
 kernel=v7.2-rc7
 profile=platform
 output=
+manifest=
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; source_dir=$2; shift 2 ;;
         --apply) apply=1; shift ;;
         --kernel) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel=$2; shift 2 ;;
         --profile) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; profile=$2; shift 2 ;;
+        --manifest) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; manifest=$2; shift 2 ;;
         --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
@@ -28,6 +30,7 @@ repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 case "$kernel" in
     v7.3)
         set -- --source "$source_dir" --profile "$profile"
+        [ -z "$manifest" ] || set -- "$@" --manifest "$manifest"
         [ -z "$output" ] || set -- "$@" --output "$output"
         [ "$apply" -ne 1 ] || set -- "$@" --apply
         exec python3 "$repo_root/kernel/prepare-candidate.py" "$@"
@@ -35,6 +38,10 @@ case "$kernel" in
     v7.2-rc7) ;;
     *) printf 'Unsupported kernel: %s\n' "$kernel" >&2; exit 2 ;;
 esac
+if [ -n "$manifest" ]; then
+    printf -- '--manifest requires --kernel v7.3\n' >&2
+    exit 2
+fi
 if [ "$profile" != platform ] || [ -n "$output" ]; then
     printf 'Profile and output selection require --kernel v7.3\n' >&2
     exit 2

@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "experiment_id": "replace-with-unique-id",
+  "status": "not-run",
+  "single_change": "describe exactly one change",
+  "observed_failure": "link reviewed sanitized evidence",
+  "upstream_provenance": {"url": null, "commit": null, "patch_sha256": null},
+  "policy_owner": "record one owner and how competing service/udev writes are prevented",
+  "original_values_private_record": null,
+  "candidate_values": {},
+  "restore_procedure_private_record": null,
+  "restore_verified": false,
+  "workload_record_sha256": null,
+  "baseline_candidate_pairs": [],
+  "documentation": "pending",
+  "software_validation": "pending",
+  "hardware_tests": "pending",
+  "energy_acceptance": "pending",
+  "disposition": "pending"
+}

@@ -80,3 +80,10 @@ OV13858 patch was deliberately not forced, and unrelated Surface Go work is not
 part of this release. Future work should split the release snapshot into a
 reviewed series while preserving original authorship and producing the identical
 final tree.
+
+## Performance and power measurement
+
+The [gated roadmap](PERFORMANCE-POWER-ROADMAP.md) and
+[experiment protocol](experiments/performance-power/README.md) provide read-only
+baseline collection, comparisons and optional experiment manifests. Hardware and
+recovery gates remain pending; these tools do not promote installation defaults.

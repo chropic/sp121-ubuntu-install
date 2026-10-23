@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -13,6 +14,47 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "kernel/ports/v7.3/manifest.json"
+
+
+def load_manifest(path):
+    manifest = json.loads(path.read_text())
+    if path.resolve() != MANIFEST.resolve():
+        if manifest.get("experiment_schema") != 1:
+            raise ValueError("Alternate manifests require experiment_schema: 1")
+        if not re.fullmatch(r"[0-9a-f]{40}", manifest.get("base_commit", "")):
+            raise ValueError("Experiment requires a full base commit")
+        identities = set()
+        versions = set()
+        for profile in manifest.get("profiles", {}).values():
+            release = profile.get("kernel_release", "")
+            version = profile.get("package_version", "")
+            if not re.fullmatch(r"[0-9][A-Za-z0-9.+~-]*-sp12-exp-[a-z0-9-]+", release):
+                raise ValueError("Experiment requires a unique sp12-exp- kernel release")
+            if not re.fullmatch(r"[0-9][A-Za-z0-9.+~]*-[A-Za-z0-9.+~]*sp12exp[a-z0-9]+", version):
+                raise ValueError("Experiment requires a unique sp12exp package version")
+            if release in identities or version in versions:
+                raise ValueError("Experiment profiles must have distinct release/package identities")
+            identities.add(release)
+            versions.add(version)
+        if not manifest.get("profiles"):
+            raise ValueError("Experiment requires explicit profiles")
+    return manifest
+
+
+def verify_identity(manifest, profile, config):
+    if manifest.get("experiment_schema") != 1:
+        return
+    selection = manifest["profiles"][profile]
+    release = selection["kernel_release"]
+    suffix = release[release.index("-sp12-exp-"):]
+    lines = config.read_text().splitlines()
+    if f'CONFIG_LOCALVERSION="{suffix}"' not in lines or "# CONFIG_LOCALVERSION_AUTO is not set" not in lines:
+        raise ValueError("Experiment config must pin its release suffix and disable LOCALVERSION_AUTO")
+
+
+def manifest_identity(manifest, profile):
+    return {"profile": profile, "manifest_sha256": hashlib.sha256(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
 
 
 def git(source, *args, env=None):
@@ -61,10 +103,14 @@ def prepare(source, manifest, root, apply=False, profile="platform", output=None
     # .config is normally ignored, so Git status alone cannot protect it.
     if config_path.exists() or config_path.is_symlink():
         raise ValueError("Existing .config would be overwritten")
+    receipt = config_dir / ".sp12-candidate.json"
+    if receipt.exists() or receipt.is_symlink():
+        raise ValueError("Existing candidate receipt would be overwritten")
     if output and ((source / ".config").exists() or (source / "include/config").exists()):
         raise ValueError("Out-of-tree builds require an unconfigured source tree")
     entries, config_entry = selected_inputs(manifest, profile)
     config = checked_input(root, config_entry)
+    verify_identity(manifest, profile, config)
     patches = [checked_input(root, item) for item in entries]
     # A disposable index checks the entire ordered series without modifying
     # the checkout or its real index. Linked Git worktrees are supported.
@@ -81,6 +127,8 @@ def prepare(source, manifest, root, apply=False, profile="platform", output=None
         git(source, "apply", str(patch))
     config_dir.mkdir(parents=True, exist_ok=True)
     config_path.write_bytes(config.read_bytes())
+    if manifest.get("experiment_schema") == 1:
+        (config_dir / ".sp12-candidate.json").write_text(json.dumps(manifest_identity(manifest, profile)) + "\n")
     print(f"Applied {profile} development series; config: {config_path}")
     print("This is a candidate for validation; see kernel/ports/v7.3/README.md.")
 
@@ -91,10 +139,11 @@ def main():
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--profile", choices=("platform", "camera"), default="platform")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--manifest", type=Path, default=MANIFEST)
     args = parser.parse_args()
     try:
-        prepare(args.source, json.loads(MANIFEST.read_text()), ROOT, args.apply, args.profile, args.output)
-    except (ValueError, OSError, subprocess.CalledProcessError) as error:
+        prepare(args.source, load_manifest(args.manifest), ROOT, args.apply, args.profile, args.output)
+    except (KeyError, ValueError, OSError, subprocess.CalledProcessError) as error:
         detail = error.stderr if isinstance(error, subprocess.CalledProcessError) else str(error)
         parser.exit(1, f"Candidate preparation failed: {detail}\n")
 

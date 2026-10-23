@@ -1,0 +1,14 @@
+{
+  "brightness_raw": 2048,
+  "radios": "record enabled/disabled states; no identifiers",
+  "peripherals": "record types only",
+  "battery_range_percent": [
+    40,
+    70
+  ],
+  "starting_temperature_celsius": "record value and allowed range",
+  "background_activity": "freeze service versions and policy owner",
+  "application_versions": "freeze before trials",
+  "input_sha256": "freeze input file hashes",
+  "latency_instrumentation": "pin method/version before trials"
+}

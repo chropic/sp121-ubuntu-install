@@ -3,7 +3,7 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: build-packages --source DIR [--jobs NUMBER] [--kernel v7.2-rc7|v7.3] [--profile platform|camera] [--output DIR] [--cross-compile PREFIX] [--build-only]'
+    printf '%s\n' 'Usage: build-packages --source DIR [--jobs NUMBER] [--kernel v7.2-rc7|v7.3] [--profile platform|camera] [--output DIR] [--manifest FILE] [--cross-compile PREFIX] [--build-only]'
 }
 
 source_dir=
@@ -11,6 +11,7 @@ jobs=$(nproc)
 kernel=v7.2-rc7
 profile=platform
 output=
+manifest=
 cross_compile=
 build_only=0
 while [ "$#" -gt 0 ]; do
@@ -19,6 +20,7 @@ while [ "$#" -gt 0 ]; do
         --jobs) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; jobs=$2; shift 2 ;;
         --kernel) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel=$2; shift 2 ;;
         --profile) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; profile=$2; shift 2 ;;
+        --manifest) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; manifest=$2; shift 2 ;;
         --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
         --cross-compile) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; cross_compile=$2; shift 2 ;;
         --build-only) build_only=1; shift ;;
@@ -37,6 +39,7 @@ case "$kernel" in
     v7.3)
         repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
         set -- --source "$source_dir" --profile "$profile" --jobs "$jobs" --cross-compile "$cross_compile"
+        [ -z "$manifest" ] || set -- "$@" --manifest "$manifest"
         [ -z "$output" ] || set -- "$@" --output "$output"
         [ "$build_only" -ne 1 ] || set -- "$@" --build-only
         exec python3 "$repo_root/kernel/build-candidate.py" "$@"
@@ -44,6 +47,10 @@ case "$kernel" in
     v7.2-rc7) ;;
     *) printf 'Unsupported kernel: %s\n' "$kernel" >&2; exit 2 ;;
 esac
+if [ -n "$manifest" ]; then
+    printf -- '--manifest requires --kernel v7.3\n' >&2
+    exit 2
+fi
 if [ "$profile" != platform ] || [ -n "$output$cross_compile" ] || [ "$build_only" -ne 0 ]; then
     printf 'Profile, output, cross-compile and build-only selection require --kernel v7.3\n' >&2
     exit 2
