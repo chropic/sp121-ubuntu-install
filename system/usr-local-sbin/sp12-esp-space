@@ -33,19 +33,19 @@ fi
 [ "$(id -u)" -eq 0 ] || { printf 'Cleanup requires root\n' >&2; exit 1; }
 exec 9>/run/lock/sp12-boot.lock
 flock -n 9 || { printf 'Another boot operation is running\n' >&2; exit 1; }
-[ -d "$dest" ] && [ ! -L "$dest" ] && [ -f "$dest/SP12BOOT" ] || {
+if [ ! -d "$dest" ] || [ -L "$dest" ] || [ ! -f "$dest/SP12BOOT" ]; then
     printf 'Refusing cleanup: active SP12 directory/marker is missing or symlinked\n' >&2; exit 1;
-}
+fi
 found=0
 for name in vmlinuz initrd.img dtb; do
-    [ -f "$dest/$name" ] && [ ! -L "$dest/$name" ] || {
+    if [ ! -f "$dest/$name" ] || [ -L "$dest/$name" ]; then
         printf 'Refusing cleanup: active payload is incomplete or symlinked\n' >&2; exit 1;
-    }
+    fi
     stage=$dest/$name.new
     if [ -e "$stage" ] || [ -L "$stage" ]; then
-        [ -f "$stage" ] && [ ! -L "$stage" ] || {
+        if [ ! -f "$stage" ] || [ -L "$stage" ]; then
             printf 'Refusing cleanup: staging path is not a regular file: %s\n' "$stage" >&2; exit 1;
-        }
+        fi
         found=1
     fi
 done

@@ -35,10 +35,10 @@ case "$kernel" in
     v7.2-rc7) ;;
     *) printf 'Unsupported kernel: %s\n' "$kernel" >&2; exit 2 ;;
 esac
-[ "$profile" = platform ] && [ -z "$output" ] || {
+if [ "$profile" != platform ] || [ -n "$output" ]; then
     printf 'Profile and output selection require --kernel v7.3\n' >&2
     exit 2
-}
+fi
 source_dir=$(readlink -f "$source_dir")
 [ -d "$source_dir/.git" ] || { printf 'Not a Git kernel checkout: %s\n' "$source_dir" >&2; exit 1; }
 

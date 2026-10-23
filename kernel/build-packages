@@ -44,10 +44,10 @@ case "$kernel" in
     v7.2-rc7) ;;
     *) printf 'Unsupported kernel: %s\n' "$kernel" >&2; exit 2 ;;
 esac
-[ "$profile" = platform ] && [ -z "$output$cross_compile" ] && [ "$build_only" -eq 0 ] || {
+if [ "$profile" != platform ] || [ -n "$output$cross_compile" ] || [ "$build_only" -ne 0 ]; then
     printf 'Profile, output, cross-compile and build-only selection require --kernel v7.3\n' >&2
     exit 2
-}
+fi
 if [ "$(git -C "$source_dir" rev-parse HEAD)" = c03c1a14507dfaf8b856c2608f9ac216021fc222 ]; then
     printf 'Select --kernel v7.3 and the matching profile/config explicitly; see kernel/ports/v7.3/README.md.\n' >&2
     exit 1
