@@ -18,4 +18,4 @@ When material is migrated into the public guide:
 
 [Source ledger](sources.md) records pins and distribution policy;
 [credits](credits.md) records attribution. Linux 7.3 research inputs and audit
-results remain beside the [kernel port](../../kernel/ports/v7.3/README.md).
+results remain beside the [7.3 kernel guide](../../kernel/ports/v7.3/README.md).

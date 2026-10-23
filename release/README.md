@@ -25,7 +25,7 @@ information and embeds them under `/sp12-kernel/`. Ubuntu's stock live kernel an
 frozen bootstrap DTB are retained separately; the installed target uses the DTB
 from its 7.3 package. A complete fresh installation with this bundle is untested.
 
-The [Linux 7.3 kernel port](../kernel/ports/v7.3/README.md) has separate build,
+The [main Linux 7.3 kernel](../kernel/ports/v7.3/README.md) has separate build,
 package and physical-boot evidence. Its successful kernel boot does not validate
 the ISO or the installer workflow below.
 

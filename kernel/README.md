@@ -7,19 +7,19 @@ Build tools prepare and package sources but never install the resulting kernel.
 
 | Kernel | Entry point | Status |
 |---|---|---|
-| Linux 7.3 | [Port guide](ports/v7.3/README.md) | Default platform target; boot/cold boot and feature tests recorded; known suspend/Wi-Fi/DP-audio issues remain |
+| Linux 7.3 | [Build and validation guide](ports/v7.3/README.md) | Main maintained version; boot/cold boot and feature tests recorded; known suspend/Wi-Fi/DP-audio issues remain |
 | Linux 7.2-rc7 | Recipe below | Archived reproduction only; no new maintenance or rollback test planned |
 
 The 7.3 `platform` profile carries the reviewed board/RTC/power additions. The
 separate `camera` profile also compiles the reconciled media stack with camera
-runtime nodes disabled. See the port guide for exact evidence and build commands.
+runtime nodes disabled. See the build and validation guide for evidence and commands.
 
 ## Build the default 7.3 target
 
 Follow the [7.3 preparation/build recipe](ports/v7.3/README.md#reproduce-preparation-and-builds),
 including its toolchain requirements. Both wrappers now select `v7.3` and
 `platform` when those options are omitted. Its documented output directory is
-`/var/tmp/sp12-port/reproduce-build-7.3-platform`; the Debian image package is
+`/var/tmp/sp12-kernel/reproduce-build-7.3-platform`; the Debian image package is
 created in its parent directory. Keep the generated `sp12-buildinfo.json` with
 that exact package. The [installer guide](../docs/install.md) uses both to verify
 and bundle the installed-system kernel. Native ARM64 headers remain a separate
@@ -27,7 +27,7 @@ procedure; no package is installed by the build tools.
 
 ## Reproduce the 7.2 reference
 
-The tested release is based on Linux `v7.2-rc7`, commit
+The archived release is based on Linux `v7.2-rc7`, commit
 `db2ddb87143519e20a95aa36c60b36107b736a58`.
 
 ## Reproduction inputs

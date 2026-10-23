@@ -48,7 +48,7 @@ Do not introduce blanket autosuspend, forced ASPM, invented energy tables, volta
 
 - Add an explicit optional `--manifest` argument to candidate preparation/build tooling and its wrappers. Preserve existing default behaviour.
 - Experimental manifests pin the base commit, ordered patches, complete resulting configuration, hashes and unique release/package identifiers. Retain full source/config verification, serial packaging and native ARM64 header procedures.
-- Keep historical port manifests and evidence immutable. Runtime experiments use separate settings records; no experimental policy starts automatically.
+- Keep historical build manifests and evidence immutable. Runtime experiments use separate settings records; no experimental policy starts automatically.
 - Add fixture-based tests covering missing telemetry, battery selection, unit conversion, charging transitions, counter resets, privacy filtering and comparison validity.
 - Extend candidate tests to reject incorrect hashes, modified source/configuration and mismatched manifests. Verify existing platform/camera defaults remain compatible.
 - Run `scripts/check-repository` and relevant tooling tests. Kernel candidates additionally require compilation, package inspection, target initramfs verification and operator-assisted boot tests.

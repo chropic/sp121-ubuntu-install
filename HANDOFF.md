@@ -5,7 +5,7 @@ Continue on `main`; the default-target migration was tested from base `babd4aa`.
 The tooling implementation was recorded at `6afb21f`; the branch began at
 `dab1a4b` on `main`.
 
-**Current testing:** the target runs `7.3.0-sp12-v7.3-platform`. Read the
+**Current main version:** the target runs `7.3.0-sp12-v7.3-platform`. Read the
 [human testing report](docs/testing-2026-10-23.md) and
 [sanitized evidence](kernel/experiments/performance-power/on-device-2026-10-23.json)
 for verified results, unresolved suspend errors and remaining work.
@@ -20,14 +20,14 @@ supersedes the earlier pause; it does not establish hardware or energy acceptanc
 
 Repository tooling is implemented. The full hardware/energy roadmap is not
 complete. Use the 7.3 **platform** profile for future experiments. Preserve
-historical 7.2 reproduction inputs, existing v7.3 port evidence, recovery
+historical 7.2 reproduction inputs, existing v7.3 build evidence, recovery
 artifacts. The user subsequently selected **7.3 platform as the sole maintained
 kernel and default build/installed-system target**, canceled the proposed 7.2
 rollback test, and retired new 7.2 work. Historical evidence/recovery copies
 remain. No experimental policy starts automatically.
 Camera enablement, hibernation, charge limits, compiler optimization and
 binary publication remain out of scope. Default-target selection is authorized;
-it does not imply complete feature or fresh-installation acceptance.
+known feature issues and fresh-installer validation are tracked separately.
 
 ## Implemented
 
@@ -37,7 +37,7 @@ it does not imply complete feature or fresh-installation acceptance.
   `scripts/install-kernel-target` installs/checks that exact native ARM64 target
   before fallback setup. Fallback defaults to 7.3 and rejects a bootstrap DTB
   that differs from its packaged DTB. Fresh live installation is still untested;
-  defaults do not assert release-wide hardware acceptance.
+  its validation is separate from the maintained kernel's on-device results.
 
 - `scripts/sp12-power-measure` is the shell entry point for
   `kernel/power-measure.py`: read-only `inventory`, timed `sample`, and `compare`,
@@ -122,9 +122,9 @@ Completed during operator-assisted testing:
   one side-button event path; application inking/calibration remain unverified.
 - Bluetooth audio connection and short playback; connected A2DP/LDAC node
   verified. Reconnection, sustained playback and post-suspend checks remain pending.
-- USB-C-to-HDMI video on the first tested port (`DP-2`) with the built-in panel
+- USB-C-to-HDMI video on both tested ports (`DP-2`, then `DP-1`) with the built-in panel
   also active. No HDMI/DP audio playback route appeared despite monitor audio
-  capability; other-port video and monitor-speaker playback remain pending.
+  capability; monitor-speaker playback remains blocked.
 - Three short deep suspend/resume cycles with working physical input/display,
   but repeated touchscreen resume and Wi-Fi PCIe errors. Wi-Fi reconnection took
   about 16–22 seconds in the two completed measured reconnects.
@@ -132,7 +132,7 @@ Completed during operator-assisted testing:
 USB recovery media is operator-confirmed available; USB boot/restoration was not
 exercised. The installed-system restoration rehearsal is a distinct result.
 The 7.3 initramfs differs from the historical snapshot but passed fresh checks
-and actual boots. Preserve historical port evidence unchanged.
+and actual boots. Preserve historical build evidence unchanged.
 
 These checks do not establish a clean suspend pass, energy savings or feature-wide
 hardware acceptance. See the [testing report](docs/testing-2026-10-23.md) for the

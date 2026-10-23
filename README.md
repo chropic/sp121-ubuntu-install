@@ -7,11 +7,12 @@ Intel Surface models, Surface Pro 11 and later SP12 revisions are outside this
 project's scope.
 
 > [!IMPORTANT]
-> **Linux 7.3 boots on the test SP12.** Both kernel profiles build, but hardware
-> regression and camera capture tests remain incomplete. **7.3 platform is the
-> sole maintained default**, including the installed-system target. The installer
-> bundles its verified package while retaining Ubuntu's stock live bootstrap;
-> a fresh end-to-end installation test remains pending. No ISO is distributed.
+> **Linux 7.3 platform is the project's main kernel and sole maintained default**
+> for builds and installed systems. On-device checks cover boot, display, input,
+> audio, sensors, Bluetooth audio and video through both USB-C ports. See the
+> [support matrix](docs/support.md) for known issues and feature-specific results.
+> The installer bundles 7.3 while retaining Ubuntu's stock live bootstrap.
+> Fresh end-to-end installer validation is pending; no ISO is distributed.
 
 ## Choose your task
 
@@ -22,7 +23,7 @@ project's scope.
 | Check what works | [Support matrix](docs/support.md) · [Hardware tests](docs/hardware-tests.md) |
 | Update or manage ESP space | [Maintenance](docs/maintenance.md) |
 | Fix a problem or restore boot | [Troubleshooting](docs/troubleshooting/README.md) · [Recovery](docs/recovery.md) |
-| Build or review Linux 7.3 | [Kernel port](kernel/ports/v7.3/README.md) |
+| Build or review Linux 7.3 | [Kernel build guide](kernel/ports/v7.3/README.md) |
 | Contribute or audit sources | [Contributing](CONTRIBUTING.md) · [Documentation index](docs/README.md) |
 
 ## Before changing boot files
@@ -33,9 +34,9 @@ project's scope.
 4. Update the **kernel, initramfs and DTB together**, using exact versioned files.
 5. Keep the running and recovery kernels. Inspect ESP usage before copying updates.
 
-See the [support matrix](docs/support.md) for the historical working reference and
-current 7.3 evidence. Camera nodes in the 7.3 camera profile remain disabled;
-compilation does not establish capture support.
+See the [support matrix](docs/support.md) for current 7.3 results and known issues.
+The optional camera profile keeps camera nodes disabled; camera capture is not
+supported yet.
 
 ## Repository map
 
@@ -43,7 +44,7 @@ compilation does not establish capture support.
 |---|---|
 | [`docs/`](docs/README.md) | Installation, maintenance, recovery and reference material |
 | [`scripts/`](scripts/) | Guarded installers, diagnostics and checks |
-| [`kernel/`](kernel/README.md) | Configurations, patches, build tools and port validation |
+| [`kernel/`](kernel/README.md) | Configurations, patches, build tools and validation records |
 | [`system/`](system/README.md) | Reviewed installed-system templates |
 | [`firmware/`](firmware/README.md) | Source pins and policy; no firmware blobs |
 | [`release/`](release/README.md) | Build provenance and release gates; no binaries in Git |

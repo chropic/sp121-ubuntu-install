@@ -21,7 +21,7 @@ recovery, suspend findings, unresolved issues and remaining checks.
 
 ## Develop and audit
 
-- [Kernel guide](../kernel/README.md) and [Linux 7.3 port](../kernel/ports/v7.3/README.md)
+- [Kernel guide](../kernel/README.md) and [Linux 7.3 builds and validation](../kernel/ports/v7.3/README.md)
 - [Boot and sensor implementation](development.md)
 - [Firmware policy](../firmware/README.md) and [release requirements](../release/README.md)
 - [Source ledger](reference/sources.md) and [credits](reference/credits.md)

@@ -5,20 +5,20 @@ result does not establish support for every peripheral.
 
 ## Maintained default: Linux 7.3 platform
 
-The platform profile has booted on the supported SP12 and reports
-`7.3.0-sp12-v7.3-platform`. Both platform and camera profiles pass full
-image/module/package builds. Target installation and initramfs inspection pass;
-warm/cold boots and selected physical tests pass. Broader regression and
-installer validation remain incomplete. The user retired 7.2 maintenance and
-canceled the proposed 7.3-to-7.2 rollback test; that test is not recorded as a pass.
+Linux 7.3 platform is the project's main kernel and sole maintained version,
+with release `7.3.0-sp12-v7.3-platform`. It is the default for builds and installed
+systems. Target installation, initramfs inspection, boot/cold boot and the
+physical checks below have passed. Both platform and camera profiles pass full
+image/module/package builds. Fresh end-to-end installer validation is tracked
+separately in the [installation guide](install.md). Linux 7.2 is archived.
 
 The camera profile keeps sensor, CCI, PHY, CAMSS and privacy-LED nodes disabled.
 Capture has not been demonstrated. Read the [current physical testing report](testing-2026-10-23.md)
-and [port evidence](../kernel/ports/v7.3/README.md) for exact scope.
+and [kernel build and validation guide](../kernel/ports/v7.3/README.md) for exact scope.
 
 | 7.3 observation | Result and limit |
 |---|---|
-| Boot, root filesystem, Wi-Fi/SSH | Running on the platform candidate; no failed systemd units |
+| Boot, root filesystem, Wi-Fi/SSH | Working on the maintained 7.3 platform kernel; no failed systemd units |
 | Internal display and GPU | Operator display checks and Freedreno EGL pass; sustained rendering/thermals remain untested |
 | Keyboard, touchpad and touchscreen | Operator checks pass across boots and short resumes; touchscreen resume error `-6` still logs |
 | Pen | Motion, pressure, tilt, tip/proximity and one side button report events; app inking/calibration unverified |

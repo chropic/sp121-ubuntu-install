@@ -58,13 +58,13 @@ claim. Registration is limited to the SP12 group in this candidate.
 
 Vendor 0006 and the aggregate change the OF default globally. The supplied
 reference concerns SP12, and that evidence does not justify changing other
-Surface models. The scoped port adds `<linux/of.h>` and uses the same root
+Surface models. The SP12-scoped change adds `<linux/of.h>` and uses the same root
 compatible already selected by the SP12 registry and board DTS. It needs no
 new DT binding. An unrelated OF machine does not match; a controller with an
 ACPI handle follows the existing ACPI path before the OF loader is entered.
 
 `ssam_ctrl_notif_d0_exit()` and `ssam_ctrl_notif_d0_entry()` return immediately
-when this capability is false. Thus this port suppresses both corresponding
+when this capability is false. Thus this change suppresses both corresponding
 EC notifications on SP12, just as the aggregate did. Upstream comments state
 that the notifications' exact EC effects are unknown. The change therefore
 preserves a reference workaround, not a newly established explanation or fix

@@ -1,13 +1,12 @@
-# Linux 7.3 port
+# Linux 7.3: main kernel build and validation guide
 
-**Platform boot verified on the supported SP12.** The device reports
+**Linux 7.3 platform is the project's main kernel and sole maintained version.**
+It is the default for builds and installed systems. The device reports
 `7.3.0-sp12-v7.3-platform`. Installation and target-generated initramfs checks
 pass. Both profiles build full images, modules and Debian packages; matching
 native ARM64 headers compile an external module, which was not loaded.
 
-This is the sole maintained/default build and installed-system target. It remains
-a development target: broad hardware regression and camera capture tests are
-incomplete. The installer bundles the verified 7.3 platform package for its target;
+The installer bundles the verified 7.3 platform package for its target;
 the stock Ubuntu live bootstrap is separate. A fresh installation test is pending.
 
 The [23 October on-device report](../../../docs/testing-2026-10-23.md) records
@@ -25,8 +24,10 @@ errors remain unresolved. See that report for the current test-device state.
 Camera sensor, CCI, PHY, CAMSS and privacy-LED nodes **remain disabled**. The
 existing 7.2 device's idle MCLK4 source reads 19.2 MHz despite its 12 MHz DT
 request; active sensor clocking and capture remain untested. The staged 19.2 MHz
-request is not a capture-proven fix. RTC, suspend, volume, DP audio and charge
-interfaces need separate runtime tests; do not guess charge thresholds.
+request is not a capture-proven fix. RTC and volume buttons have runtime checks;
+suspend resumes with logged errors and delayed Wi-Fi reconnection. HDMI/DP audio
+has no exposed playback route. Charge-limit behavior remains unverified; do not
+guess charge thresholds. See the [support matrix](../../../docs/support.md).
 
 - [Software results](validation/software-results.json): check scope and remaining gates.
 - [Boot smoke test](validation/boot-smoke.json): SSH, Wi-Fi, display enumeration,
@@ -68,19 +69,19 @@ module/debug configuration; a small RAM-backed `/tmp` is insufficient. These
 commands create fresh source and output paths:
 
 ```sh
-mkdir -p /var/tmp/sp12-port
+mkdir -p /var/tmp/sp12-kernel
 git clone --depth 1 --branch v7.3 --single-branch \
     https://github.com/torvalds/linux.git \
-    /var/tmp/sp12-port/reproduce-linux-7.3-platform
+    /var/tmp/sp12-kernel/reproduce-linux-7.3-platform
 kernel/prepare-tree --kernel v7.3 --profile platform \
-    --source /var/tmp/sp12-port/reproduce-linux-7.3-platform \
-    --output /var/tmp/sp12-port/reproduce-build-7.3-platform
+    --source /var/tmp/sp12-kernel/reproduce-linux-7.3-platform \
+    --output /var/tmp/sp12-kernel/reproduce-build-7.3-platform
 kernel/prepare-tree --kernel v7.3 --profile platform \
-    --source /var/tmp/sp12-port/reproduce-linux-7.3-platform \
-    --output /var/tmp/sp12-port/reproduce-build-7.3-platform --apply
+    --source /var/tmp/sp12-kernel/reproduce-linux-7.3-platform \
+    --output /var/tmp/sp12-kernel/reproduce-build-7.3-platform --apply
 kernel/build-packages --kernel v7.3 --profile platform \
-    --source /var/tmp/sp12-port/reproduce-linux-7.3-platform \
-    --output /var/tmp/sp12-port/reproduce-build-7.3-platform \
+    --source /var/tmp/sp12-kernel/reproduce-linux-7.3-platform \
+    --output /var/tmp/sp12-kernel/reproduce-build-7.3-platform \
     --cross-compile aarch64-linux-gnu- --jobs 12
 ```
 
@@ -114,7 +115,7 @@ and select `--profile camera` in both preparation and building. The profiles
 must not be mixed. Their config localversions are respectively
 `-sp12-v7.3-platform` and `-sp12-v7.3-camera`.
 
-## Remaining gates
+## Known issues and follow-up validation
 
 The original boot-smoke evidence records the earlier legacy-helper state.
 Subsequent operator-assisted testing installed the maintained helper with an
@@ -125,14 +126,16 @@ other installations may still pin 7.2.
 1. Complete repeated 7.3 warm reboots. Initial boot and cold boot have passed.
    The operator canceled the proposed 7.2 rollback test; it is not a pass or a
    remaining maintenance task for the retired line.
-2. Complete the [hardware tests](../../../docs/hardware-tests.md), including
-   feature-specific RTC, volume, suspend, DP audio and charge-interface checks.
+2. Follow up on suspend errors, delayed Wi-Fi reconnection, HDMI/DP audio routing,
+   RTC persistence and charge interfaces. The [hardware checklist](../../../docs/hardware-tests.md)
+   and [current results](../../../docs/testing-2026-10-23.md) distinguish completed
+   checks from remaining work.
 3. Before enabling camera nodes, validate clock/power behavior, media topology,
    real capture, privacy indication and repeated start/stop.
 4. Independently validate live-installer boot, installation, handoff, updates and
    recovery before changing its matched kernel/DTB inputs.
 5. Resolve recorded provenance gaps and complete release checks before binary
-   publication. Successful builds do not promote a supported release.
+   publication. Binary distribution has separate provenance and installer checks.
 
 The supplied notes and patch audit remain verbatim in [`research/`](research/).
 They are research inputs, not executable instructions or new support claims;

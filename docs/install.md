@@ -5,7 +5,8 @@ Edition with Snapdragon X Plus (`X1P42100`). It does not support Intel Surface
 devices, Surface Pro 11, or a later Surface Pro 12 revision.
 
 The installed-system target is **7.3.0-sp12-v7.3-platform**, the sole maintained
-kernel line. It remains a development target with [known testing limits](testing-2026-10-23.md).
+kernel line and the project's main version. See the [support matrix](support.md)
+for verified features and known issues.
 The live session uses Canonical's stock Ubuntu kernel and a frozen compatible
 bootstrap DTB. The installed target receives the separately verified 7.3 image,
 modules and matching packaged DTB; these two boot paths use different DTBs.
@@ -73,8 +74,8 @@ First complete the [7.3 platform build recipe](../kernel/ports/v7.3/README.md#re
 For that recipe's paths, verify these generated inputs exist:
 
 ```bash
-KERNEL_PACKAGE=/var/tmp/sp12-port/linux-image-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1_arm64.deb
-KERNEL_BUILD_INFO=/var/tmp/sp12-port/reproduce-build-7.3-platform/sp12-buildinfo.json
+KERNEL_PACKAGE=/var/tmp/sp12-kernel/linux-image-7.3.0-sp12-v7.3-platform_7.3-1~sp12candidate1_arm64.deb
+KERNEL_BUILD_INFO=/var/tmp/sp12-kernel/reproduce-build-7.3-platform/sp12-buildinfo.json
 test -f "$KERNEL_PACKAGE" && test -f "$KERNEL_BUILD_INFO"
 mkdir -p build/installer-inputs build/output
 cd build/installer-inputs

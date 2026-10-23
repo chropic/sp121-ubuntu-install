@@ -2,9 +2,10 @@
 
 The [roadmap](../../PERFORMANCE-POWER-ROADMAP.md) defines acceptance and scope.
 Use the 7.3 **platform** profile for future experiments. The historical 7.2
-inputs and the v7.3 port evidence remain immutable. The user selected 7.3 platform
-as the sole maintained/default build and installed-system target. This does not
-establish hardware or energy acceptance. No experimental service starts automatically.
+inputs and the v7.3 build and validation evidence remain immutable. Linux 7.3
+platform is the sole maintained/default build and installed-system target.
+Hardware results are recorded per feature; energy savings require separate
+measurements. No experimental service starts automatically.
 
 ## Current gates
 
@@ -13,7 +14,7 @@ subsequently authorized on-device testing; current results are in the
 [23 October testing report](../../../docs/testing-2026-10-23.md) and
 [sanitized on-device evidence](on-device-2026-10-23.json). These later records
 supersede the earlier observed 7.2/legacy-helper state without changing historical
-port evidence.
+build evidence.
 
 The target now runs `7.3.0-sp12-v7.3-platform`. Maintained boot sync is installed
 with an explicit release/DTB selection. A complete recovery archive and its
@@ -172,7 +173,7 @@ hashes the selected manifest. Serial packaging and native ARM64 header procedure
 remain in effect. Use `kernel/inspect-candidate.py`, inspect the target initramfs,
 and complete operator boot tests independently. A software pass is not a hardware
 or energy pass. No uncompiled experiment manifests are presented as accepted
-candidates here. Keep new runtime settings outside historical port manifests.
+candidates here. Keep new runtime settings outside historical build manifests.
 
 Run `scripts/check-repository` for fixture and integration checks. `--root` is a
 fixture filesystem override for the collector; live package/service queries run
