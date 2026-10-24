@@ -1,0 +1,111 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+
+usage() {
+    printf '%s\n' 'Usage: install-grub-fallback-guard [--apply | --remove | --help]' \
+        'Default: report the planned change without modifying files.'
+}
+
+mode=dry-run
+case "${1:-}" in
+    '') ;;
+    --apply) mode=apply ;;
+    --remove) mode=remove ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+esac
+[ "$#" -le 1 ] || { usage >&2; exit 2; }
+
+entry=/usr/lib/grub/grub-multi-install
+original=/usr/lib/grub/grub-multi-install.sp12-original
+wrapper=/usr/local/sbin/sp12-grub-multi-install-guard
+source_dir=$(CDPATH='' cd -- "$(dirname "$0")/../system/usr-local-sbin" && pwd)
+source_wrapper=$source_dir/sp12-grub-multi-install-guard
+
+die() { printf 'install-grub-fallback-guard: %s\n' "$*" >&2; exit 1; }
+
+if [ "$(dpkg --print-architecture)" != arm64 ] || [ "$(uname -m)" != aarch64 ]; then
+    die 'this guard is for the ARM64 SP12 installation only'
+fi
+if [ ! -r /etc/sp12-linux/boot.conf ] ||
+   ! grep -qx 'KVER=7.3.0-sp12-v7.3-platform' /etc/sp12-linux/boot.conf; then
+    die 'maintained SP12 boot configuration was not found; refusing to proceed'
+fi
+diversion=$(dpkg-divert --list "$entry" 2>/dev/null || true)
+expected="local diversion of $entry to $original"
+if [ "$mode" = remove ]; then
+    [ "$diversion" = "$expected" ] || die "expected diversion not found: ${diversion:-none}"
+    if [ -L "$entry" ]; then
+        [ "$(readlink "$entry")" = "$wrapper" ] || die "$entry points somewhere unexpected"
+    elif [ -e "$entry" ]; then
+        die "$entry exists but is not the guard symlink; refusing to remove it"
+    fi
+    [ -x "$original" ] || die "diverted package helper is missing: $original"
+    [ "$(id -u)" -eq 0 ] || die '--remove requires root'
+    printf 'Will restore the package helper from %s and remove the SP12 guard.\n' "$original"
+    if [ -L "$entry" ]; then
+        rm -- "$entry"
+    fi
+    dpkg-divert --local --rename --remove --divert "$original" "$entry"
+    rm -f -- "$wrapper"
+    printf 'Restored %s; the ESP and NVRAM were not modified.\n' "$entry"
+    exit 0
+fi
+
+if [ ! -f "$source_wrapper" ]; then
+    die "wrapper source is missing: $source_wrapper"
+fi
+if ! dpkg-query -W -f='${db:Status-Status}\n' grub2-common 2>/dev/null | grep -qx installed; then
+    die 'grub2-common is not installed'
+fi
+help=$(LC_ALL=C grub-install --help 2>&1) || die 'grub-install --help failed'
+case "$help" in *--no-extra-removable*) ;; *) die 'grub-install lacks --no-extra-removable' ;; esac
+case "$help" in *--no-nvram*) ;; *) die 'grub-install lacks --no-nvram' ;; esac
+
+if [ -z "$diversion" ]; then
+    if ! dpkg -S "$entry" 2>/dev/null | grep -Fq 'grub2-common:'; then
+        die "expected grub2-common ownership of $entry"
+    fi
+    [ -x "$entry" ] && [ ! -e "$original" ] || die 'unexpected helper/diversion state'
+elif [ "$diversion" = "$expected" ]; then
+    [ -x "$original" ] || die "diverted package helper is missing: $original"
+else
+    die "another diversion exists: $diversion"
+fi
+
+if [ -e "$wrapper" ] || [ -L "$wrapper" ]; then
+    cmp -s "$source_wrapper" "$wrapper" || die "existing wrapper differs from source: $wrapper"
+else
+    [ "$mode" = dry-run ] || [ "$(id -u)" -eq 0 ] || die '--apply requires root'
+fi
+
+printf '%s\n' 'Will install a local dpkg diversion for grub-multi-install.' \
+    "The package helper will be preserved at $original." \
+    "The guard will force --no-extra-removable and --no-nvram." \
+    'The ESP and UEFI NVRAM will not be written by this installer.'
+if [ "$mode" = dry-run ]; then
+    printf '%s\n' 'DRY RUN: no files or package settings changed. Re-run with --apply as root.'
+    exit 0
+fi
+[ "$(id -u)" -eq 0 ] || die '--apply requires root'
+
+install -d -m 0755 /usr/local/sbin
+if [ ! -e "$wrapper" ]; then
+    install -o root -g root -m 0755 "$source_wrapper" "$wrapper"
+fi
+
+if [ -z "$diversion" ]; then
+    dpkg-divert --local --rename --add --divert "$original" "$entry"
+fi
+
+if [ -e "$entry" ] || [ -L "$entry" ]; then
+    if [ ! -L "$entry" ] || [ "$(readlink "$entry")" != "$wrapper" ]; then
+        die "$entry was repopulated unexpectedly; inspect the diversion before proceeding"
+    fi
+else
+    ln -s "$wrapper" "$entry"
+fi
+
+"$entry" --verify
+printf '%s\n' 'Installed. No GRUB installation, ESP write, or NVRAM update was run.'

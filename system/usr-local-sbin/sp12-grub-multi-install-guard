@@ -1,0 +1,76 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Preserve the SP12 fallback loader and firmware boot order during package hooks.
+set -euo pipefail
+
+entry=/usr/lib/grub/grub-multi-install
+original=/usr/lib/grub/grub-multi-install.sp12-original
+wrapper=/usr/local/sbin/sp12-grub-multi-install-guard
+
+usage() {
+    printf '%s\n' 'SP12 GRUB multi-install guard' \
+        'Forwards package-hook calls while forcing --no-extra-removable and --no-nvram.' \
+        'Usage: sp12-grub-multi-install-guard [--verify | --help]'
+}
+
+verify() {
+    local diversion help
+    diversion=$(dpkg-divert --list "$entry" 2>/dev/null || true)
+    if [[ "$diversion" != "local diversion of $entry to $original" ]]; then
+        printf 'FAIL: unexpected dpkg diversion: %s\n' "${diversion:-none}" >&2
+        return 1
+    fi
+    if [[ ! -L "$entry" || "$(readlink -f "$entry")" != "$wrapper" ]]; then
+        printf 'FAIL: %s is not linked to the SP12 guard\n' "$entry" >&2
+        return 1
+    fi
+    if [[ ! -x "$original" ]]; then
+        printf 'FAIL: diverted package helper is missing: %s\n' "$original" >&2
+        return 1
+    fi
+    if ! help=$(LC_ALL=C grub-install --help 2>&1); then
+        printf '%s\n' 'FAIL: grub-install --help failed' >&2
+        return 1
+    fi
+    if [[ "$help" != *--no-extra-removable* || "$help" != *--no-nvram* ]]; then
+        printf '%s\n' 'FAIL: grub-install lacks required no-fallback/no-NVRAM options' >&2
+        return 1
+    fi
+    printf '%s\n' 'PASS: package helper is diverted through the SP12 guard' \
+        'PASS: diverted helper exists and grub-install supports both safety options'
+}
+
+case "${1-}" in
+    --help|-h) usage; exit 0 ;;
+    --verify)
+        [[ "$#" -eq 1 ]] || { usage >&2; exit 2; }
+        verify
+        exit
+        ;;
+esac
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    printf '%s\n' 'sp12-grub-multi-install-guard: package installation requires root' >&2
+    exit 1
+fi
+
+if ! help=$(LC_ALL=C grub-install --help 2>&1) ||
+   [[ "$help" != *--no-extra-removable* || "$help" != *--no-nvram* ]]; then
+    printf '%s\n' 'sp12-grub-multi-install-guard: required safety options are unavailable; refusing install' >&2
+    exit 1
+fi
+if [[ ! -x "$original" ]]; then
+    printf 'sp12-grub-multi-install-guard: diverted helper is missing: %s\n' "$original" >&2
+    exit 1
+fi
+
+# Never let caller-supplied flags cancel the fallback-path or NVRAM protection.
+args=()
+for arg in "$@"; do
+    case "$arg" in
+        --no-extra-removable|--force-extra-removable|--removable|--no-nvram) ;;
+        *) args+=("$arg") ;;
+    esac
+done
+
+exec "$original" "${args[@]}" --no-extra-removable --no-nvram

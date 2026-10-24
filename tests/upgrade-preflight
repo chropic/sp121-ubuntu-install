@@ -1,0 +1,176 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
+python3 - "$repo_root" <<'PY'
+from pathlib import Path
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+repo = Path(sys.argv[1])
+source_script = (repo / "scripts/sp12-upgrade-preflight").read_text()
+
+
+class UpgradePreflightTests(unittest.TestCase):
+    def shell_path(self, path):
+        if os.name == "nt":
+            return subprocess.check_output(["cygpath", "-u", str(path)], text=True).strip()
+        return str(path)
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.etc = self.root / "etc"
+        self.boot = self.root / "boot"
+        self.esp = self.boot / "efi"
+        self.modules = self.root / "lib/modules/7.3-test"
+        for directory in [
+            self.etc / "apt/sources.list.d",
+            self.etc / "update-manager",
+            self.etc / "sp12-linux",
+            self.boot,
+            self.esp / "EFI/BOOT",
+            self.esp / "sp12",
+            self.modules,
+        ]:
+            directory.mkdir(parents=True, exist_ok=True)
+        (self.etc / "os-release").write_text("ID=ubuntu\nVERSION_ID=26.04\n")
+        (self.etc / "update-manager/release-upgrades").write_text("Prompt=normal\n")
+        (self.etc / "sp12-linux/boot.conf").write_text(
+            "KVER=7.3-test\nDTB=" + self.shell_path(self.boot / "dtb-7.3-test") + "\n"
+        )
+        for path in [
+            self.boot / "vmlinuz-7.3-test",
+            self.boot / "initrd.img-7.3-test",
+            self.boot / "dtb-7.3-test",
+            self.esp / "EFI/BOOT/BOOTAA64.EFI",
+            self.esp / "sp12/vmlinuz",
+            self.esp / "sp12/initrd.img",
+            self.esp / "sp12/dtb",
+        ]:
+            path.write_bytes(b"fixture")
+        (self.esp / "sp12/SP12BOOT").touch()
+        (self.etc / "apt/sources.list").write_text(
+            "deb https://ports.ubuntu.com/ubuntu-ports resolute main\n"
+        )
+        (self.etc / "apt/sources.list.d/ubuntu.sources").write_text(
+            "Types: deb\nURIs: https://archive.ubuntu.com/ubuntu\n"
+            "Suites: resolute\nComponents: main\n"
+        )
+
+        # Rewrite only inspected target paths into the temporary fixture root.
+        self.script = self.root / "sp12-upgrade-preflight"
+        text = source_script
+        for host_path, fixture_path in [
+            ("/etc/", self.shell_path(self.etc) + "/"),
+            ("/boot/", self.shell_path(self.boot) + "/"),
+            ("/lib/modules/", self.shell_path(self.root / "lib/modules") + "/"),
+        ]:
+            text = text.replace(host_path, fixture_path)
+        self.script.write_text(text)
+
+        self.bin = self.root / "bin"
+        self.bin.mkdir()
+        self.command("id", 'printf "0\\n"')
+        self.command(
+            "uname",
+            'if [ "${1-}" = "-m" ]; then printf "aarch64\\n"; '
+            'else printf "7.3-test\\n"; fi',
+        )
+        self.command(
+            "curl",
+            'case "${SP12_TEST_DIST:-stonking}" in '
+            'stonking) printf "Dist: stonking\\nVersion: 26.10\\nSupported: 1\\nUpgradeTool: https://example.invalid/stonking.tar.gz\\n" ;; '
+            'dist-only) printf "Dist: 26.10\\nVersion: 26.04.1 LTS\\nSupported: 1\\nUpgradeTool: https://example.invalid/resolute.tar.gz\\n" ;; '
+            '*) printf "Dist: resolute\\nVersion: 26.04.1 LTS\\nSupported: 1\\nUpgradeTool: https://example.invalid/resolute.tar.gz\\n" ;; '
+            'esac',
+        )
+        self.command("dpkg", "exit 0")
+        self.command("apt-mark", "exit 0")
+        self.command(
+            "grub-file",
+            'if [ "${SP12_TEST_BAD_LOADER:-}" = "1" ]; then exit 1; fi',
+        )
+        self.command(
+            "apt-get",
+            'if [ "${SP12_TEST_PENDING:-}" = "1" ]; then '
+            'printf "Inst sample [1] (2 Ubuntu:26.04/stable)\\n"; '
+            'else printf "0 upgraded, 0 newly installed, 0 to remove\\n"; fi',
+        )
+        self.command("findmnt", "exit 0")
+        self.command(
+            "df",
+            'printf "Filesystem Size Used Avail Use%% Mounted on\\nfixture 50G 1G 49G 2%% /\\n"',
+        )
+        self.command(
+            "debconf-show",
+            'printf "* grub2/no_efi_extra_removable: true\\n'
+            '* grub2/force_efi_extra_removable: false\\n"',
+        )
+        self.env = dict(os.environ, PATH=str(self.bin) + os.pathsep + os.environ["PATH"])
+
+    def command(self, name, body):
+        path = self.bin / name
+        path.write_text("#!/bin/sh\nset -eu\n" + body + "\n")
+        path.chmod(0o755)
+
+    def run_tool(self, **env):
+        return subprocess.run(
+            ["sh", str(self.script)],
+            env=dict(self.env, **env),
+            capture_output=True,
+            text=True,
+        )
+
+    def snapshot(self):
+        return {
+            path.relative_to(self.root): path.read_bytes()
+            for path in self.root.rglob("*")
+            if path.is_file()
+        }
+
+    def test_matches_installed_boot_config_and_deb822_ubuntu_source(self):
+        before = self.snapshot()
+        result = self.run_tool()
+        self.assertNotEqual(0, result.returncode)  # Manual recovery gates remain.
+        self.assertIn("configured kernel, initramfs and modules exist: 7.3-test", result.stdout)
+        self.assertIn("configured DTB exists", result.stdout)
+        self.assertIn("fallback EFI loader and active SP12 payload files exist", result.stdout)
+        self.assertIn("fallback loader is an ARM64 EFI image", result.stdout)
+        self.assertIn("ESP payload matches", result.stdout)
+        self.assertIn("GRUB debconf requests no extra EFI removable-path install", result.stdout)
+        self.assertIn("no non-Ubuntu APT source entries detected", result.stdout)
+        self.assertNotIn("DTB_PATH", result.stdout + result.stderr)
+        self.assertEqual(before, self.snapshot(), "preflight must not modify inspected state")
+
+    def test_reports_pending_updates_and_external_list_source(self):
+        extra = self.etc / "apt/sources.list.d/vendor.list"
+        extra.write_text("deb https://packages.example.invalid/ubuntu stable main\n")
+        result = self.run_tool(SP12_TEST_PENDING="1")
+        self.assertIn("ordinary Ubuntu 26.04 package updates are pending", result.stdout)
+        self.assertIn("packages.example.invalid", result.stdout)
+
+    def test_rejects_unadvertised_release_metadata(self):
+        result = self.run_tool(SP12_TEST_DIST="26.04")
+        self.assertIn("no supported Ubuntu 26.10 entry", result.stderr)
+
+    def test_does_not_treat_dist_codename_as_release_version(self):
+        result = self.run_tool(SP12_TEST_DIST="dist-only")
+        self.assertIn("no supported Ubuntu 26.10 entry", result.stderr)
+
+    def test_rejects_non_arm64_fallback_loader(self):
+        result = self.run_tool(SP12_TEST_BAD_LOADER="1")
+        self.assertIn("fallback loader is not a valid ARM64 EFI image", result.stderr)
+
+    def test_rejects_stale_esp_kernel_payload(self):
+        (self.esp / "sp12/vmlinuz").write_bytes(b"stale")
+        result = self.run_tool()
+        self.assertIn("ESP payload is missing or differs", result.stderr)
+
+
+unittest.main(argv=["upgrade-preflight"])
+PY

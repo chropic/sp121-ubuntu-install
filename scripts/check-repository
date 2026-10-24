@@ -99,5 +99,6 @@ fi
 tests/build-installer
 tests/install-fallback-target
 tests/boot-space
+tests/upgrade-preflight
 
 printf 'Repository checks passed.\n'

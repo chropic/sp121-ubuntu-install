@@ -165,6 +165,166 @@ Raw captures remain private; publish only reviewed, sanitized evidence.
    stays explicitly pending. Run `scripts/check-repository` after relevant
    tooling changes.
 
-The user also requested a separate Ubuntu 26.10 upgrade assessment. It is not an
-instruction to run a release upgrade; keep that assessment separate from these
-hardware results.
+The user then asked to progress toward moving from Ubuntu 26.04 to 26.10. Keep
+this work separate from the kernel/energy results and use the release-upgrade
+gates below before changing the device's Ubuntu release.
+
+## Ubuntu 26.10 preparation and current status
+
+The read-only first-stage checker is `scripts/sp12-upgrade-preflight`. It
+checks release metadata, release track, package state, holds, APT simulation,
+third-party sources, filesystem space, GRUB settings, configured kernel/DTB,
+ESP payloads and fallback EFI type. It is read-only and never initiates an
+upgrade. It has fixture coverage for ARM/deb822 sources, pending updates,
+third-party repositories and missing release metadata. The latest fix makes
+unreadable root-only initramfs comparisons manual checks rather than false
+content failures.
+
+The user directed that recovery-media readiness be bypassed for other checks.
+That was followed for read-only inspection only; it does not waive the need for
+independent full-system and user-data backups before an actual OS upgrade.
+Current detailed status and remaining gates are in [docs/release-upgrade.md](docs/release-upgrade.md).
+
+On 2026-10-23, read-only SSH checks confirmed Ubuntu 26.04.1 on
+`7.3.0-sp12-v7.3-platform`, initially `Prompt=lts`, held `iio-sensor-proxy`, three
+pending current-release package updates, and no supported 26.10 upgrade-tool
+entry in stable metadata. The target has only its internal disk attached and
+no noninteractive sudo for the SSH user. The actual 26.10 removal plan,
+full-system backup and separate user-data backup remain outstanding. The
+operator subsequently ran the staged preflight as root. It returned `NOT
+READY` with three failures: `Prompt=lts`, no supported stable 26.10 upgrader
+metadata, and `grub2/no_efi_extra_removable=false`. It passed the running and
+configured 7.3 kernel checks, exact kernel/initramfs/DTB ESP comparisons,
+fallback loader presence and ARM64 EFI validation. The output lists three
+pending current-release package updates, the held sensor package, third-party
+sources, 186 GiB root free space and 810 MiB ESP free space. The actual 26.10
+removal plan remains unavailable. The root-only initramfs comparison passed;
+full-system backup and separate user-data backup remain outstanding.
+A follow-up SSH check again confirmed `Prompt=lts` and the read-only ESP mount.
+The root-only cache listing returned no `/var/lib/update-manager/meta-release*`
+files. Read-only inspection found only an empty
+`/var/lib/ubuntu-release-upgrader/release-upgrade-available` marker and no
+`/var/log/dist-upgrade` files. Installed update-manager source confirms the
+stable endpoint and cache path; the root preflight fetched the endpoint and
+found no supported 26.10 entry, so stale local metadata does not explain that
+failure. A second direct fetch listed versions only through 26.04.1 LTS.
+No-cache headers showed `200 OK` with `Last-Modified: 2026-09-11` for the
+stable interim-release endpoint on 2026-10-24, indicating upstream metadata
+publication has not caught up with the 2026-10-15 release.
+Ubuntu's public `stonking` package catalogue lists iio-sensor-proxy
+3.9-1ubuntu1 (versus held 3.8-1), grub2-common 2.14-2ubuntu3 (versus installed
+2.14-2ubuntu2.1), and shim-signed 1.59+15.8-0ubuntu2. The sensor package and
+GRUB changes require compatibility and hook review; these public versions are
+not a device-specific release-upgrader plan. The operator confirmed the 7.3
+initramfs matches its ESP copy.
+Release-note-specific checks show `/lib32` absent, `/` directly on `/dev/sda2`
+as ext4, no active crypttab entry or crypt mapper, `/boot` sharing ext4, and a
+vfat ESP. The TPM-backed FDE and dangling-`/lib32` upgrade blockers do not
+apply. The 26.10 switch to Rust `cp`, `mv` and `rm` still needs a scratch-ESP
+test of boot-sync staging and rollback before relying on those helpers.
+Repository endpoint checks found no R `stonking-cran40` or Waydroid `stonking`
+metadata (HTTP 404); Waydroid is not installed. Tailscale's `stonking` index
+advertises ARM64, and VS Code/ChatGPT stable indexes respond; VS Code's index
+advertises ARM64. This does not prove package compatibility. Keep the R source
+disabled unless its vendor publishes a supported 26.10 suite.
+The preflight script was missing from the target at its first invocation; it is
+now staged at `/tmp/sp12-upgrade-preflight-20261023` and its SHA-256 matches
+the repository copy. The root run is complete and is documented above.
+
+A non-rebooting reinstall of `shim-signed`, `grub2-common` and
+`grub-efi-arm64` was performed. Despite temporarily setting
+`grub2/update_nvram=false`, the shim hook created an Ubuntu NVRAM entry and
+changed BootOrder. The operator restored the original NVRAM state and restored
+the ESP byte-for-byte from the same-disk image. Follow-up confirms the original
+fallback loader/payload hashes, ARM64 EFI format, read-only ESP mount and
+pre-rehearsal BootOrder. Do not reboot: shim-to-custom-GRUB boot behavior has
+not been tested. This rehearsal is complete as a package-write/restore check,
+not as a boot test or full-system recovery test.
+
+The installed scripts explain the side effect: GRUB's postinst honors its
+`no_efi_extra_removable` and `update_nvram` debconf values, but shim invokes
+`grub-multi-install` directly without those arguments. Exact package-script
+findings, hashes and preflight results are recorded in `docs/release-upgrade.md`.
+The release upgrade remains not ready; do not run `do-release-upgrade` yet.
+
+Fallback protection work: read-only inspection confirmed shim's two install
+calls go through `/usr/lib/grub/grub-multi-install`, whose helper forwards
+arguments to `grub-install`; no separate `efibootmgr` invocation exists in the
+shim postinst. Added a local `dpkg-divert` guard and installer in the repository.
+The guard forces `--no-extra-removable --no-nvram`, handles `--help` without
+delegating, fails closed if either option is unavailable, and has a reversible
+remove path. The installer is dry-run by default and does not write the ESP or
+NVRAM. Both files and the updated preflight are staged under
+`/tmp/sp12-grub-fallback-guard`; hashes match the repo copies, syntax checks
+passed, and the dry run reported the intended diversion with no changes. The
+operator then applied the staged installer as root. It confirmed the diversion,
+preserved helper and support for both safety options; it did not run GRUB or
+write the ESP/NVRAM. The subsequent root preflight passed the verified-guard
+check, clearing the prior fallback-path failure. The operator then reinstalled
+`shim-signed`, `grub2-common` and `grub-efi-arm64` with the guard active. All
+three packages configured and both GRUB installer runs reported success.
+Post-rehearsal checks confirm the ESP is read-only, `BootCurrent=0003`,
+`BootOrder=0001,0004,0000,0002` with no Ubuntu entry, all six fallback/SP12
+payload hashes are unchanged, and the diverted helper verifies. The guarded
+package-hook rehearsal is complete; firmware boot compatibility remains
+untested. The earlier accidental helper `--help` invocation left all six
+recorded ESP hashes unchanged; NVRAM was not checked at that time. It was
+captured before the guarded package rehearsal and confirmed unchanged afterward.
+
+During that inspection, the package helper was mistakenly invoked with
+`--help`. It proceeded to `grub-install --help` while the ESP was mounted
+read-only. Follow-up checks confirmed the six recorded ESP payload hashes are
+unchanged and the ESP remains read-only. NVRAM could not be inspected through
+noninteractive sudo at that time; the operator later captured it before and
+after the guarded package rehearsal, confirming the expected state remained
+unchanged. Full details are recorded in `docs/release-upgrade.md`.
+
+Preparation runbook now separates actions possible before metadata publication
+from the gated upgrade sequence. The operator set `Prompt=normal`; it does not
+start an upgrade. The runbook retains the guarded root command in case the
+setting must be repeated, followed by an ordinary 26.04 APT simulation that
+must be reviewed before applying updates. It also specifies scratch-ESP
+uutils testing, explicit GRUB/shim loader-preservation work, backup and
+recovery requirements, and stop/go checks once stable metadata advertises the
+26.10 `UpgradeTool`. The release track was changed to `Prompt=normal`; the
+three reviewed ordinary updates were applied later, as recorded below.
+
+The operator has since set `Prompt=normal`; the latest root preflight confirms
+it and reduces the failed checks to one: no supported stable 26.10 upgrader
+metadata. The local GRUB fallback guard has now been installed and verified;
+six manual gates remain. Review of the actual 26.10 GRUB/shim maintainer
+scripts remains a manual gate until those target packages are available.
+After refreshing APT indexes, the operator reviewed the `full-upgrade`
+simulation and applied its three upgrades (`ubuntu-pro-client`,
+`ubuntu-pro-client-l10n`, and `chatgpt`), with no removals or new packages.
+Ten phased packages remain deferred. The proposed/applied packages did not
+include kernel, GRUB, shim or the held sensor package. The latest preflight
+reports no current-release updates pending. Current `resolute` R and Waydroid
+indexes refresh, which does not prove support for `stonking`. See the latest
+output and suite distinction in `docs/release-upgrade.md`.
+
+### Remaining Ubuntu 26.10 handoff gates
+
+Before starting the release upgrade:
+
+1. Make and verify independent full-system and user-data backups; test the
+   recovery route. The ESP image is not a full-system backup.
+2. Resolve the held `iio-sensor-proxy` against the local sensor fork/build and
+   the actual target plan; preserve and retest the sensor integration.
+3. Review compatibility of R, ChatGPT, Tailscale, VS Code and Waydroid sources.
+   R and Waydroid lacked 26.10 suite metadata in recorded checks; Waydroid is
+   not installed.
+4. Test ESP boot-sync staging and rollback on a scratch ESP with 26.10 Rust
+   `cp`, `mv` and `rm`.
+5. When stable metadata advertises a supported `UpgradeTool`, rerun preflight
+   and inspect the actual device upgrade plan. Check kernel/recovery/SP12 hook
+   retention, removals, repository changes, prompts and required free space.
+6. Review the target 26.10 GRUB/shim maintainer scripts and confirm their
+   hooks still pass through the local diversion guard.
+7. Validate firmware boot through the custom GRUB using a safe boot/recovery
+   procedure. The guarded package reinstall passed but did not test firmware
+   boot compatibility.
+
+Do not use `-d` or start `do-release-upgrade` until the stable metadata is
+present and these gates are closed. See [docs/release-upgrade.md](docs/release-upgrade.md)
+for the detailed status and commands.

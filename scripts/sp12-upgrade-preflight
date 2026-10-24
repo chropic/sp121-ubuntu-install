@@ -1,0 +1,314 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Read-only readiness report for an in-place Ubuntu 26.04 to 26.10 upgrade.
+set -u
+
+failures=0
+pending=0
+
+pass() { printf 'PASS: %s\n' "$*"; }
+fail() { printf 'FAIL: %s\n' "$*" >&2; failures=$((failures + 1)); }
+manual() { printf 'MANUAL: %s\n' "$*"; pending=$((pending + 1)); }
+info() { printf 'INFO: %s\n' "$*"; }
+
+usage() {
+    printf '%s\n' 'Usage: sp12-upgrade-preflight [--help]'
+    printf '%s\n' 'Read-only checks for Ubuntu 26.04 -> 26.10; this never starts an upgrade.'
+}
+
+case "${1-}" in
+    '') ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+esac
+
+if [ "$(id -u)" -eq 0 ]; then
+    pass 'running as root for complete local inspection'
+else
+    manual 'run with sudo for complete package, mount and boot inspection'
+fi
+
+if [ -r /etc/os-release ]; then
+    # Parse only the two expected data fields; do not evaluate the file as shell.
+    os_id=$(sed -n 's/^ID=//p' /etc/os-release | tr -d "'\"" | tail -n 1)
+    os_version=$(sed -n 's/^VERSION_ID=//p' /etc/os-release | tr -d "'\"" | tail -n 1)
+    if [ "$os_id" = ubuntu ] && [ "$os_version" = 26.04 ]; then
+        pass "Ubuntu ${os_version} detected"
+    else
+        fail "expected Ubuntu 26.04, found ${os_id:-unknown} ${os_version:-unknown}"
+    fi
+else
+    fail 'cannot read /etc/os-release'
+fi
+
+if [ "$(uname -m)" = aarch64 ]; then
+    pass 'ARM64 architecture detected'
+else
+    fail "expected aarch64, found $(uname -m)"
+fi
+
+if [ -r /etc/update-manager/release-upgrades ]; then
+    prompt=$(sed -n 's/^[[:space:]]*Prompt[[:space:]]*=[[:space:]]*//p' /etc/update-manager/release-upgrades | tail -n 1 | tr -d '[:space:]')
+    case "$prompt" in
+        normal) pass 'release-upgrader track is Prompt=normal' ;;
+        lts) fail 'release-upgrader is set to Prompt=lts; interim track has not been selected' ;;
+        *) fail "release-upgrader Prompt is unset or unrecognized: ${prompt:-missing}" ;;
+    esac
+else
+    fail 'cannot read /etc/update-manager/release-upgrades'
+fi
+
+if command -v curl >/dev/null 2>&1; then
+    metadata=$(curl --fail --silent --show-error --location --max-time 15 https://changelogs.ubuntu.com/meta-release 2>&1)
+    curl_status=$?
+    if [ "$curl_status" -ne 0 ]; then
+        fail "cannot retrieve stable Ubuntu release metadata: $metadata"
+    elif advertised=$(printf '%s\n' "$metadata" | awk '
+        BEGIN { RS = ""; FS = "\n" }
+        {
+            version = supported = upgrade_tool = dist = ""
+            for (i = 1; i <= NF; i++) {
+                if ($i ~ /^Version:[[:space:]]*/) version = $i
+                if ($i ~ /^Supported:[[:space:]]*/) supported = $i
+                if ($i ~ /^UpgradeTool:[[:space:]]*/) upgrade_tool = $i
+                if ($i ~ /^Dist:[[:space:]]*/) dist = $i
+            }
+            if (version ~ /^Version:[[:space:]]*26\.10([[:space:]]|$)/ &&
+                supported ~ /^Supported:[[:space:]]*1[[:space:]]*$/ &&
+                upgrade_tool ~ /^UpgradeTool:[[:space:]]*https?:\/\// &&
+                dist ~ /^Dist:[[:space:]]*[^[:space:]]+$/) {
+                sub(/^Dist:[[:space:]]*/, "", dist)
+                print dist
+                found = 1
+                exit 0
+            }
+        }
+        END { if (!found) exit 1 }
+    '); then
+        pass "stable metadata advertises a supported Ubuntu 26.10 upgrade tool (${advertised})"
+    else
+        fail 'stable metadata has no supported Ubuntu 26.10 entry with an UpgradeTool; do not bypass with -d'
+    fi
+else
+    fail 'curl is unavailable; stable release availability cannot be checked'
+fi
+
+if command -v dpkg >/dev/null 2>&1; then
+    audit=$(dpkg --audit 2>&1)
+    audit_status=$?
+    if [ "$audit_status" -ne 0 ]; then
+        fail "dpkg --audit failed: $audit"
+    elif [ -n "$audit" ]; then
+        fail 'dpkg --audit reports unfinished package configuration'
+        printf '%s\n' "$audit" | sed 's/^/  /' >&2
+    else
+        pass 'dpkg --audit is clean'
+    fi
+else
+    fail 'dpkg is unavailable'
+fi
+
+if command -v apt-mark >/dev/null 2>&1; then
+    holds=$(apt-mark showhold 2>&1)
+    hold_status=$?
+    if [ "$hold_status" -ne 0 ]; then
+        fail "cannot inspect held packages: $holds"
+    elif [ -n "$holds" ]; then
+        manual "held packages require compatibility review: $(printf '%s' "$holds" | tr '\n' ' ')"
+    else
+        pass 'no held packages'
+    fi
+else
+    fail 'apt-mark is unavailable; package holds cannot be inspected'
+fi
+
+if command -v apt-get >/dev/null 2>&1; then
+    simulation=$(apt-get -s dist-upgrade 2>&1)
+    simulation_status=$?
+    if [ "$simulation_status" -ne 0 ]; then
+        fail "APT upgrade simulation failed: $simulation"
+    else
+        plan=$(printf '%s\n' "$simulation" | grep -E '^(Inst |Remv )' || true)
+        if printf '%s\n' "$simulation" | grep -q '^Remv '; then
+            manual 'current-release simulated removals need review before applying ordinary updates'
+            printf '%s\n' "$plan"
+        fi
+        if printf '%s\n' "$simulation" | grep -q '^Inst '; then
+            manual 'ordinary Ubuntu 26.04 package updates are pending; apply and validate them before a release upgrade'
+            printf '%s\n' "$plan"
+        elif ! printf '%s\n' "$simulation" | grep -q '^Remv '; then
+            pass 'current-release APT simulation proposes no package changes'
+        fi
+        info 'this is a 26.04 package simulation, not the 26.10 release-upgrader plan'
+    fi
+else
+    fail 'apt-get is unavailable'
+fi
+
+if command -v findmnt >/dev/null 2>&1 && command -v df >/dev/null 2>&1; then
+    for mount in / /boot /boot/efi; do
+        if findmnt -rn --target "$mount" >/dev/null 2>&1; then
+            printf 'Space for %s:\n' "$mount"
+            df -hP "$mount"
+        else
+            fail "cannot determine filesystem containing $mount"
+        fi
+    done
+    findmnt -rn --mountpoint /boot/efi >/dev/null 2>&1 || fail 'ESP is not mounted at /boot/efi'
+else
+    fail 'findmnt or df is unavailable; filesystem space cannot be checked'
+fi
+
+boot_conf=/etc/sp12-linux/boot.conf
+if [ -r "$boot_conf" ]; then
+    # The configuration is parsed as data, never sourced.
+    kernel=$(sed -n 's/^KVER=//p' "$boot_conf" | tail -n 1 | tr -d "'\"")
+    dtb=$(sed -n 's/^DTB=//p' "$boot_conf" | tail -n 1 | tr -d "'\"")
+    case "$kernel" in *[!A-Za-z0-9._+~-]*|'') fail 'boot.conf has no valid exact KVER' ;; *) : ;; esac
+    if [ -n "$kernel" ] && [ -f "/boot/vmlinuz-$kernel" ] && [ -f "/boot/initrd.img-$kernel" ] && [ -d "/lib/modules/$kernel" ]; then
+        pass "configured kernel, initramfs and modules exist: $kernel"
+        if [ "$(uname -r)" = "$kernel" ]; then
+            pass 'running kernel matches the configured maintained kernel'
+        else
+            fail "running kernel $(uname -r) does not match configured kernel $kernel"
+        fi
+        if command -v cmp >/dev/null 2>&1; then
+            for pair in \
+                "/boot/vmlinuz-$kernel:/boot/efi/sp12/vmlinuz" \
+                "/boot/initrd.img-$kernel:/boot/efi/sp12/initrd.img"; do
+                source=${pair%%:*}
+                destination=${pair#*:}
+                if [ ! -f "$destination" ]; then
+                    fail "ESP payload is missing: $destination"
+                elif [ ! -r "$source" ] || [ ! -r "$destination" ]; then
+                    manual "cannot read both files to compare $source with $destination; rerun with sudo"
+                elif cmp -s "$source" "$destination"; then
+                    pass "ESP payload matches $source"
+                else
+                    fail "ESP payload differs from $source: $destination"
+                fi
+            done
+        else
+            manual 'cmp is unavailable; exact kernel and initramfs ESP payloads cannot be compared'
+        fi
+    else
+        fail "configured kernel, initramfs or modules are missing: ${kernel:-unset}"
+    fi
+    case "$dtb" in
+        /*)
+            if [ -f "$dtb" ]; then
+                pass "configured DTB exists: $dtb"
+                if [ -f /boot/efi/sp12/dtb ] && cmp -s "$dtb" /boot/efi/sp12/dtb; then
+                    pass "ESP payload matches $dtb"
+                else
+                    fail "ESP DTB is missing or differs from the configured DTB: /boot/efi/sp12/dtb"
+                fi
+            else
+                fail "configured DTB is missing: $dtb"
+            fi
+            ;;
+        *) fail "boot.conf DTB must be an absolute path: ${dtb:-unset}" ;;
+    esac
+else
+    fail "cannot read $boot_conf; explicit custom boot selection is unverified"
+fi
+
+if command -v findmnt >/dev/null 2>&1 && findmnt -rn --mountpoint /boot/efi >/dev/null 2>&1; then
+    if [ -f /boot/efi/EFI/BOOT/BOOTAA64.EFI ] && [ -f /boot/efi/sp12/vmlinuz ] && [ -f /boot/efi/sp12/initrd.img ] && [ -f /boot/efi/sp12/dtb ]; then
+        pass 'fallback EFI loader and active SP12 payload files exist'
+        if command -v grub-file >/dev/null 2>&1; then
+            if grub-file --is-arm64-efi /boot/efi/EFI/BOOT/BOOTAA64.EFI; then
+                pass 'fallback loader is an ARM64 EFI image'
+            else
+                fail 'fallback loader is not a valid ARM64 EFI image'
+            fi
+        else
+            manual 'grub-file is unavailable; fallback loader architecture cannot be verified'
+        fi
+    else
+        fail 'fallback EFI loader or one or more active SP12 payload files are missing'
+    fi
+else
+    fail 'ESP is not mounted at /boot/efi'
+fi
+
+grub_entry=/usr/lib/grub/grub-multi-install
+grub_guard=/usr/local/sbin/sp12-grub-multi-install-guard
+grub_guard_active=0
+if [ -L "$grub_entry" ] && [ "$(readlink -f "$grub_entry" 2>/dev/null || true)" = "$grub_guard" ] &&
+   [ -x "$grub_guard" ] && "$grub_entry" --verify >/dev/null 2>&1; then
+    pass 'GRUB package helper is diverted through the verified no-fallback/no-NVRAM guard'
+    grub_guard_active=1
+fi
+
+if [ "$grub_guard_active" -eq 0 ] && command -v debconf-show >/dev/null 2>&1; then
+    grub_debconf=$(debconf-show grub-efi-arm64 2>&1)
+    grub_debconf_status=$?
+    if [ "$grub_debconf_status" -ne 0 ]; then
+        manual "cannot inspect GRUB ARM64 debconf settings: $grub_debconf"
+    else
+        no_extra=$(printf '%s\n' "$grub_debconf" | sed -n 's/^[*[:space:]]*grub2\/no_efi_extra_removable:[[:space:]]*//p' | tail -n 1)
+        force_extra=$(printf '%s\n' "$grub_debconf" | sed -n 's/^[*[:space:]]*grub2\/force_efi_extra_removable:[[:space:]]*//p' | tail -n 1)
+        if [ "$no_extra" = true ] && [ "$force_extra" != true ]; then
+            pass 'GRUB debconf requests no extra EFI removable-path install'
+        fi
+        fail "GRUB fallback-path guard is not installed; debconf values alone cannot constrain shim's direct helper call (no_efi_extra_removable=${no_extra:-unset}, force_efi_extra_removable=${force_extra:-unset})"
+    fi
+elif [ "$grub_guard_active" -eq 0 ]; then
+    fail 'GRUB fallback-path guard is not installed and debconf settings cannot be inspected'
+else
+    info 'GRUB debconf values are not used as the sole protection; the verified guard forces safe installer options'
+fi
+manual 'review the actual 26.10 grub-efi-arm64 and shim-signed maintainer scripts; confirm their package hooks still use the diverted helper'
+manual 'verify the running and recovery kernel packages will be retained; review the actual release-upgrader removal plan'
+manual 'verify a restorable full-system backup, user-data backup and tested recovery media; boot-only archives are insufficient'
+manual 'review free space on /, /boot and /boot/efi against the actual 26.10 upgrader requirements'
+source_uris=$(
+    for source in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+        [ -r "$source" ] || continue
+        awk -v source="$source" '
+            $1 == "deb" || $1 == "deb-src" {
+                token = 2
+                if ($token ~ /^\[/) token++
+                if (token <= NF) print source, $token
+            }
+        ' "$source"
+    done
+    for source in /etc/apt/sources.list.d/*.sources; do
+        [ -r "$source" ] || continue
+        awk -v source="$source" '
+            BEGIN { RS=""; FS="\n" }
+            {
+                for (line = 1; line <= NF; line++) {
+                    if ($line ~ /^URIs:[[:space:]]*/) {
+                        sub(/^URIs:[[:space:]]*/, "", $line)
+                        count = split($line, uris, /[[:space:]]+/)
+                        for (uri = 1; uri <= count; uri++) {
+                            gsub(/,/, "", uris[uri])
+                            if (uris[uri] != "") print source, uris[uri]
+                        }
+                    }
+                }
+            }
+        ' "$source"
+    done
+)
+non_ubuntu_sources=$(printf '%s\n' "$source_uris" | while IFS=' ' read -r source uri; do
+    [ -n "${uri-}" ] || continue
+    case "$uri" in
+        http://archive.ubuntu.com/*|https://archive.ubuntu.com/*|http://*.archive.ubuntu.com/*|https://*.archive.ubuntu.com/*|http://security.ubuntu.com/*|https://security.ubuntu.com/*|http://ports.ubuntu.com/*|https://ports.ubuntu.com/*|http://esm.ubuntu.com/*|https://esm.ubuntu.com/*) ;;
+        *) printf '%s: %s\n' "$source" "$uri" ;;
+    esac
+done)
+if [ -n "$non_ubuntu_sources" ]; then
+    manual 'non-Ubuntu APT source entries require compatibility review:'
+    printf '%s\n' "$non_ubuntu_sources"
+else
+    pass 'no non-Ubuntu APT source entries detected (vendor packages still require review)'
+fi
+
+if [ "$failures" -ne 0 ] || [ "$pending" -ne 0 ]; then
+    printf 'RESULT: NOT READY -- %s failed check(s), %s manual gate(s); do not start the release upgrade\n' "$failures" "$pending" >&2
+    exit 1
+fi
+printf 'RESULT: READY -- checks passed; manually review the release-upgrader plan before proceeding\n'
