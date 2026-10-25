@@ -3,15 +3,17 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: inspect-install-target [--target DIR] [--kernel-release RELEASE]'
+    printf '%s\n' 'Usage: inspect-install-target [--target DIR] [--kernel-release RELEASE] [--experimental-26.10]'
 }
 
 target=/target
 kver=
+experimental_2610=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --target) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; target=$2; shift 2 ;;
         --kernel-release) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kver=$2; shift 2 ;;
+        --experimental-26.10) experimental_2610=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
@@ -49,7 +51,11 @@ os_release=$target/etc/os-release
 os_id=$(sed -n 's/^ID=//p' "$os_release" | tr -d '"' | tail -n 1)
 os_version=$(sed -n 's/^VERSION_ID=//p' "$os_release" | tr -d '"' | tail -n 1)
 [ "$os_id" = ubuntu ] || { printf 'Unsupported target OS: %s\n' "$os_id" >&2; exit 1; }
-[ "$os_version" = 26.04 ] || { printf 'Unsupported target Ubuntu version: %s\n' "$os_version" >&2; exit 1; }
+case "$os_version:$experimental_2610" in
+    26.04:*) ;;
+    26.10:1) printf 'EXPERIMENTAL: Ubuntu 26.10 fresh-install target; physical installation is unvalidated\n' ;;
+    *) printf 'Unsupported target Ubuntu version: %s (26.10 requires --experimental-26.10)\n' "$os_version" >&2; exit 1 ;;
+esac
 
 modules=$target/usr/lib/grub/arm64-efi
 for module in part_gpt fat search search_fs_file linux; do

@@ -1,0 +1,86 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
+python3 - "$repo_root" <<'PY'
+from pathlib import Path
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+source = (Path(sys.argv[1]) / 'scripts/inspect-install-target').read_text()
+
+
+class TargetInspectionTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        root = Path(self.temp.name)
+        scripts = root / 'scripts'
+        scripts.mkdir()
+        self.script = scripts / 'inspect-install-target'
+        self.script.write_text(source)
+        (scripts / 'sp12-preflight').write_text('#!/bin/sh\nexit 0\n')
+        (scripts / 'sp12-preflight').chmod(0o755)
+        self.target = root / 'target'
+        self.etc = self.target / 'etc'
+        self.etc.mkdir(parents=True)
+        (self.target / 'boot/efi').mkdir(parents=True)
+        modules = self.target / 'usr/lib/grub/arm64-efi'
+        modules.mkdir(parents=True)
+        for name in ['part_gpt', 'fat', 'search', 'search_fs_file', 'linux']:
+            (modules / (name+'.mod')).touch()
+        binaries = self.target / 'usr/bin'
+        binaries.mkdir(parents=True)
+        for name in ['grub-file', 'grub-mkstandalone']:
+            path = binaries / name
+            path.write_text('#!/bin/sh\nexit 0\n')
+            path.chmod(0o755)
+        fake_bin = root / 'bin'
+        fake_bin.mkdir()
+        for name, body in {
+            'mountpoint': 'exit 0',
+            'findmnt': '''case "$*" in
+*-o\\ SOURCE*) case "$*" in *boot/efi*) echo /dev/fixture-esp;; *) echo /dev/fixture-root;; esac;;
+*-o\\ UUID*) echo fixture-root-uuid;;
+*-o\\ FSTYPE*) case "$*" in *boot/efi*) echo vfat;; *) echo ext4;; esac;;
+esac''',
+        }.items():
+            path = fake_bin / name
+            path.write_text('#!/bin/sh\nset -eu\n'+body+'\n')
+            path.chmod(0o755)
+        self.env = dict(os.environ, PATH=str(fake_bin)+':'+os.environ['PATH'])
+
+    def run_inspection(self, version, *args, os_id='ubuntu'):
+        (self.etc / 'os-release').write_text('ID='+os_id+'\nVERSION_ID="'+version+'"\n')
+        return subprocess.run(['sh', str(self.script), '--target', str(self.target), *args],
+                              env=self.env, capture_output=True, text=True)
+
+    def test_existing_2604_target_remains_accepted(self):
+        result = self.run_inspection('26.04')
+        self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_2610_requires_explicit_experimental_opt_in(self):
+        result = self.run_inspection('26.10')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('requires --experimental-26.10', result.stderr)
+        result = self.run_inspection('26.10', '--experimental-26.10')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn('EXPERIMENTAL:', result.stdout)
+
+    def test_opt_in_does_not_allow_foreign_or_other_releases(self):
+        for version, os_id in [('27.04', 'ubuntu'), ('26.10', 'debian')]:
+            result = self.run_inspection(version, '--experimental-26.10', os_id=os_id)
+            self.assertNotEqual(0, result.returncode)
+
+    def test_opt_in_keeps_required_grub_checks(self):
+        (self.target / 'usr/lib/grub/arm64-efi/linux.mod').unlink()
+        result = self.run_inspection('26.10', '--experimental-26.10')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('Missing target GRUB module', result.stderr)
+
+
+unittest.main(argv=['inspect-install-target'])
+PY

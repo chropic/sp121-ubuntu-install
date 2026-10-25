@@ -1,56 +1,50 @@
 # Ubuntu on Surface Pro 12
 
-Installation, recovery and kernel tooling for the **Surface Pro 12-inch,
-1st Edition** — Snapdragon X Plus `X1P42100`, ARM64.
+The main configuration is **Ubuntu 26.10 ARM64 with the custom Linux 7.3
+platform kernel**, `7.3.0-sp12-v7.3-platform`.
 
-Intel Surface models, Surface Pro 11 and later SP12 revisions are outside this
-project's scope.
+This project is for the **Surface Pro 12-inch, 1st Edition**, with Snapdragon
+X Plus `X1P42100`. Other Surface models are outside its scope.
 
-> [!IMPORTANT]
-> **Linux 7.3 platform is the project's main kernel and sole maintained default**
-> for builds and installed systems. On-device checks cover boot, display, input,
-> audio, sensors, Bluetooth audio and video through both USB-C ports. See the
-> [support matrix](docs/support.md) for known issues and feature-specific results.
-> The installer bundles 7.3 while retaining Ubuntu's stock live bootstrap.
-> Fresh end-to-end installer validation is pending; no ISO is distributed.
+> [!WARNING]
+> **Installation is experimental and has not been fully vetted.** The 26.10
+> image has booted on the SP12, but a complete fresh installation and recovery
+> test have not been completed. Do not treat it as an installation-tested release.
 
-## Choose your task
+## Start here
 
-| I want to… | Start here |
-|---|---|
-| Install Ubuntu | [Installation guide](docs/install.md) |
-| Configure Wi-Fi, sound and sensors | [First boot](docs/first-boot.md) |
-| Check what works | [Support matrix](docs/support.md) · [Hardware tests](docs/hardware-tests.md) |
-| Update or manage ESP space | [Maintenance](docs/maintenance.md) |
-| Fix a problem or restore boot | [Troubleshooting](docs/troubleshooting/README.md) · [Recovery](docs/recovery.md) |
-| Build or review Linux 7.3 | [Kernel build guide](kernel/ports/v7.3/README.md) |
-| Contribute or audit sources | [Contributing](CONTRIBUTING.md) · [Documentation index](docs/README.md) |
+- [Try the image or plan an installation](docs/install.md)
+- [Maintain the system, fix problems, and recover boot](docs/maintenance.md)
+- [Ubuntu 26.04: legacy notes](docs/legacy-26.04.md)
+- [Build tools, test records, and sources](docs/developer/README.md)
 
-## Before changing boot files
+## Support status
 
-1. Run `scripts/sp12-preflight`; stop if it fails.
-2. Keep Secure Boot disabled for the current unsigned boot path.
-3. Keep a bootable recovery USB and the known-good kernel.
-4. Update the **kernel, initramfs and DTB together**, using exact versioned files.
-5. Keep the running and recovery kernels. Inspect ESP usage before copying updates.
+| Area | Status |
+| --- | --- |
+| Main configuration | Ubuntu 26.10 ARM64 + custom SP12 Linux 7.3 platform |
+| Live USB | The owner booted private live v2, confirmed the kernel name, and reported everything working, including Wi-Fi and sound |
+| Fresh installation and recovery | Experimental; not fully vetted; installation was deferred because no spare target disk was available |
+| Detailed hardware checks | Older installed-system results are recorded separately; the live report is not a new measurement of every feature |
+| Secure Boot, cameras, and hibernate | No new support claim; see the [hardware records](docs/developer/records/kernel-7.3-hardware.md) |
+| Public image download | Not offered; the tested private image includes device files excluded from project distribution |
 
-See the [support matrix](docs/support.md) for current 7.3 results and known issues.
-The optional camera profile keeps camera nodes disabled; camera capture is not
-supported yet.
+The first 26.10 candidate used Ubuntu's generic kernel and had no working Wi-Fi
+or sound. **Private live v2**, which uses the custom kernel and matching device
+files, is the tested configuration above. See its [exact build record](docs/developer/live-image.md).
 
-## Repository map
+## Repository layout
 
-| Directory | Contents |
-|---|---|
-| [`docs/`](docs/README.md) | Installation, maintenance, recovery and reference material |
-| [`scripts/`](scripts/) | Guarded installers, diagnostics and checks |
-| [`kernel/`](kernel/README.md) | Configurations, patches, build tools and validation records |
-| [`system/`](system/README.md) | Reviewed installed-system templates |
-| [`firmware/`](firmware/README.md) | Source pins and policy; no firmware blobs |
-| [`release/`](release/README.md) | Build provenance and release gates; no binaries in Git |
+| Folder | Purpose |
+| --- | --- |
+| `docs/` | The installation and maintenance guides; developer references are under `docs/developer/` |
+| `scripts/` | Commands for building, checking, installing, and recovering |
+| `kernel/` | Kernel source recipes, patches, configurations, and build evidence |
+| `system/` | Files installed by the guarded setup tools |
+| `firmware/` | Device-file source pins and distribution rules; no firmware blobs |
+| `release/` | Machine-readable build and test records; no binary releases in Git |
 
-[Credits](docs/reference/credits.md) · [Source ledger](docs/reference/sources.md) ·
-[Security policy](SECURITY.md) · [License](LICENSE.md)
+[Credits](docs/developer/reference/credits.md) ·
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [License](LICENSE.md)
 
-Independent community project; not affiliated with Microsoft, Qualcomm,
-Canonical or the Linux kernel project.
+Independent community project. Not affiliated with Microsoft, Qualcomm, or Canonical.

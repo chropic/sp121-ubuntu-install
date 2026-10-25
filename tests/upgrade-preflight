@@ -69,6 +69,8 @@ class UpgradePreflightTests(unittest.TestCase):
             ("/etc/", self.shell_path(self.etc) + "/"),
             ("/boot/", self.shell_path(self.boot) + "/"),
             ("/lib/modules/", self.shell_path(self.root / "lib/modules") + "/"),
+            ("/usr/lib/grub/", self.shell_path(self.root / "usr/lib/grub") + "/"),
+            ("/usr/local/sbin/", self.shell_path(self.root / "usr/local/sbin") + "/"),
         ]:
             text = text.replace(host_path, fixture_path)
         self.script.write_text(text)
@@ -118,9 +120,9 @@ class UpgradePreflightTests(unittest.TestCase):
         path.write_text("#!/bin/sh\nset -eu\n" + body + "\n")
         path.chmod(0o755)
 
-    def run_tool(self, **env):
+    def run_tool(self, *args, **env):
         return subprocess.run(
-            ["sh", str(self.script)],
+            ["sh", str(self.script), *args],
             env=dict(self.env, **env),
             capture_output=True,
             text=True,
@@ -154,9 +156,58 @@ class UpgradePreflightTests(unittest.TestCase):
         self.assertIn("ordinary Ubuntu 26.04 package updates are pending", result.stdout)
         self.assertIn("packages.example.invalid", result.stdout)
 
+    def test_verified_guard_uses_only_fixture_paths(self):
+        guard = self.root / 'usr/local/sbin/sp12-grub-multi-install-guard'
+        entry = self.root / 'usr/lib/grub/grub-multi-install'
+        guard.parent.mkdir(parents=True)
+        entry.parent.mkdir(parents=True)
+        guard.write_text('#!/bin/sh\n[ "$1" = --verify ]\n')
+        guard.chmod(0o755)
+        entry.symlink_to(guard)
+        result = self.run_tool('--skip-release-metadata')
+        self.assertIn('GRUB package helper is diverted through the verified', result.stdout)
+        self.assertNotIn('GRUB debconf requests', result.stdout)
+
     def test_rejects_unadvertised_release_metadata(self):
         result = self.run_tool(SP12_TEST_DIST="26.04")
         self.assertIn("no supported Ubuntu 26.10 entry", result.stderr)
+
+    def test_default_fetches_and_accepts_supported_metadata(self):
+        self.command("curl", 'printf called >> "$SP12_TEST_FETCH_LOG"; '
+                     'printf "Dist: stonking\\nVersion: 26.10\\nSupported: 1\\nUpgradeTool: https://example.invalid/tool\\n"')
+        log = self.root / "fetch-log"
+        result = self.run_tool(SP12_TEST_FETCH_LOG=str(log))
+        self.assertEqual("called", log.read_text())
+        self.assertIn("stable metadata advertises a supported Ubuntu 26.10", result.stdout)
+
+    def test_skip_metadata_never_fetches_and_continues_local_checks(self):
+        log = self.root / "fetch-log"
+        self.command("curl", 'printf called >> "$SP12_TEST_FETCH_LOG"; exit 99')
+        result = self.run_tool("--skip-release-metadata", SP12_TEST_FETCH_LOG=str(log))
+        self.assertFalse(log.exists())
+        self.assertEqual(1, result.returncode)
+        self.assertIn("release availability is unchecked", result.stdout)
+        self.assertIn("dpkg --audit is clean", result.stdout)
+        self.assertIn("ESP payload matches", result.stdout)
+        self.assertIn("RESULT: NOT READY", result.stderr)
+        self.assertNotIn("RESULT: READY", result.stdout + result.stderr)
+
+    def test_rejects_unknown_repeated_and_extra_arguments_before_fetch(self):
+        self.command("curl", 'exit 99')
+        for args in [("--unknown",), ("",),
+                     ("--skip-release-metadata", "--skip-release-metadata"),
+                     ("--help", "--help"), ("--help", "--unknown"),
+                     ("--skip-release-metadata", "--help")]:
+            with self.subTest(args=args):
+                result = self.run_tool(*args)
+                self.assertEqual(2, result.returncode)
+                self.assertNotIn("PASS:", result.stdout)
+
+    def test_help_explains_skip_without_inspection(self):
+        result = self.run_tool("--help")
+        self.assertEqual(0, result.returncode)
+        self.assertIn("--skip-release-metadata", result.stdout)
+        self.assertNotIn("PASS:", result.stdout)
 
     def test_does_not_treat_dist_codename_as_release_version(self):
         result = self.run_tool(SP12_TEST_DIST="dist-only")
@@ -169,7 +220,7 @@ class UpgradePreflightTests(unittest.TestCase):
     def test_rejects_stale_esp_kernel_payload(self):
         (self.esp / "sp12/vmlinuz").write_bytes(b"stale")
         result = self.run_tool()
-        self.assertIn("ESP payload is missing or differs", result.stderr)
+        self.assertIn("ESP payload differs from", result.stderr)
 
 
 unittest.main(argv=["upgrade-preflight"])

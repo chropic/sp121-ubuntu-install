@@ -5,11 +5,14 @@ set -eu
 usage() {
     cat <<'EOF'
 Usage: build-installer --iso FILE --iso-sha256 HASH --dtb FILE \
-  --dtb-sha256 HASH --kernel-package FILE --kernel-build-info FILE --output FILE
+  --dtb-sha256 HASH --kernel-package FILE --kernel-build-info FILE --output FILE \
+  [--ubuntu-version 26.04|26.10]
 
 Builds a Surface Pro 12 installer ISO from locally supplied inputs.
-The installed target is Linux 7.3 platform. Stock Ubuntu live boot is preserved.
+First stage: bundles Linux 7.3 platform but preserves the generic live kernel.
+Use build-live-installer next for the maintained-kernel live session. Default Ubuntu: 26.10.
 The output contains this project's tracked files, but no third-party support checkout.
+Ubuntu 26.10 output is an experimental candidate requiring physical installation tests.
 EOF
 }
 
@@ -20,6 +23,7 @@ dtb_sha256=
 output=
 kernel_package=
 kernel_build_info=
+ubuntu_version=26.10
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -30,10 +34,16 @@ while [ "$#" -gt 0 ]; do
         --output) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; output=$2; shift 2 ;;
         --kernel-package) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel_package=$2; shift 2 ;;
         --kernel-build-info) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kernel_build_info=$2; shift 2 ;;
+        --ubuntu-version) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; ubuntu_version=$2; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
 done
+
+case "$ubuntu_version" in
+    26.04|26.10) ;;
+    *) printf 'Unsupported base Ubuntu version: %s\n' "$ubuntu_version" >&2; exit 2 ;;
+esac
 
 [ -n "$base_iso" ] || { printf 'Missing --iso\n' >&2; exit 2; }
 [ -n "$iso_sha256" ] || { printf 'Missing --iso-sha256\n' >&2; exit 2; }
@@ -116,6 +126,13 @@ cleanup() {
 }
 trap cleanup EXIT HUP INT TERM
 
+xorriso -osirrox on -indev "$base_iso" -extract /.disk/info "$work/iso-info"
+version_pattern=$(printf '%s' "$ubuntu_version" | sed 's/\./\\./g')
+if ! grep -Eq "^Ubuntu ${version_pattern}([[:space:]]|$).*arm64" "$work/iso-info"; then
+    printf 'Base ISO identity does not match Ubuntu %s ARM64\n' "$ubuntu_version" >&2
+    exit 1
+fi
+
 grub_cfg=$work/grub.cfg
 md5sums_original=$work/md5sum.txt.original
 md5sums=$work/md5sum.txt
@@ -151,6 +168,8 @@ project_sha256=$(sha256sum "$project_archive" | awk '{print $1}')
     printf 'xorriso_version=%s\n' "$xorriso_version"
     printf 'base_iso_name=%s\n' "$(basename -- "$base_iso")"
     printf 'base_iso_sha256=%s\n' "$actual_iso_sha256"
+    printf 'ubuntu_version=%s\n' "$ubuntu_version"
+    printf 'installer_status=experimental-not-installation-tested\n'
     printf 'dtb_name=%s\n' "$(basename -- "$dtb")"
     printf 'dtb_sha256=%s\n' "$actual_dtb_sha256"
     printf 'project_archive_sha256=%s\n' "$project_sha256"
@@ -182,7 +201,7 @@ printf 'Building customized ISO...\n'
 xorriso -indev "$base_iso" \
     -outdev "$output" \
     -boot_image any replay \
-    -mkdir /sp12-kernel \
+    -mkdir /sp12-kernel -- \
     -update "$grub_cfg" /boot/grub/grub.cfg \
     -update "$dtb" /casper/x1p42100-microsoft-sp12in.dtb \
     -update "$project_archive" /sp12-linux.tar.gz \

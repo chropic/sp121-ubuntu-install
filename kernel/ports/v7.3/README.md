@@ -9,7 +9,7 @@ native ARM64 headers compile an external module, which was not loaded.
 The installer bundles the verified 7.3 platform package for its target;
 the stock Ubuntu live bootstrap is separate. A fresh installation test is pending.
 
-The [23 October on-device report](../../../docs/testing-2026-10-23.md) records
+The [23 October on-device report](../../../docs/developer/records/hardware-2026-10-23.md) records
 subsequent cold boots, restoration, maintained boot-sync deployment and three
 short suspend cycles. Input/display resumed, but touchscreen and Wi-Fi PCIe
 errors remain unresolved. See that report for the current test-device state.
@@ -27,7 +27,7 @@ request; active sensor clocking and capture remain untested. The staged 19.2 MHz
 request is not a capture-proven fix. RTC and volume buttons have runtime checks;
 suspend resumes with logged errors and delayed Wi-Fi reconnection. HDMI/DP audio
 has no exposed playback route. Charge-limit behavior remains unverified; do not
-guess charge thresholds. See the [support matrix](../../../docs/support.md).
+guess charge thresholds. See the [support matrix](../../../docs/developer/records/kernel-7.3-hardware.md).
 
 - [Software results](validation/software-results.json): check scope and remaining gates.
 - [Boot smoke test](validation/boot-smoke.json): SSH, Wi-Fi, display enumeration,
@@ -127,8 +127,8 @@ other installations may still pin 7.2.
    The operator canceled the proposed 7.2 rollback test; it is not a pass or a
    remaining maintenance task for the retired line.
 2. Follow up on suspend errors, delayed Wi-Fi reconnection, HDMI/DP audio routing,
-   RTC persistence and charge interfaces. The [hardware checklist](../../../docs/hardware-tests.md)
-   and [current results](../../../docs/testing-2026-10-23.md) distinguish completed
+   RTC persistence and charge interfaces. The [hardware checklist](../../../docs/developer/hardware-tests.md)
+   and [current results](../../../docs/developer/records/hardware-2026-10-23.md) distinguish completed
    checks from remaining work.
 3. Before enabling camera nodes, validate clock/power behavior, media topology,
    real capture, privacy indication and repeated start/stop.
@@ -137,6 +137,6 @@ other installations may still pin 7.2.
 5. Resolve recorded provenance gaps and complete release checks before binary
    publication. Binary distribution has separate provenance and installer checks.
 
-The supplied notes and patch audit remain verbatim in [`research/`](research/).
+The supplied notes and patch audit remain verbatim in [`research/`](research).
 They are research inputs, not executable instructions or new support claims;
 their relative links refer to their original location.

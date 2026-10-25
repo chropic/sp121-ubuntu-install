@@ -74,7 +74,10 @@ def require_fresh_target(target):
 def install(args):
     target = args.target.resolve(strict=True)
     require(str(target) == "/target", "Only the separately mounted /target is accepted")
-    subprocess.run([str(ROOT / "scripts/inspect-install-target"), "--target", str(target)], check=True)
+    inspection = [str(ROOT / "scripts/inspect-install-target"), "--target", str(target)]
+    if args.experimental_2610:
+        inspection.append("--experimental-26.10")
+    subprocess.run(inspection, check=True)
     package = args.bundle / "linux-image.deb"
     report = verify(package.resolve(strict=True), (args.bundle / "buildinfo.json").resolve(strict=True))
     saved = json.loads((args.bundle / "inspection.json").read_text())
@@ -158,6 +161,8 @@ def main():
     target.add_argument("--bundle", type=Path, default=Path("/cdrom/sp12-kernel"))
     target.add_argument("--target", type=Path, default=Path("/target"))
     target.add_argument("--apply", action="store_true")
+    target.add_argument("--experimental-26.10", dest="experimental_2610", action="store_true",
+                        help="Opt in to an unvalidated Ubuntu 26.10 fresh-install target")
     args = parser.parse_args()
     try:
         (bundle if args.command == "bundle" else install)(args)

@@ -1,3 +1,6 @@
+> Historical record. For the current configuration and test limits, use the
+> [project README](../../../README.md). These notes are not a new 26.10 installation pass.
+
 # Support matrix
 
 Support depends on the exact kernel, DTB, firmware and userspace setup. A boot
@@ -10,11 +13,11 @@ with release `7.3.0-sp12-v7.3-platform`. It is the default for builds and instal
 systems. Target installation, initramfs inspection, boot/cold boot and the
 physical checks below have passed. Both platform and camera profiles pass full
 image/module/package builds. Fresh end-to-end installer validation is tracked
-separately in the [installation guide](install.md). Linux 7.2 is archived.
+separately in the [installation guide](../../install.md). Linux 7.2 is archived.
 
 The camera profile keeps sensor, CCI, PHY, CAMSS and privacy-LED nodes disabled.
-Capture has not been demonstrated. Read the [current physical testing report](testing-2026-10-23.md)
-and [kernel build and validation guide](../kernel/ports/v7.3/README.md) for exact scope.
+Capture has not been demonstrated. Read the [current physical testing report](hardware-2026-10-23.md)
+and [kernel build and validation guide](../../../kernel/ports/v7.3/README.md) for exact scope.
 
 | 7.3 observation | Result and limit |
 |---|---|
@@ -33,7 +36,7 @@ and [kernel build and validation guide](../kernel/ports/v7.3/README.md) for exac
 
 Maintained boot sync is installed on the test device and explicitly selects 7.3
 with its matching DTB. Older installations may still have legacy hooks; recheck
-before updates. The [original boot report](../kernel/ports/v7.3/validation/boot-smoke.json)
+before updates. The [original boot report](../../../kernel/ports/v7.3/validation/boot-smoke.json)
 is historical, not the current maintenance state.
 
 ## Archived 7.2 reference (not maintained)

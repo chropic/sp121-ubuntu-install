@@ -20,10 +20,13 @@ unbootable.
 
 ## Find the right place
 
-User procedures belong in [`docs/`](docs/README.md); detailed kernel review and
-validation belong beside the [main kernel guide](kernel/ports/v7.3/README.md). Keep the root
-README focused on scope, status and navigation. Preserve historical reference
-notes and patch authorship; update current status where users enter the project.
+Keep user steps in the [installation](docs/install.md) or
+[maintenance](docs/maintenance.md) guide. Put technical explanations and dated
+test records under [developer references](docs/developer/README.md). Keep kernel
+build inputs beside the [kernel guide](kernel/ports/v7.3/README.md).
+Link to an existing procedure instead of copying it. Use short sentences and
+explain new technical terms. Keep the README focused on status and navigation.
+Preserve historical source notes and patch authorship.
 
 Run `scripts/check-repository` before submitting changes. Record which checks
 ran and distinguish build checks from physical tests.

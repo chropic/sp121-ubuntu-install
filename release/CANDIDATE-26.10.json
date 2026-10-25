@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "experimental-live-boot-reported-wifi-audio-fail",
+  "image": {
+    "filename": "sp12-ubuntu-26.10-arm64-experimental.iso",
+    "size_bytes": 4739092480,
+    "sha256": "99f817b1e82b414ce2ecbc999409cf43b63622736c29041dbce111032c448725"
+  },
+  "builder_revision": "7682f1695024e21d5488ca660f29725c325ecc14",
+  "base_iso_sha256": "9242a38c47eb53a5beb153c249d4843e4366f8955e9b972663e4ab7989311e9f",
+  "target_kernel": "7.3.0-sp12-v7.3-platform",
+  "checks": {
+    "full_media_manifest": "pass",
+    "embedded_provenance": "pass",
+    "primary_gpt_crc": "pass",
+    "unchanged_efi_partition": "pass",
+    "arm64_efi_files": "pass",
+    "stock_live_initramfs": "pass",
+    "grub_dtb_handoff": "pass"
+  },
+  "remaining": [
+    "Live Wi-Fi and audio failures; maintained-kernel live rebuild and hardware validation",
+    "Fresh installation on an authorized test target",
+    "Installed-system recovery and hardware tests",
+    "Publication/licensing review"
+  ],
+  "physical_test": {
+    "evidence": "operator-reported",
+    "live_boot": "booted",
+    "running_kernel": "7.3.0-9-generic",
+    "wifi": "not-working",
+    "sound": "not-working",
+    "other_hardware": "not-verified"
+  },
+  "distribution": "local-testing-only",
+  "publication_ready": false
+}

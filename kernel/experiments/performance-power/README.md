@@ -11,7 +11,7 @@ measurements. No experimental service starts automatically.
 
 The earlier repository-tooling status is in [status.json](status.json). The user
 subsequently authorized on-device testing; current results are in the
-[23 October testing report](../../../docs/testing-2026-10-23.md) and
+[23 October testing report](../../../docs/developer/records/hardware-2026-10-23.md) and
 [sanitized on-device evidence](on-device-2026-10-23.json). These later records
 supersede the earlier observed 7.2/legacy-helper state without changing historical
 build evidence.
@@ -31,7 +31,7 @@ remaining gates and freeze workloads before deploying performance/power candidat
 
 Before maintenance, recheck matching kernel, module tree, initramfs contents,
 DTB, active ESP and loader; record exact releases and hashes. Follow
-[recovery](../../../docs/recovery.md) and [maintenance](../../../docs/maintenance.md).
+[recovery](../../../docs/maintenance.md#recover-boot) and [maintenance](../../../docs/maintenance.md).
 Keep complete loader/payload/hooks/configuration backups and external recovery
 media available. Record actual test results; leave unperformed tests pending.
 

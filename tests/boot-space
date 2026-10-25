@@ -18,7 +18,26 @@ class BootSpaceTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.esp = self.root/'esp'
+        scratch = os.environ.get('SP12_TEST_ESP_ROOT')
+        if scratch:
+            scratch = Path(scratch).resolve(strict=True)
+            if str(scratch) == '/boot/efi' or Path('/boot/efi') in scratch.parents:
+                raise RuntimeError('the installed ESP must never be used for tests')
+            if not (scratch / 'SP12-DISPOSABLE-TEST-ESP').is_file():
+                raise RuntimeError('scratch ESP requires SP12-DISPOSABLE-TEST-ESP marker')
+            mount = subprocess.check_output(
+                ['findmnt', '-rn', '--mountpoint', str(scratch), '-o', 'FSTYPE,SOURCE'],
+                text=True).split()
+            if len(mount) != 2 or mount[0] != 'vfat' or not mount[1].startswith('/dev/loop'):
+                raise RuntimeError('scratch ESP must be a dedicated FAT loopback mount')
+            subprocess.run(['/bin/mount', '-o', 'remount,rw', str(scratch)], check=True)
+            fat_temp = tempfile.TemporaryDirectory(dir=scratch)
+            self.addCleanup(fat_temp.cleanup)
+            self.addCleanup(lambda: subprocess.run(
+                ['/bin/mount', '-o', 'remount,rw', str(scratch)], check=True))
+            self.esp = Path(fat_temp.name)
+        else:
+            self.esp = self.root/'esp'
         self.dest = self.esp/'sp12'
         self.dest.mkdir(parents=True)
         self.boot = self.root/'boot'
@@ -50,8 +69,19 @@ class BootSpaceTests(unittest.TestCase):
             self.programs[name].write_text(text)
         self.command('id', "printf '0\\n'")
         self.command('mountpoint', 'exit 0')
-        self.command('mount', 'printf \'%s\\n\' "$*" >> "$SP12_TEST_MOUNT_LOG"')
-        self.command('sync', 'exit 0')
+        self.command('mount', '''
+printf '%s\\n' "$*" >> "$SP12_TEST_MOUNT_LOG"
+if [ "${SP12_TEST_FAIL_RO:-}" = 1 ] && [ "${2-}" = remount,ro ]; then exit 1; fi
+if [ -n "${SP12_TEST_ESP_ROOT:-}" ]; then
+    exec /bin/mount -o "$2" "$SP12_TEST_ESP_ROOT"
+fi
+''')
+        self.command('sync', '''
+if [ "${SP12_TEST_FAIL_SYNC:-}" = 1 ] && [ ! -e "$SP12_TEST_SYNC_FAILED" ]; then
+    : > "$SP12_TEST_SYNC_FAILED"
+    exit 1
+fi
+''')
         self.command('df', 'printf \'Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999 1 %s 0%% /esp\\n\' "$SP12_TEST_FREE_KIB"')
         self.command('cp', '''
 for argument do destination=$argument; done
@@ -65,16 +95,28 @@ if [ "${SP12_TEST_FAIL_COPY:-}" = "$(basename "$destination")" ]; then
     printf partial > "$destination"
     exit 1
 fi
-exec /bin/cp "$@"
+exec "$SP12_TEST_CP" "$@"
 ''')
         self.command('mv', '''
 for argument do destination=$argument; done
 if [ "${SP12_TEST_FAIL_MOVE:-}" = "$(basename "$destination")" ]; then exit 1; fi
-exec /bin/mv "$@"
+exec "$SP12_TEST_MV" "$@"
+''')
+        self.command('rm', '''
+for argument do destination=$argument; done
+if [ "${SP12_TEST_FAIL_RM:-}" = "$(basename "$destination")" ]; then exit 1; fi
+exec "$SP12_TEST_RM" "$@"
 ''')
         self.env = dict(os.environ, PATH=str(self.bin)+':'+os.environ['PATH'],
                         SP12_TEST_FREE_KIB='999999',SP12_TEST_MOUNT_LOG=str(self.log),
-                        SP12_TEST_COPY_LOG=str(self.root/'copy-log'))
+                        SP12_TEST_COPY_LOG=str(self.root/'copy-log'),
+                        SP12_TEST_SYNC_FAILED=str(self.root/'sync-failed'))
+        for command in ['cp', 'mv', 'rm']:
+            key = 'SP12_TEST_' + command.upper()
+            selected = os.environ.get(key, '/bin/' + command)
+            if not Path(selected).is_absolute() or not os.access(selected, os.X_OK):
+                raise RuntimeError(key + ' must name an executable absolute path')
+            self.env[key] = selected
 
     def command(self, name, body):
         path = self.bin/name
@@ -108,7 +150,7 @@ exec /bin/mv "$@"
     def test_only_changed_file_needs_staging_space(self):
         for name in ['vmlinuz','dtb']: (self.dest/name).write_bytes(self.sources[name].read_bytes())
         block=os.statvfs(self.esp).f_frsize
-        self.env['SP12_TEST_FREE_KIB']=str((1048576+block)//1024)
+        self.env['SP12_TEST_FREE_KIB']=str((1048576+block+1023)//1024)
         result=self.run_tool()
         self.assertEqual(0,result.returncode,result.stderr)
         self.assertEqual({name:path.read_bytes() for name,path in self.sources.items()},self.snapshot())
@@ -180,6 +222,8 @@ exec /bin/mv "$@"
         self.assertEqual([self.dest/'keep.new'],list(self.dest.glob('*.new')))
 
     def test_cleanup_rejects_symlink_before_deleting_anything(self):
+        if os.environ.get('SP12_TEST_ESP_ROOT'):
+            self.skipTest('FAT does not support symlinks; covered by Linux filesystem fixtures')
         (self.dest/'vmlinuz.new').write_bytes(b'keep staging')
         outside=self.root/'outside'
         outside.write_bytes(b'keep outside')
@@ -206,6 +250,47 @@ exec /bin/mv "$@"
                 self.assertNotEqual(0,result.returncode)
                 self.assertIn('operation is running',result.stderr)
         self.assertFalse(self.log.exists())
+
+    def test_successful_sync_and_read_only_remount(self):
+        result=self.run_tool()
+        self.assertEqual(0,result.returncode,result.stderr)
+        self.assertEqual({name:path.read_bytes() for name,path in self.sources.items()},self.snapshot())
+        self.assertFalse(list(self.dest.glob('*.new')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_read_only_remount_failure_is_nonzero(self):
+        self.env['SP12_TEST_FAIL_RO']='1'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual({name:path.read_bytes() for name,path in self.sources.items()},self.snapshot())
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_staging_cleanup_failure_is_nonzero_and_preserves_active_set(self):
+        self.env['SP12_TEST_FAIL_COPY']='initrd.img.new'
+        self.env['SP12_TEST_FAIL_RM']='vmlinuz.new'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual(self.before,self.snapshot())
+        self.assertTrue((self.dest/'vmlinuz.new').exists())
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_cleanup_failure_after_success_is_nonzero(self):
+        self.env['SP12_TEST_FAIL_RM']='dtb'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertEqual({name:path.read_bytes() for name,path in self.sources.items()},self.snapshot())
+        self.assertTrue(list(self.root.glob('rollback.*/dtb')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
+
+    def test_sync_failure_after_promotion_restores_originals(self):
+        self.env['SP12_TEST_FAIL_SYNC']='1'
+        result=self.run_tool()
+        self.assertNotEqual(0,result.returncode)
+        self.assertTrue((self.root/'sync-failed').exists())
+        self.assertEqual(self.before,self.snapshot())
+        self.assertFalse(list(self.dest.glob('*.new')))
+        self.assertFalse(list(self.root.glob('rollback.*')))
+        self.assertIn('remount,ro',self.log.read_text().splitlines()[-1])
 
 unittest.main(argv=['boot-space'])
 PY

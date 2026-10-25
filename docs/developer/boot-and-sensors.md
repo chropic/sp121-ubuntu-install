@@ -27,26 +27,9 @@ Never publish a root UUID as a universal value.
 
 ## Installing the fallback path into `/target`
 
-From the customized live installer, after Ubuntu mounts `/target` and
-`/target/boot/efi`, inspect and preview:
-
-```bash
-scripts/install-kernel-target
-# After reviewing the native target/package checks:
-sudo scripts/install-kernel-target --apply
-KVER=7.3.0-sp12-v7.3-platform
-scripts/inspect-install-target \
-  --target /target \
-  --kernel-release "$KVER"
-scripts/install-fallback-target \
-  --kernel-release "$KVER" \
-  --dtb-source /target/boot/dtb-$KVER
-```
-
-The installer rejects non-separate mountpoints, non-FAT ESPs, non-Ubuntu 26.04
-roots, missing ARM64 GRUB modules or exact kernel files, and unsupported Surface
-hardware. It derives the root UUID from the mounted target rather than accepting
-typed input. Add `sudo` and `--apply` only after reviewing every displayed path.
+Use the [single experimental installation procedure](../install.md#experimental-installation).
+Ubuntu 26.10 requires `--experimental-26.10` throughout. That opt-in does not
+waive model, mount, GRUB, exact kernel/DTB or fresh-target checks.
 
 The apply path stages and verifies the versioned DTB under target `/boot` and
 the exact three-file ESP payload; builds and validates `BOOTAA64.NEW` in the
@@ -74,7 +57,7 @@ filesystem and restores promoted files on handled failures, retaining those
 copies if restoration fails. Failed attempts remove only their own staging
 files. A shared lock excludes concurrent sync, cleanup, recovery and fallback
 installation. The three-file switch is not atomic across power loss; retain an
-independent recovery set. See [ESP maintenance](maintenance.md#check-esp-space-before-updates) for
+independent recovery set. See [ESP maintenance](../maintenance.md#esp-space) for
 reporting and narrowly scoped stale-file cleanup. Preview installation:
 
 ```bash
@@ -102,7 +85,7 @@ The working reference uses three GPL components:
 
 These revisions predate the 2026-08-13 reference installation, remain the tested
 branch heads, and report the live artifact versions. Exact binary hashes are in
-[`firmware/sources.yaml`](../firmware/sources.yaml).
+[`firmware/sources.yaml`](../../firmware/sources.yaml).
 
 The old installer cloned three moving branches, recursively copied a large
 `usr/` tree, removed build checkouts, wrote services with shell heredocs, and held
