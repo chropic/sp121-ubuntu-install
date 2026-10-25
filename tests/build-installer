@@ -79,8 +79,19 @@ esac
 output=
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        -mkdir)
+            [ "$#" -ge 3 ] && [ "$3" = -- ] || {
+                printf 'Variable-length xorriso -mkdir needs a -- terminator\n' >&2
+                exit 1
+            }
+            shift 3
+            ;;
         -extract)
             [ "$#" -ge 3 ]
+            if [ "$2" = /.disk/info ]; then
+                printf 'Ubuntu %s "Installer fixture" - Release %s\n' "${SP12_TEST_ISO_VERSION:-26.10}" "${SP12_TEST_ISO_ARCH:-arm64}" > "$3"
+                exit 0
+            fi
             if [ "$2" = /md5sum.txt ]; then
                 printf '%s\n' \
                     '00000000000000000000000000000000  ./boot/grub/grub.cfg' \
@@ -155,6 +166,15 @@ grep -q './sp12-kernel/linux-image.deb' "$output"
 grep -q './sp12-kernel/inspection.json' "$output"
 (CDPATH='' cd -- "$test_root" && sha256sum -c sp12-installer.iso.sha256) >/dev/null
 
+grep -qx 'ubuntu_version=26.10' "$output.buildinfo"
+legacy_output=$test_root/legacy-2604.iso
+SP12_TEST_ISO_VERSION=26.04 PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+    --iso "$base_iso" --iso-sha256 "$iso_sha256" --dtb "$dtb" \
+    --dtb-sha256 "$dtb_sha256" --kernel-package "$kernel_package" \
+    --kernel-build-info "$kernel_build_info" --ubuntu-version 26.04 \
+    --output "$legacy_output" >/dev/null
+grep -qx 'ubuntu_version=26.04' "$legacy_output.buildinfo"
+
 bad_output=$test_root/bad.iso
 if PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
     --iso "$base_iso" \
@@ -169,6 +189,35 @@ if PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
 fi
 grep -q 'Base ISO checksum mismatch' "$test_root/bad.log"
 [ ! -e "$bad_output" ]
+
+candidate_2610=$test_root/experimental-2610.iso
+SP12_TEST_ISO_VERSION=26.10 PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+    --iso "$base_iso" --iso-sha256 "$iso_sha256" --dtb "$dtb" \
+    --dtb-sha256 "$dtb_sha256" --kernel-package "$kernel_package" \
+    --kernel-build-info "$kernel_build_info" --ubuntu-version 26.10 \
+    --output "$candidate_2610" >/dev/null
+grep -qx 'ubuntu_version=26.10' "$candidate_2610.buildinfo"
+grep -qx 'installer_status=experimental-not-installation-tested' "$candidate_2610.buildinfo"
+for mismatch in version architecture; do
+    if [ "$mismatch" = version ]; then
+        fixture_version=26.04
+        fixture_arch=arm64
+    else
+        fixture_version=26.10
+        fixture_arch=amd64
+    fi
+    if SP12_TEST_ISO_VERSION=$fixture_version SP12_TEST_ISO_ARCH=$fixture_arch \
+        PATH=$fake_bin:$PATH "$repo_root/scripts/build-installer" \
+        --iso "$base_iso" --iso-sha256 "$iso_sha256" --dtb "$dtb" \
+        --dtb-sha256 "$dtb_sha256" --kernel-package "$kernel_package" \
+        --kernel-build-info "$kernel_build_info" --ubuntu-version 26.10 \
+        --output "$bad_output" >"$test_root/identity-$mismatch.log" 2>&1; then
+        printf 'Builder accepted incorrect ISO %s\n' "$mismatch" >&2
+        exit 1
+    fi
+    grep -q 'Base ISO identity does not match' "$test_root/identity-$mismatch.log"
+    [ ! -e "$bad_output" ]
+done
 
 python3 - "$kernel_build_info" <<'PY'
 import json,sys

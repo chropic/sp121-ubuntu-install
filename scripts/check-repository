@@ -3,20 +3,18 @@
 set -eu
 
 required_files='README.md
-docs/README.md
 docs/install.md
-docs/first-boot.md
-docs/hardware-tests.md
+docs/legacy-26.04.md
+docs/developer/README.md
 docs/maintenance.md
-docs/recovery.md
-docs/reference/credits.md
-docs/reference/sources.md
-docs/support.md
+docs/developer/hardware-tests.md
+docs/developer/reference/credits.md
+docs/developer/reference/sources.md
+docs/developer/records/kernel-7.3-hardware.md
 SECURITY.md
 LICENSE.md
-docs/troubleshooting/README.md
-docs/development.md
-docs/reference/original-tested-guide.md
+docs/developer/boot-and-sensors.md
+docs/developer/reference/original-tested-guide.md
 kernel/patches.yaml
 release/reference/BUILDINFO.json
 release/CANDIDATE.json
@@ -30,13 +28,19 @@ done
 
 for script in scripts/*; do
     [ -f "$script" ] || continue
-    sh -n "$script"
+    case "$(head -n 1 "$script")" in
+        '#!/bin/bash') bash -n "$script" ;;
+        *) sh -n "$script" ;;
+    esac
 done
 
 for script in system/usr-local-sbin/* system/etc/kernel/postinst.d/* \
     system/etc/initramfs/post-update.d/*; do
     [ -f "$script" ] || continue
-    sh -n "$script"
+    case "$(head -n 1 "$script")" in
+        '#!/bin/bash') bash -n "$script" ;;
+        *) sh -n "$script" ;;
+    esac
 done
 
 for script in kernel/prepare-tree kernel/build-packages; do
@@ -57,12 +61,12 @@ if find . \( -path ./.git -o -path ./build -o -path ./dist -o -path ./.cache \) 
 fi
 
 grep -q 'active: false' kernel/patches.yaml
-grep -q 'touchscreen GPIOs 51/52' docs/reference/sources.md
-grep -q 'known incorrect' docs/reference/sources.md
+grep -q 'touchscreen GPIOs 51/52' docs/developer/reference/sources.md
+grep -q 'known incorrect' docs/developer/reference/sources.md
 grep -Fq "tool_root=\$target/opt/sp12-linux" scripts/install-fallback-target
 grep -q 'test -x /target/opt/sp12-linux/scripts/sp12-verify' docs/install.md
-if grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/' docs/first-boot.md; then
-    printf 'First-boot guide still uses a live-session-relative scripts path\n' >&2
+if grep -Eq '(^|[[:space:]])(sudo[[:space:]]+)?scripts/' docs/maintenance.md; then
+    printf 'Maintenance guide still uses a live-session-relative scripts path\n' >&2
     exit 1
 fi
 grep -q 'ea0f07e66beea95898d96fbeb6daa472f4735af3' firmware/sources.yaml
@@ -89,6 +93,8 @@ if command -v python3 >/dev/null 2>&1; then
     python3 kernel/tests/test_candidate.py
     python3 kernel/tests/test_power_measure.py
     python3 kernel/tests/test_installer_kernel.py
+    python3 kernel/tests/test_live_installer.py
+    python3 kernel/check-doc-links.py
     python3 -m json.tool kernel/ports/v7.3/manifest.json >/dev/null
     python3 -m json.tool kernel/ports/v7.3/aggregate-audit.json >/dev/null
     find release -type f -name '*.json' -print | while IFS= read -r json_file; do
@@ -98,7 +104,9 @@ fi
 
 tests/build-installer
 tests/install-fallback-target
+tests/inspect-install-target
 tests/boot-space
 tests/upgrade-preflight
+tests/grub-guard
 
 printf 'Repository checks passed.\n'

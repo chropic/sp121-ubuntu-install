@@ -4,7 +4,7 @@ Run these tests after every kernel or DTB change; a DTB node is not a hardware
 pass.
 
 For completed checks and remaining work on the current 7.3 platform kernel, see
-the [23 October 2026 testing results](testing-2026-10-23.md). The checklist below
+the [23 October 2026 testing results](records/hardware-2026-10-23.md). The checklist below
 is a procedure, not evidence that each feature passed.
 
 | Area | Command or test | Expected result / caution |
@@ -39,4 +39,4 @@ read-only until their range is established.
 
 
 Record the exact kernel, DTB and observed result. Compare against the
-[support matrix](support.md); a successful boot is not a pass for every feature.
+[support matrix](records/kernel-7.3-hardware.md); a successful boot is not a pass for every feature.

@@ -12,12 +12,17 @@ manual() { printf 'MANUAL: %s\n' "$*"; pending=$((pending + 1)); }
 info() { printf 'INFO: %s\n' "$*"; }
 
 usage() {
-    printf '%s\n' 'Usage: sp12-upgrade-preflight [--help]'
+    printf '%s\n' 'Usage: sp12-upgrade-preflight [--skip-release-metadata | --help]'
     printf '%s\n' 'Read-only checks for Ubuntu 26.04 -> 26.10; this never starts an upgrade.'
+    printf '%s\n' '--skip-release-metadata: perform local checks without fetching release metadata; always NOT READY.'
 }
 
+skip_release_metadata=0
+# Exactly one optional argument; reject extras before any inspection or request.
+[ "$#" -le 1 ] || { usage >&2; exit 2; }
 case "${1-}" in
-    '') ;;
+    '') [ "$#" -eq 0 ] || { usage >&2; exit 2; } ;;
+    --skip-release-metadata) skip_release_metadata=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; exit 2 ;;
 esac
@@ -58,7 +63,9 @@ else
     fail 'cannot read /etc/update-manager/release-upgrades'
 fi
 
-if command -v curl >/dev/null 2>&1; then
+if [ "$skip_release_metadata" -eq 1 ]; then
+    manual 'release availability is unchecked (--skip-release-metadata); no release metadata requested'
+elif command -v curl >/dev/null 2>&1; then
     metadata=$(curl --fail --silent --show-error --location --max-time 15 https://changelogs.ubuntu.com/meta-release 2>&1)
     curl_status=$?
     if [ "$curl_status" -ne 0 ]; then

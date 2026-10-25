@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "status": "experimental-live-boot-owner-reported-pass-installation-not-vetted",
+  "image": {
+    "filename": "sp12-ubuntu-26.10-arm64-private-live-v2.iso",
+    "size_bytes": 4971847680,
+    "sha256": "d550c05575196069bd458f3a97c04acfc6660ceb4cdb5e7b7dab37879b6b6ec5"
+  },
+  "distribution": "private-local-testing-only-do-not-publish",
+  "live_kernel": "7.3.0-sp12-v7.3-platform",
+  "checks": {
+    "media_manifest": "pass",
+    "kernel_module_dtb_identity": "pass",
+    "casper_scripts_media_uuid_and_layer": "pass",
+    "initramfs_module_dependencies": "pass",
+    "gpt_and_unchanged_iso_efi_partition": "pass",
+    "original_install_layers": "unchanged",
+    "physical_esp_nvram_mount_before_cleanup": "unchanged"
+  },
+  "cleanup": {
+    "result": "sys_and_root_unmount_failed_in_private_namespace",
+    "host_followup": "no_build_mounts_visible_and_builder_exited",
+    "note": "Image audits completed before cleanup error; not a clean build-process exit"
+  },
+  "remaining": [
+    "Fresh installation on an authorized recoverable target",
+    "Installed-system boot and recovery on 26.10",
+    "Recorded per-feature hardware matrix",
+    "Publication/licensing review before any public image"
+  ],
+  "usb_staging": {
+    "path": "E:\\sp12-ubuntu-26.10-arm64-private-live-v2.iso",
+    "filesystem": "Ventoy exFAT USB data partition",
+    "full_sha256_verification": "pass",
+    "sha256": "d550c05575196069bd458f3a97c04acfc6660ceb4cdb5e7b7dab37879b6b6ec5",
+    "previous_sp12_iso": "replaced on USB; preserved and checksum-verified locally",
+    "other_iso_and_efi_partition": "unchanged"
+  },
+  "primary_configuration": true,
+  "physical_test": {
+    "evidence": "owner-reported",
+    "live_boot": "pass",
+    "running_kernel": "7.3.0-sp12-v7.3-platform",
+    "kernel_name_confirmed": true,
+    "owner_report": "everything works and kernel name matches",
+    "wifi": "reported-working",
+    "sound": "reported-working",
+    "individual_feature_measurements": "not-collected-in-this-live-session",
+    "fresh_installation": "deferred-no-spare-disk",
+    "installed_recovery": "not-tested-on-26.10"
+  }
+}

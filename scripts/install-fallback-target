@@ -3,7 +3,7 @@
 set -eu
 
 usage() {
-    printf '%s\n' 'Usage: install-fallback-target [--kernel-release RELEASE] [--dtb-source FILE] [--apply]'
+    printf '%s\n' 'Usage: install-fallback-target [--kernel-release RELEASE] [--dtb-source FILE] [--experimental-26.10] [--apply]'
     printf '%s\n' 'Defaults: 7.3 platform and its versioned DTB under /target/boot.'
     printf '%s\n' 'This command operates only on a separately mounted /target and /target/boot/efi.'
 }
@@ -11,11 +11,13 @@ usage() {
 kver=7.3.0-sp12-v7.3-platform
 dtb_source=
 apply=0
+experimental_2610=0
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --kernel-release) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; kver=$2; shift 2 ;;
         --dtb-source) [ "$#" -ge 2 ] || { usage >&2; exit 2; }; dtb_source=$2; shift 2 ;;
         --apply) apply=1; shift ;;
+        --experimental-26.10) experimental_2610=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown argument: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
@@ -47,7 +49,11 @@ if [ "$kver" = 7.3.0-sp12-v7.3-platform ]; then
     fi
 fi
 
-"$repo_root/scripts/inspect-install-target" --target "$target" --kernel-release "$kver"
+if [ "$experimental_2610" -eq 1 ]; then
+    "$repo_root/scripts/inspect-install-target" --target "$target" --kernel-release "$kver" --experimental-26.10
+else
+    "$repo_root/scripts/inspect-install-target" --target "$target" --kernel-release "$kver"
+fi
 root_uuid=$(findmnt -n -o UUID --mountpoint "$target")
 
 printf '\nRequested fallback installation\n'

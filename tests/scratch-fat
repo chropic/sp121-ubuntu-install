@@ -1,0 +1,42 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Root-only integration runner; never uses the installed ESP as a destination.
+set -eu
+usage() { printf 'Usage: tests/scratch-fat COMMAND_DIRECTORY\n' >&2; }
+case "$#:${2-}" in
+    1:|2:--inside) ;;
+    *) usage; exit 2 ;;
+esac
+commands=$(realpath -- "$1")
+for command in cp mv rm; do
+    [ -x "$commands/$command" ] || { printf 'Missing executable: %s/%s\n' "$commands" "$command" >&2; exit 1; }
+done
+[ "$(id -u)" -eq 0 ] || { printf 'scratch-fat requires root for loopback mounts\n' >&2; exit 1; }
+script=$(realpath -- "$0")
+repo_root=$(dirname "$(dirname "$script")")
+if [ "${2-}" != --inside ]; then
+    exec unshare --mount --propagation private "$script" "$commands" --inside
+fi
+
+scratch=$(mktemp -d /var/tmp/sp12-disposable-fat.XXXXXX)
+mounted=0
+cleanup() {
+    result=$?
+    trap - EXIT HUP INT TERM
+    if [ "$mounted" -eq 1 ]; then
+        umount "$scratch/esp" || result=1
+    fi
+    printf 'Scratch image retained at %s/esp.img\n' "$scratch"
+    exit "$result"
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+truncate -s 128M "$scratch/esp.img"
+mkfs.vfat -F 32 "$scratch/esp.img"
+mkdir "$scratch/esp"
+mount -o loop,nodev,nosuid,noexec "$scratch/esp.img" "$scratch/esp"
+mounted=1
+touch "$scratch/esp/SP12-DISPOSABLE-TEST-ESP"
+findmnt "$scratch/esp"
+SP12_TEST_ESP_ROOT="$scratch/esp" SP12_TEST_CP="$commands/cp" \
+    SP12_TEST_MV="$commands/mv" SP12_TEST_RM="$commands/rm" "$repo_root/tests/boot-space"

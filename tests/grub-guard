@@ -1,0 +1,90 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+set -eu
+repo_root=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
+python3 - "$repo_root" <<'PY'
+from pathlib import Path
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+
+source = (Path(sys.argv[1]) / 'system/usr-local-sbin/sp12-grub-multi-install-guard').read_text()
+
+
+class GuardTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.bin = self.root / 'bin'
+        self.bin.mkdir()
+        self.original = self.root / 'original'
+        self.guard = self.root / 'guard'
+        self.entry = self.root / 'entry'
+        self.log = self.root / 'calls'
+        text = source.replace('/usr/lib/grub/grub-multi-install.sp12-original', str(self.original))
+        text = text.replace('/usr/lib/grub/grub-multi-install', str(self.entry))
+        text = text.replace('/usr/local/sbin/sp12-grub-multi-install-guard', str(self.guard))
+        self.guard.write_text(text)
+        self.entry.symlink_to(self.guard)
+        self.guard.chmod(0o755)
+        self.original.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$TEST_LOG"\n')
+        self.original.chmod(0o755)
+        self.command('id', 'printf "0\\n"')
+        self.command('grub-install', 'printf "%s\\n" --no-extra-removable --no-nvram')
+        self.command('dpkg-divert', 'printf "%s\\n" "local diversion of ' + str(self.entry) + ' to ' + str(self.original) + '"')
+        self.env = dict(os.environ, PATH=str(self.bin) + ':' + os.environ['PATH'], TEST_LOG=str(self.log))
+
+    def command(self, name, body):
+        path = self.bin / name
+        path.write_text('#!/bin/sh\nset -eu\n' + body + '\n')
+        path.chmod(0o755)
+
+    def run_guard(self, *args):
+        return subprocess.run(['bash', str(self.guard), *args], env=self.env,
+                              text=True, capture_output=True)
+
+    def test_conflicts_removed_and_arguments_preserved(self):
+        result = self.run_guard('--force-extra-removable', '--removable', '--no-nvram',
+                                '--no-extra-removable', '--bootloader-id=Ubuntu test', '/dev/test')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(['--bootloader-id=Ubuntu test', '/dev/test',
+                          '--no-extra-removable', '--no-nvram'], self.log.read_text().splitlines())
+
+    def test_missing_original_fails_closed(self):
+        self.original.unlink()
+        self.assertNotEqual(0, self.run_guard().returncode)
+        self.assertFalse(self.log.exists())
+
+    def test_missing_option_or_failed_help_fails_closed(self):
+        for body in ['printf "%s\\n" --no-nvram',
+                     'printf "%s\\n" --no-extra-removable', 'exit 1']:
+            with self.subTest(body=body):
+                self.command('grub-install', body)
+                self.assertNotEqual(0, self.run_guard().returncode)
+                self.assertFalse(self.log.exists())
+
+    def test_help_does_not_delegate_or_probe_installer(self):
+        self.command('grub-install', 'exit 99')
+        result = self.run_guard('--help')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse(self.log.exists())
+
+    def test_verify_only_probes_help_and_does_not_delegate(self):
+        self.command('grub-install', '[ "$#" -eq 1 ] && [ "$1" = --help ]; '
+                     'printf "%s\\n" --no-extra-removable --no-nvram')
+        result = self.run_guard('--verify')
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertFalse(self.log.exists())
+        self.assertEqual(2, self.run_guard('--verify', '--removable').returncode)
+
+    def test_verify_rejects_wrong_diversion(self):
+        self.command('dpkg-divert', 'printf wrong')
+        self.assertNotEqual(0, self.run_guard('--verify').returncode)
+        self.assertFalse(self.log.exists())
+
+
+unittest.main(argv=['grub-guard'])
+PY

@@ -1,56 +1,30 @@
-# Releases
+# Build records and release requirements
 
-Binary files do not belong in Git history. A future GitHub Release will contain:
+Ubuntu 26.10 ARM64 with custom SP12 Linux 7.3 is the main configuration.
+**Fresh installation and recovery are experimental and not fully vetted.**
+The [user guide](../docs/install.md) is the single installation entry point.
 
-- exact ARM64 kernel image and header packages;
-- matching DTB;
-- `SHA256SUMS`;
-- `BUILDINFO.json`;
-- corresponding source/patch bundle;
-- installation and rollback notes;
-- hardware-test results.
+## Records
 
-`reference/BUILDINFO.json` records the sanitized live system from which the guide
-was written. It is evidence, not a promise that equivalent binaries have already
-been published.
+- [Private live v2](CANDIDATE-26.10-private-live-v2.json): audited maintained-kernel
+  image; owner confirmed the kernel and working live hardware.
+- [Earlier 26.10 candidate](CANDIDATE-26.10.json): generic live kernel; Wi-Fi and
+  sound failed. It is not the main configuration.
+- [Historical installer audit](CANDIDATE.json) and [reference build](reference/BUILDINFO.json):
+  earlier evidence, not current release artifacts.
+- `upgrade-preparation/`: authenticated package/runtime and diagnostic evidence
+  for the earlier 26.04 upgrade assessment.
 
-`CANDIDATE.json` preserves the earlier stock-live/bootstrap image-pipeline audit.
-It does not describe the new 7.3 target bundle. That historical image is not
-a release artifact and must not be uploaded under the current builder-only
-distribution policy.
+## Before publishing an image
 
-Linux 7.3 platform is now the sole maintained/default build and installed-system
-target. The builder requires its inspected image package and matching build
-information and embeds them under `/sp12-kernel/`. Ubuntu's stock live kernel and
-frozen bootstrap DTB are retained separately; the installed target uses the DTB
-from its 7.3 package. A complete fresh installation with this bundle is untested.
+- Complete fresh installation on an explicitly authorized recoverable target.
+- Verify installed boot, required device files and the fallback loader.
+- Test recovery and record individual hardware results.
+- Rebuild from the final source revision and repeat offline and physical checks.
+- Publish checksums, build provenance and corresponding kernel source.
+- Resolve distribution terms for every included component.
 
-The [main Linux 7.3 kernel](../kernel/ports/v7.3/README.md) has separate build,
-package and physical-boot evidence. Its successful kernel boot does not validate
-the ISO or the installer workflow below.
-
-## Installer release checklist
-
-Completed: the external support checkout is pinned and inspected; Canonical's
-signed checksum metadata is verified; exact ISO and installer-DTB hashes are
-required; third-party support binaries are excluded; project and input
-provenance is embedded; Ubuntu media checksums are refreshed; the ARM64 EFI path
-and hybrid GPT are preserved; offline integration and ShellCheck coverage exist;
-and every extracted candidate file was audited against the media manifest.
-
-Before an installation-tested release:
-
-- [ ] Boot the candidate on the exact supported Surface Pro 12 model.
-- [ ] Confirm live DT model/compatible values and internal UFS visibility.
-- [ ] Complete installation on a recoverable test device.
-- [ ] Exercise fallback installation and recovery from a deliberately broken
-      primary boot path.
-- [ ] Run `scripts/sp12-verify` and the full hardware checks in [hardware checks](../docs/hardware-tests.md).
-- [ ] Record every [support matrix](../docs/support.md) item as pass or fail.
-- [ ] Rebuild from the final tag and repeat the complete offline audit.
-- [ ] Produce signed release checksums and final build provenance.
-
-Until then, publish only the repository, builder, documentation, and
-redistributable source. Do not upload the modified Ubuntu ISO; the Harrison
-checkout or its firmware/DSP files; DTB or kernel binaries without required
-source and provenance; or any image labeled supported before those gates pass.
+Publish source and tooling while these gates are open. Do not upload the private
+image or the third-party firmware/DSP files excluded by the
+[device-file policy](../firmware/README.md). Binary ISO, kernel and DTB files do
+not belong in Git. Making 26.10 the main configuration does not waive these gates.

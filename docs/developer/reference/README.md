@@ -1,7 +1,7 @@
 # Reference material
 
 `original-tested-guide.md` is the verbatim 2026-08-13 machine-tested source from
-which the public [installation guide](../install.md) and companion pages are derived.
+which the public [installation guide](../../install.md) and companion pages are derived.
 
 It is retained to prevent information loss and to make editorial changes
 auditable. It is not the novice installation entry point, and its commands are
@@ -18,4 +18,4 @@ When material is migrated into the public guide:
 
 [Source ledger](sources.md) records pins and distribution policy;
 [credits](credits.md) records attribution. Linux 7.3 research inputs and audit
-results remain beside the [7.3 kernel guide](../../kernel/ports/v7.3/README.md).
+results remain beside the [7.3 kernel guide](../../../kernel/ports/v7.3/README.md).
