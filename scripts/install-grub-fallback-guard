@@ -67,7 +67,9 @@ if [ -z "$diversion" ]; then
     if ! dpkg -S "$entry" 2>/dev/null | grep -Fq 'grub2-common:'; then
         die "expected grub2-common ownership of $entry"
     fi
-    [ -x "$entry" ] && [ ! -e "$original" ] || die 'unexpected helper/diversion state'
+    if [ ! -x "$entry" ] || [ -e "$original" ]; then
+        die 'unexpected helper/diversion state'
+    fi
 elif [ "$diversion" = "$expected" ]; then
     [ -x "$original" ] || die "diverted package helper is missing: $original"
 else
